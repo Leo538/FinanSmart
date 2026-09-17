@@ -8,6 +8,7 @@ import { LoginComponent } from './features/auth/pages/login.component';
 import { PlaceholderPageComponent } from './shared/components/placeholder-page/placeholder-page.component';
 import { InstitutionComponent } from './features/admin/institution/institution.component';
 import { CreditTypesComponent } from './features/admin/credits/credit-types/credit-types.component';
+import { CreditRatesComponent } from './features/admin/credits/credit-rates/credit-rates.component';
 
 const placeholder = (title: string, subtitle: string) => ({ component: PlaceholderPageComponent, data: { title, subtitle } });
 
@@ -19,7 +20,7 @@ export const routes: Routes = [
     { path: 'dashboard', component: AdminDashboardComponent },
     { path: 'institution', component: InstitutionComponent },
     { path: 'credits/types', component: CreditTypesComponent },
-    { path: 'credits/rates', ...placeholder('Tasas', 'Gestiona las tasas de interés configuradas') },
+    { path: 'credits/rates', component: CreditRatesComponent },
     { path: 'credits/charges', ...placeholder('Cargos', 'Gestiona los cargos adicionales de cada crédito') },
     { path: 'credits/simulator', ...placeholder('Simulador de crédito', 'Calcula escenarios de crédito') },
     { path: 'credits/comparison', ...placeholder('Comparación de sistemas', 'Compara sistemas de amortización') },

@@ -1,0 +1,47 @@
+<main class="page-container">
+  <app-page-header title="Tasas de interés" subtitle="Administra las tasas vigentes e históricas de cada tipo de crédito.">
+    <button class="btn btn-primary btn-md" type="button" (click)="openCreate()">+ Nueva tasa</button>
+  </app-page-header>
+  @if (feedback()) { <p class="feedback" [class.error]="feedbackType() === 'error'" role="status">{{ feedback() }}</p> }
+  <section class="stats-grid">
+    <app-stat-card title="Tasas activas" [value]="activeRates()" />
+    <app-stat-card title="Tipos con tasa vigente" [value]="currentTypeCount()" />
+    <app-stat-card title="Tasas futuras" [value]="futureRates()" />
+  </section>
+  <section class="card rates-card">
+    @if (loading()) {
+      <div class="loading-area"><app-loading-spinner label="Cargando tasas de interés" /></div>
+    } @else if (loadError()) {
+      <div class="load-error"><p>No fue posible cargar las tasas de interés.</p><button class="btn btn-secondary btn-md" type="button" (click)="load()">Reintentar</button></div>
+    } @else if (!rates().length) {
+      <app-empty-state title="No hay tasas de interés registradas." description="Agrega una tasa para comenzar a configurar los productos crediticios."><button class="btn btn-primary btn-md" type="button" (click)="openCreate()">Nueva tasa</button></app-empty-state>
+    } @else {
+      <div class="filters">
+        <label><span>Tipo de crédito</span><select class="form-select" [value]="selectedCreditTypeId()" (change)="setCreditTypeFilter($event)"><option value="">Todos</option>@for (type of creditTypes(); track type.id) { <option [value]="type.id">{{ type.name }}</option> }</select></label>
+        <label><span>Estado temporal</span><select class="form-select" [value]="selectedTemporalStatus()" (change)="setStatusFilter($event)"><option value="all">Todos</option><option value="current">Vigentes</option><option value="future">Futuras</option><option value="expired">Vencidas</option><option value="inactive">Inactivas</option></select></label>
+        <button class="btn btn-ghost btn-md" type="button" (click)="clearFilters()">Limpiar filtros</button>
+      </div>
+      @if (!filteredRates().length) {
+        <div class="no-results">No hay tasas que coincidan con los filtros seleccionados.</div>
+      } @else {
+        <div class="table-container"><table class="data-table"><thead><tr><th>Tipo de crédito</th><th>Tasa anual</th><th>Vigencia desde</th><th>Vigencia hasta</th><th>Estado</th><th>Vigencia actual</th><th>Acciones</th></tr></thead><tbody>
+          @for (rate of filteredRates(); track rate.id) { <tr [class.current-row]="temporalStatus(rate) === 'current'"><td><strong>{{ rate.creditTypeName }}</strong></td><td>{{ formatRate(rate.annualInterestRate) }}</td><td>{{ rate.effectiveFrom | date:'dd/MM/yyyy':'UTC' }}</td><td>{{ rate.effectiveTo ? (rate.effectiveTo | date:'dd/MM/yyyy':'UTC') : 'Sin fecha de fin' }}</td><td><app-status-badge [status]="rate.isActive ? 'active' : 'inactive'" /></td><td><span class="temporal-badge" [class]="temporalStatus(rate)">{{ temporalLabel(rate) }}</span></td><td><div class="row-actions"><button class="btn btn-secondary btn-sm" type="button" (click)="openEdit(rate)" [attr.aria-label]="'Editar ' + rate.creditTypeName">Editar</button>@if (rate.isActive) { <button class="btn btn-ghost btn-sm danger-action" type="button" (click)="requestDeactivation(rate)">Desactivar</button> } @else { <button class="btn btn-ghost btn-sm" type="button" (click)="reactivate(rate)" [disabled]="saving()">Reactivar</button> }</div></td></tr> }
+        </tbody></table></div>
+      }
+    }
+  </section>
+</main>
+
+@if (modalOpen()) {
+  <div class="modal-backdrop" (click)="closeForm()"><section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="rate-modal-title" (click)="$event.stopPropagation()">
+    <header class="modal-header"><div><h2 id="rate-modal-title">{{ editingRate() ? 'Editar tasa de interés' : 'Nueva tasa de interés' }}</h2><p>Define la tasa y su período de vigencia.</p></div><button class="btn btn-ghost btn-sm" type="button" aria-label="Cerrar formulario" (click)="closeForm()" [disabled]="saving()">×</button></header>
+    <form [formGroup]="form" (ngSubmit)="save()"><div class="modal-body">
+      <section class="form-section"><h3>Información de la tasa</h3><div class="form-grid"><div class="form-group"><label class="form-label" for="rateCreditType">Tipo de crédito</label><select id="rateCreditType" class="form-select" formControlName="creditTypeId"><option value="">Selecciona un tipo</option>@for (type of availableCreditTypes(); track type.id) { <option [value]="type.id">{{ type.name }}@if (!type.isActive) { (Inactivo) }</option> }</select>@if (form.controls.creditTypeId.touched && form.controls.creditTypeId.invalid) { <span class="form-error">El tipo de crédito es obligatorio.</span> }</div><div class="form-group"><label class="form-label" for="annualInterestRate">Tasa anual (%)</label><input id="annualInterestRate" class="form-control" type="number" step="0.01" min="0" formControlName="annualInterestRate" />@if (form.controls.annualInterestRate.touched && form.controls.annualInterestRate.invalid) { <span class="form-error">La tasa anual debe ser mayor que cero.</span> }</div></div></section>
+      <section class="form-section"><h3>Vigencia</h3><div class="form-grid"><div class="form-group"><label class="form-label" for="effectiveFrom">Fecha de inicio</label><input id="effectiveFrom" class="form-control" type="date" formControlName="effectiveFrom" />@if (form.controls.effectiveFrom.touched && form.controls.effectiveFrom.invalid) { <span class="form-error">La fecha de inicio es obligatoria.</span> }</div><div class="form-group"><label class="form-label" for="effectiveTo">Fecha de fin</label><input id="effectiveTo" class="form-control" type="date" formControlName="effectiveTo" />@if (form.controls.effectiveTo.touched && form.hasError('dateRange')) { <span class="form-error">La fecha de fin debe ser posterior o igual a la fecha de inicio.</span> }</div></div><span class="form-help">Deja la fecha de fin vacía si la tasa continuará vigente hasta una nueva actualización.</span></section>
+      <section class="form-section"><h3>Estado</h3><label class="toggle-field"><input type="checkbox" formControlName="isActive" /><span>Activa</span></label></section>
+    </div><footer class="modal-footer"><button class="btn btn-secondary btn-md" type="button" (click)="closeForm()" [disabled]="saving()">Cancelar</button><button class="btn btn-primary btn-md" type="submit" [disabled]="saving()">{{ saving() ? 'Guardando...' : 'Guardar' }}</button></footer></form>
+  </section></div>
+}
+@if (confirmTarget()) {
+  <div class="modal-backdrop" (click)="closeConfirmation()"><section class="confirmation-card" role="dialog" aria-modal="true" aria-labelledby="deactivate-rate-title" (click)="$event.stopPropagation()"><h2 id="deactivate-rate-title">Desactivar tasa de interés</h2><p>Esta tasa dejará de ser considerada para nuevas simulaciones, pero permanecerá en el historial.</p><div class="confirmation-actions"><button class="btn btn-secondary btn-md" type="button" (click)="closeConfirmation()" [disabled]="saving()">Cancelar</button><button class="btn btn-primary btn-md" type="button" (click)="deactivate()" [disabled]="saving()">{{ saving() ? 'Desactivando...' : 'Desactivar' }}</button></div></section></div>
+}
