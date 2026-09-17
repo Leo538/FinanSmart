@@ -1,0 +1,28 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+
+# Node and Angular
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# IDEs
+.vs/
+.vscode/
+.idea/
+
+# Environment and temporary files
+.env
+.env.*
+!*.example
+*.tmp
+*.temp
+*.log
+Thumbs.db
+.DS_Store
