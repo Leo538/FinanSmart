@@ -1,0 +1,11 @@
+@use 'breakpoints' as bp;
+
+@mixin focus-ring {
+  outline: 3px solid rgb(24 169 153 / 35%);
+  outline-offset: 2px;
+}
+
+@mixin mobile {
+  @media (max-width: bp.$tablet - 1px) { @content; }
+}
+

@@ -1,0 +1,6 @@
+.status-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 9px; font-size: .75rem; font-weight: 700; }
+.status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.status-active, .status-approved { background: #ecfdf3; color: var(--color-success); }
+.status-inactive, .status-rejected { background: #fef2f2; color: var(--color-danger); }
+.status-pending { background: #fff7ed; color: var(--color-warning); }
+
