@@ -9,6 +9,7 @@ import { PlaceholderPageComponent } from './shared/components/placeholder-page/p
 import { InstitutionComponent } from './features/admin/institution/institution.component';
 import { CreditTypesComponent } from './features/admin/credits/credit-types/credit-types.component';
 import { CreditRatesComponent } from './features/admin/credits/credit-rates/credit-rates.component';
+import { CreditChargesComponent } from './features/admin/credits/credit-charges/credit-charges.component';
 
 const placeholder = (title: string, subtitle: string) => ({ component: PlaceholderPageComponent, data: { title, subtitle } });
 
@@ -21,7 +22,7 @@ export const routes: Routes = [
     { path: 'institution', component: InstitutionComponent },
     { path: 'credits/types', component: CreditTypesComponent },
     { path: 'credits/rates', component: CreditRatesComponent },
-    { path: 'credits/charges', ...placeholder('Cargos', 'Gestiona los cargos adicionales de cada crédito') },
+    { path: 'credits/charges', component: CreditChargesComponent },
     { path: 'credits/simulator', ...placeholder('Simulador de crédito', 'Calcula escenarios de crédito') },
     { path: 'credits/comparison', ...placeholder('Comparación de sistemas', 'Compara sistemas de amortización') },
     { path: 'investments/products', ...placeholder('Productos de inversión', 'Módulo en preparación') },
