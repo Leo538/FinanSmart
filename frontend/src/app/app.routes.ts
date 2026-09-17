@@ -11,6 +11,7 @@ import { CreditTypesComponent } from './features/admin/credits/credit-types/cred
 import { CreditRatesComponent } from './features/admin/credits/credit-rates/credit-rates.component';
 import { CreditChargesComponent } from './features/admin/credits/credit-charges/credit-charges.component';
 import { CreditSimulatorComponent } from './features/credits/simulator/credit-simulator.component';
+import { CreditComparisonComponent } from './features/credits/comparison/credit-comparison.component';
 
 const placeholder = (title: string, subtitle: string) => ({ component: PlaceholderPageComponent, data: { title, subtitle } });
 
@@ -25,7 +26,7 @@ export const routes: Routes = [
     { path: 'credits/rates', component: CreditRatesComponent },
     { path: 'credits/charges', component: CreditChargesComponent },
     { path: 'credits/simulator', component: CreditSimulatorComponent },
-    { path: 'credits/comparison', ...placeholder('Comparación de sistemas', 'Compara sistemas de amortización') },
+    { path: 'credits/comparison', component: CreditComparisonComponent },
     { path: 'investments/products', ...placeholder('Productos de inversión', 'Módulo en preparación') },
     { path: 'investments/rates', ...placeholder('Tasas de inversión', 'Módulo en preparación') },
     { path: 'clients', ...placeholder('Clientes', 'Gestiona la información de clientes') },
@@ -36,7 +37,7 @@ export const routes: Routes = [
   { path: 'client', component: ClientLayoutComponent, children: [
     { path: 'dashboard', component: ClientDashboardComponent },
     { path: 'credits/simulator', component: CreditSimulatorComponent },
-    { path: 'credits/comparison', ...placeholder('Comparar sistemas', 'Compara alternativas de amortización') },
+    { path: 'credits/comparison', component: CreditComparisonComponent },
     { path: 'investments/simulator', ...placeholder('Simular una inversión', 'Módulo en preparación') },
     { path: 'simulations', ...placeholder('Mis simulaciones', 'Aquí verás tus simulaciones guardadas') },
     { path: 'investments', ...placeholder('Mis inversiones', 'Aquí verás tus inversiones') },
