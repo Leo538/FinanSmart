@@ -22,6 +22,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAmortizationCalculator, FrenchAmortizationCalculator>();
         services.AddScoped<IAmortizationCalculator, GermanAmortizationCalculator>();
         services.AddScoped<CreditChargeCalculator>();
+        services.AddScoped<ICreditComparisonService, CreditComparisonService>();
         services.AddScoped<ICreditSimulationService, CreditSimulationService>();
         services.AddScoped<IInstitutionService, InstitutionService>();
         return services;
