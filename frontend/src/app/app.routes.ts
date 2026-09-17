@@ -10,6 +10,7 @@ import { InstitutionComponent } from './features/admin/institution/institution.c
 import { CreditTypesComponent } from './features/admin/credits/credit-types/credit-types.component';
 import { CreditRatesComponent } from './features/admin/credits/credit-rates/credit-rates.component';
 import { CreditChargesComponent } from './features/admin/credits/credit-charges/credit-charges.component';
+import { CreditSimulatorComponent } from './features/credits/simulator/credit-simulator.component';
 
 const placeholder = (title: string, subtitle: string) => ({ component: PlaceholderPageComponent, data: { title, subtitle } });
 
@@ -23,7 +24,7 @@ export const routes: Routes = [
     { path: 'credits/types', component: CreditTypesComponent },
     { path: 'credits/rates', component: CreditRatesComponent },
     { path: 'credits/charges', component: CreditChargesComponent },
-    { path: 'credits/simulator', ...placeholder('Simulador de crédito', 'Calcula escenarios de crédito') },
+    { path: 'credits/simulator', component: CreditSimulatorComponent },
     { path: 'credits/comparison', ...placeholder('Comparación de sistemas', 'Compara sistemas de amortización') },
     { path: 'investments/products', ...placeholder('Productos de inversión', 'Módulo en preparación') },
     { path: 'investments/rates', ...placeholder('Tasas de inversión', 'Módulo en preparación') },
@@ -34,7 +35,7 @@ export const routes: Routes = [
   ] },
   { path: 'client', component: ClientLayoutComponent, children: [
     { path: 'dashboard', component: ClientDashboardComponent },
-    { path: 'credits/simulator', ...placeholder('Simular un crédito', 'Calcula tus cuotas próximamente') },
+    { path: 'credits/simulator', component: CreditSimulatorComponent },
     { path: 'credits/comparison', ...placeholder('Comparar sistemas', 'Compara alternativas de amortización') },
     { path: 'investments/simulator', ...placeholder('Simular una inversión', 'Módulo en preparación') },
     { path: 'simulations', ...placeholder('Mis simulaciones', 'Aquí verás tus simulaciones guardadas') },
