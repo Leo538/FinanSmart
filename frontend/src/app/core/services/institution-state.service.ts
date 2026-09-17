@@ -17,11 +17,18 @@ export class InstitutionStateService {
     if (this.loaded()) return of(this.currentInstitution());
     if (!this.loadRequest) {
       this.loadRequest = this.institutionService.getAll().pipe(
-        map(institutions => institutions.find(institution => institution.isActive) ?? null),
-        tap(institution => {
-          this.setInstitution(institution);
+        map(institutions => {
+          const activeInstitution = institutions.find(institution => institution.isActive) ?? null;
+          return {
+            activeInstitution,
+            managedInstitution: activeInstitution ?? institutions[0] ?? null
+          };
+        }),
+        tap(({ activeInstitution }) => {
+          this.setInstitution(activeInstitution);
           this.loaded.set(true);
         }),
+        map(({ managedInstitution }) => managedInstitution),
         shareReplay({ bufferSize: 1, refCount: false })
       );
     }
@@ -29,7 +36,9 @@ export class InstitutionStateService {
   }
 
   setInstitution(institution: Institution | null): void {
-    this.currentInstitution.set(institution);
-    if (institution) this.themeService.applyInstitutionTheme(institution);
+    const activeInstitution = institution?.isActive ? institution : null;
+    this.currentInstitution.set(activeInstitution);
+    if (activeInstitution) this.themeService.applyInstitutionTheme(activeInstitution);
+    else this.themeService.resetInstitutionTheme();
   }
 }

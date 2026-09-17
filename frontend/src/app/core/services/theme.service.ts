@@ -9,6 +9,15 @@ export class ThemeService {
   applyInstitutionTheme(institution: Institution): void {
     const root = this.document.documentElement;
     if (institution.primaryColor) root.style.setProperty('--color-primary', institution.primaryColor);
+    else root.style.removeProperty('--color-primary');
+
     if (institution.secondaryColor) root.style.setProperty('--color-accent', institution.secondaryColor);
+    else root.style.removeProperty('--color-accent');
+  }
+
+  resetInstitutionTheme(): void {
+    const root = this.document.documentElement;
+    root.style.removeProperty('--color-primary');
+    root.style.removeProperty('--color-accent');
   }
 }
