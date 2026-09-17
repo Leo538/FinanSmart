@@ -11,6 +11,10 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
 
 builder.Services.AddDbContext<FinanSmartDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddCors(options => options.AddPolicy("Frontend", policy => policy
+    .WithOrigins("http://localhost:4200")
+    .AllowAnyHeader()
+    .AllowAnyMethod()));
 builder.Services.AddApplicationServices();
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -19,6 +23,7 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseCors("Frontend");
 app.MapOpenApi();
 app.MapControllers();
 

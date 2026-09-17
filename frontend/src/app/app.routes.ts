@@ -6,6 +6,7 @@ import { AdminDashboardComponent } from './features/admin/dashboard/admin-dashbo
 import { ClientDashboardComponent } from './features/client/dashboard/client-dashboard.component';
 import { LoginComponent } from './features/auth/pages/login.component';
 import { PlaceholderPageComponent } from './shared/components/placeholder-page/placeholder-page.component';
+import { InstitutionComponent } from './features/admin/institution/institution.component';
 
 const placeholder = (title: string, subtitle: string) => ({ component: PlaceholderPageComponent, data: { title, subtitle } });
 
@@ -15,7 +16,7 @@ export const routes: Routes = [
   { path: 'forgot-password', component: AuthLayoutComponent, children: [{ path: '', ...placeholder('Recuperar contraseña', 'Esta opción estará disponible próximamente') }] },
   { path: 'admin', component: AdminLayoutComponent, children: [
     { path: 'dashboard', component: AdminDashboardComponent },
-    { path: 'institution', ...placeholder('Institución', 'Configura la información institucional') },
+    { path: 'institution', component: InstitutionComponent },
     { path: 'credits/types', ...placeholder('Tipos de crédito', 'Administra los productos crediticios disponibles') },
     { path: 'credits/rates', ...placeholder('Tasas', 'Gestiona las tasas de interés configuradas') },
     { path: 'credits/charges', ...placeholder('Cargos', 'Gestiona los cargos adicionales de cada crédito') },

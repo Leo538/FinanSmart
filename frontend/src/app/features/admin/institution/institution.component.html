@@ -1,0 +1,137 @@
+<main class="page-container">
+  <app-page-header
+    title="Configuración de la institución"
+    subtitle="Administra la información e identidad visual de la entidad financiera."
+  />
+
+  @if (loading()) {
+    <section class="loading-area">
+      <app-loading-spinner label="Cargando configuración" />
+    </section>
+  } @else {
+    <section class="institution-layout">
+      <form class="card institution-form" [formGroup]="form" (ngSubmit)="save()">
+        <div class="card-header">
+          <h2>Información institucional</h2>
+          <app-status-badge [status]="form.controls.isActive.value ? 'active' : 'inactive'" />
+        </div>
+
+        <div class="card-body form-grid">
+          <div class="form-group full">
+            <label class="form-label" for="name">Nombre de la institución</label>
+            <input id="name" class="form-control" formControlName="name" />
+            @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+              <span class="form-error">El nombre es obligatorio.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="ruc">RUC</label>
+            <input id="ruc" class="form-control" formControlName="ruc" />
+            @if (form.controls.ruc.touched && form.controls.ruc.hasError('required')) {
+              <span class="form-error">El RUC es obligatorio.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Correo electrónico</label>
+            <input id="email" class="form-control" type="email" formControlName="email" />
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <span class="form-error">Ingresa un correo válido.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="phone">Teléfono</label>
+            <input id="phone" class="form-control" formControlName="phone" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="address">Dirección</label>
+            <input id="address" class="form-control" formControlName="address" />
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label" for="logoUrl">URL del logo</label>
+            <input id="logoUrl" class="form-control" type="url" formControlName="logoUrl" placeholder="https://..." />
+            <span class="form-help">La carga de archivos estará disponible próximamente.</span>
+          </div>
+
+          <div class="color-field">
+            <label class="form-label" for="primaryColor">Color primario</label>
+            <div>
+              <input
+                id="primaryColorPicker"
+                type="color"
+                [value]="form.controls.primaryColor.value || '#123B5D'"
+                (input)="setColor('primaryColor', $event)"
+                aria-label="Seleccionar color primario"
+              />
+              <input id="primaryColor" class="form-control" formControlName="primaryColor" />
+            </div>
+            @if (form.controls.primaryColor.touched && form.controls.primaryColor.invalid) {
+              <span class="form-error">Usa un color hexadecimal válido.</span>
+            }
+          </div>
+
+          <div class="color-field">
+            <label class="form-label" for="secondaryColor">Color secundario</label>
+            <div>
+              <input
+                id="secondaryColorPicker"
+                type="color"
+                [value]="form.controls.secondaryColor.value || '#18A999'"
+                (input)="setColor('secondaryColor', $event)"
+                aria-label="Seleccionar color secundario"
+              />
+              <input id="secondaryColor" class="form-control" formControlName="secondaryColor" />
+            </div>
+            @if (form.controls.secondaryColor.touched && form.controls.secondaryColor.invalid) {
+              <span class="form-error">Usa un color hexadecimal válido.</span>
+            }
+          </div>
+
+          <label class="toggle-field full">
+            <input type="checkbox" formControlName="isActive" />
+            <span></span>
+            Institución activa
+          </label>
+        </div>
+
+        <div class="card-footer">
+          <button class="btn btn-primary btn-md" type="submit" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+          @if (feedback()) {
+            <p class="feedback" [class.error]="feedbackType() === 'error'">{{ feedback() }}</p>
+          }
+        </div>
+      </form>
+
+      <aside class="card preview-card">
+        <div class="card-header"><h2>Vista previa</h2></div>
+        <div
+          class="card-body preview"
+          [style.--preview-primary]="preview().primaryColor || '#123B5D'"
+          [style.--preview-accent]="preview().secondaryColor || '#18A999'"
+        >
+          <div class="preview-logo">
+            @if (preview().logoUrl && !logoFailed()) {
+              <img [src]="preview().logoUrl" alt="Logo de la institución" (error)="logoFailed.set(true)" />
+            } @else {
+              <span>{{ initials(preview().name) }}</span>
+            }
+          </div>
+          <h2>{{ preview().name || 'FinanSmart' }}</h2>
+          <p>RUC {{ preview().ruc || 'Sin configurar' }}</p>
+          <div class="swatches">
+            <span><i class="primary"></i>Primario</span>
+            <span><i class="accent"></i>Secundario</span>
+          </div>
+          <button class="preview-primary" type="button">Acción principal</button>
+          <button class="preview-accent" type="button">Acción secundaria</button>
+        </div>
+      </aside>
+    </section>
+  }
+</main>
