@@ -1,5 +1,7 @@
+using FinanSmart.Api.Configurations;
 using FinanSmart.Api.Data.Context;
 using FinanSmart.Api.Data.Seed;
+using FinanSmart.Api.Middlewares;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,8 +10,15 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
 
 builder.Services.AddDbContext<FinanSmartDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddApplicationServices();
+builder.Services.AddControllers();
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.MapOpenApi();
+app.MapControllers();
 
 app.MapGet("/api/health", () => Results.Ok(new
 {
