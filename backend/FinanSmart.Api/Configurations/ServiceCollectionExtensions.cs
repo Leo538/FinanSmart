@@ -4,6 +4,9 @@ using FinanSmart.Api.Modules.Credits.CreditRates.Interfaces;
 using FinanSmart.Api.Modules.Credits.CreditRates.Services;
 using FinanSmart.Api.Modules.Credits.CreditTypes.Interfaces;
 using FinanSmart.Api.Modules.Credits.CreditTypes.Services;
+using FinanSmart.Api.Modules.Credits.Simulations.Calculators;
+using FinanSmart.Api.Modules.Credits.Simulations.Interfaces;
+using FinanSmart.Api.Modules.Credits.Simulations.Services;
 using FinanSmart.Api.Modules.Institution.Interfaces;
 using FinanSmart.Api.Modules.Institution.Services;
 
@@ -16,6 +19,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICreditChargeService, CreditChargeService>();
         services.AddScoped<ICreditRateService, CreditRateService>();
         services.AddScoped<ICreditTypeService, CreditTypeService>();
+        services.AddScoped<IAmortizationCalculator, FrenchAmortizationCalculator>();
+        services.AddScoped<IAmortizationCalculator, GermanAmortizationCalculator>();
+        services.AddScoped<CreditChargeCalculator>();
+        services.AddScoped<ICreditSimulationService, CreditSimulationService>();
         services.AddScoped<IInstitutionService, InstitutionService>();
         return services;
     }
