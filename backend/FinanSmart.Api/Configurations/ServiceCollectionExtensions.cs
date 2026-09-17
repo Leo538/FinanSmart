@@ -1,3 +1,5 @@
+using FinanSmart.Api.Modules.Credits.CreditTypes.Interfaces;
+using FinanSmart.Api.Modules.Credits.CreditTypes.Services;
 using FinanSmart.Api.Modules.Institution.Interfaces;
 using FinanSmart.Api.Modules.Institution.Services;
 
@@ -7,8 +9,8 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        services.AddScoped<ICreditTypeService, CreditTypeService>();
         services.AddScoped<IInstitutionService, InstitutionService>();
         return services;
     }
 }
-
