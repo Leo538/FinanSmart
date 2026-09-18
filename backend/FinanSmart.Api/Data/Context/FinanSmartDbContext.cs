@@ -15,6 +15,7 @@ public class FinanSmartDbContext(DbContextOptions<FinanSmartDbContext> options) 
     public DbSet<InvestmentProduct> InvestmentProducts => Set<InvestmentProduct>();
     public DbSet<InvestmentRate> InvestmentRates => Set<InvestmentRate>();
     public DbSet<InvestmentApplication> InvestmentApplications => Set<InvestmentApplication>();
+    public DbSet<InvestmentApplicationDocument> InvestmentApplicationDocuments => Set<InvestmentApplicationDocument>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

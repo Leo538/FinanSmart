@@ -44,11 +44,23 @@ export class InvestmentSimulatorComponent {
 
   constructor() {
     this.productService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: products => { this.products.set(products.filter(product => product.isActive)); this.loadingProducts.set(false); },
+      next: products => {
+        const activeProducts = products.filter(product => product.isActive).map(product => ({
+          ...product,
+          minimumAmount: Number(product.minimumAmount), maximumAmount: product.maximumAmount === null ? null : Number(product.maximumAmount),
+          minimumTermDays: Number(product.minimumTermDays), maximumTermDays: product.maximumTermDays === null ? null : Number(product.maximumTermDays)
+        }));
+        this.products.set(activeProducts);
+        this.updateSelectedProduct(this.form.controls.investmentProductId.value);
+        this.loadingProducts.set(false);
+      },
       error: () => { this.loadingProducts.set(false); this.error.set('No se pudo conectar con el servidor.'); }
     });
+    this.form.controls.investmentProductId.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(productId => {
+      this.updateSelectedProduct(productId);
+      if (this.result()) this.resultStale.set(true);
+    });
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.selectedProduct.set(this.products().find(product => product.id === this.form.controls.investmentProductId.value) ?? null);
       if (this.result()) this.resultStale.set(true);
     });
   }
@@ -75,16 +87,14 @@ export class InvestmentSimulatorComponent {
 
   isValid(): boolean {
     const product = this.selectedProduct(); const value = this.form.getRawValue();
-    return this.form.valid && !!product && value.amount > 0 && value.amount >= product.minimumAmount &&
-      (!product.maximumAmount || value.amount <= product.maximumAmount) && Number.isInteger(value.termDays) && value.termDays > 0 &&
-      value.termDays >= product.minimumTermDays && (!product.maximumTermDays || value.termDays <= product.maximumTermDays);
+    return this.form.valid && !!product && Number.isFinite(value.amount) && Number.isFinite(value.termDays) && Number.isInteger(value.termDays);
   }
   amountError(): string {
     const product = this.selectedProduct(); const amount = this.form.controls.amount.value;
     if (amount <= 0) return 'Ingresa un monto válido.';
     if (!product) return '';
     if (amount < product.minimumAmount) return `El monto mínimo es ${this.money(product.minimumAmount)}.`;
-    if (product.maximumAmount && amount > product.maximumAmount) return `El monto máximo es ${this.money(product.maximumAmount)}.`;
+    if (product.maximumAmount !== null && amount > product.maximumAmount) return `El monto máximo es ${this.money(product.maximumAmount)}.`;
     return '';
   }
   termError(): string {
@@ -92,7 +102,7 @@ export class InvestmentSimulatorComponent {
     if (!Number.isInteger(termDays) || termDays <= 0) return 'Ingresa un plazo entero y positivo.';
     if (!product) return '';
     if (termDays < product.minimumTermDays) return `El plazo mínimo es ${product.minimumTermDays} días.`;
-    if (product.maximumTermDays && termDays > product.maximumTermDays) return `El plazo máximo es ${product.maximumTermDays} días.`;
+    if (product.maximumTermDays !== null && termDays > product.maximumTermDays) return `El plazo máximo es ${product.maximumTermDays} días.`;
     return '';
   }
   money(value: number): string { return this.currencyFormatter.format(value); }
@@ -102,6 +112,27 @@ export class InvestmentSimulatorComponent {
   paymentTypeLabel(paymentType: string): string { return ({ Interest: 'Pago de intereses', Maturity: 'Vencimiento', Upfront: 'Pago anticipado' } as Record<string, string>)[paymentType] ?? paymentType; }
   methodExplanation(method: InterestCalculationMethod | string): string { return method === 'Compound' ? 'Los intereses se calculan considerando la acumulación de intereses durante el plazo.' : 'Los intereses se calculan sobre el capital inicial durante el plazo de la inversión.'; }
   isPeriodic(frequency: InterestPaymentFrequency | string): boolean { return ['Monthly', 'Quarterly', 'SemiAnnual'].includes(frequency); }
+  private updateSelectedProduct(productId: string): void {
+    const product = this.products().find(item => item.id === productId) ?? null;
+    this.selectedProduct.set(product);
+    if (!product) {
+      this.form.controls.amount.setValidators([Validators.required, Validators.min(0.01)]);
+      this.form.controls.termDays.setValidators([Validators.required, Validators.min(1)]);
+    } else {
+      const amountValidators = [Validators.required, Validators.min(product.minimumAmount)];
+      const termValidators = [Validators.required, Validators.min(product.minimumTermDays)];
+      if (product.maximumAmount !== null) amountValidators.push(Validators.max(product.maximumAmount));
+      if (product.maximumTermDays !== null) termValidators.push(Validators.max(product.maximumTermDays));
+      this.form.controls.amount.setValidators(amountValidators);
+      this.form.controls.termDays.setValidators(termValidators);
+      console.debug('[Investment simulator] Selected product limits', {
+        productId: product.id, minimumAmount: product.minimumAmount, maximumAmount: product.maximumAmount,
+        minimumTermDays: product.minimumTermDays, maximumTermDays: product.maximumTermDays
+      });
+    }
+    this.form.controls.amount.updateValueAndValidity({ emitEvent: false });
+    this.form.controls.termDays.updateValueAndValidity({ emitEvent: false });
+  }
   private errorMessage(error: HttpErrorResponse): string {
     if (error.status === 0) return 'No se pudo conectar con el servidor.';
     const message = typeof error.error === 'object' && error.error !== null && 'message' in error.error ? String(error.error.message).toLowerCase() : '';

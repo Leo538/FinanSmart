@@ -33,4 +33,5 @@ public class InvestmentApplication
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset? SubmittedAt { get; set; }
     public InvestmentProduct InvestmentProduct { get; set; } = null!;
+    public ICollection<InvestmentApplicationDocument> Documents { get; set; } = new List<InvestmentApplicationDocument>();
 }
