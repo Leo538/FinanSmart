@@ -1,0 +1,1 @@
+namespace FinanSmart.Api.Modules.Investments.Simulations.DTOs; public class InvestmentPaymentDto{public int PaymentNumber{get;init;}public DateTimeOffset PaymentDate{get;init;}public string PaymentType{get;init;}=string.Empty;public decimal InterestAmount{get;init;}}

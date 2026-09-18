@@ -14,6 +14,7 @@ import { CreditSimulatorComponent } from './features/credits/simulator/credit-si
 import { CreditComparisonComponent } from './features/credits/comparison/credit-comparison.component';
 import { InvestmentProductsComponent } from './features/admin/investments/investment-products/investment-products.component';
 import { InvestmentRatesComponent } from './features/admin/investments/investment-rates/investment-rates.component';
+import { InvestmentSimulatorComponent } from './features/investments/simulator/investment-simulator.component';
 
 const placeholder = (title: string, subtitle: string) => ({ component: PlaceholderPageComponent, data: { title, subtitle } });
 
@@ -40,7 +41,7 @@ export const routes: Routes = [
     { path: 'dashboard', component: ClientDashboardComponent },
     { path: 'credits/simulator', component: CreditSimulatorComponent },
     { path: 'credits/comparison', component: CreditComparisonComponent },
-    { path: 'investments/simulator', ...placeholder('Simular una inversión', 'Módulo en preparación') },
+    { path: 'investments/simulator', component: InvestmentSimulatorComponent },
     { path: 'simulations', ...placeholder('Mis simulaciones', 'Aquí verás tus simulaciones guardadas') },
     { path: 'investments', ...placeholder('Mis inversiones', 'Aquí verás tus inversiones') },
     { path: '', pathMatch: 'full', redirectTo: 'dashboard' }

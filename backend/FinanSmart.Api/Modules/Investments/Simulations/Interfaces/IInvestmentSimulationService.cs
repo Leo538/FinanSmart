@@ -1,0 +1,1 @@
+using FinanSmart.Api.Modules.Investments.Simulations.DTOs;namespace FinanSmart.Api.Modules.Investments.Simulations.Interfaces;public interface IInvestmentSimulationService{Task<InvestmentSimulationResponseDto> SimulateAsync(InvestmentSimulationRequestDto request);}

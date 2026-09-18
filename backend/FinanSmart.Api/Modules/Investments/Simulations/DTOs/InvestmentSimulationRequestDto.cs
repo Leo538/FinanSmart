@@ -1,0 +1,1 @@
+namespace FinanSmart.Api.Modules.Investments.Simulations.DTOs; public class InvestmentSimulationRequestDto{public Guid InvestmentProductId{get;init;}public decimal Amount{get;init;}public int TermDays{get;init;}public DateTimeOffset? StartDate{get;init;}}
