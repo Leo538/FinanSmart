@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { InvestmentProduct, InterestCalculationMethod, InterestPaymentFrequency } from '../../admin/investments/investment-products/models/investment-product.model';
 import { InvestmentProductService } from '../../admin/investments/investment-products/services/investment-product.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -11,6 +12,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { InvestmentSimulationResponse } from './models/investment-simulation.model';
 import { InvestmentSimulationService } from './services/investment-simulation.service';
+import { InvestmentApplicationService } from '../application/services/investment-application.service';
 
 @Component({
   selector: 'app-investment-simulator',
@@ -23,12 +25,15 @@ export class InvestmentSimulatorComponent {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly productService = inject(InvestmentProductService);
   private readonly simulationService = inject(InvestmentSimulationService);
+  private readonly applicationService = inject(InvestmentApplicationService);
+  private readonly router = inject(Router);
   private readonly currencyFormatter = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' });
   private readonly percentageFormatter = new Intl.NumberFormat('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   readonly products = signal<InvestmentProduct[]>([]);
   readonly selectedProduct = signal<InvestmentProduct | null>(null);
   readonly loadingProducts = signal(true);
   readonly simulating = signal(false);
+  readonly creatingApplication = signal(false);
   readonly result = signal<InvestmentSimulationResponse | null>(null);
   readonly resultStale = signal(false);
   readonly error = signal('');
@@ -55,6 +60,16 @@ export class InvestmentSimulatorComponent {
     this.simulationService.simulate({ ...value, startDate: `${value.startDate}T00:00:00Z` }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: result => { this.result.set(result); this.resultStale.set(false); this.simulating.set(false); },
       error: error => { this.simulating.set(false); this.error.set(this.errorMessage(error)); }
+    });
+  }
+
+  createApplication(): void {
+    if (!this.result() || this.resultStale() || this.error() || this.creatingApplication()) return;
+    const value = this.form.getRawValue();
+    this.creatingApplication.set(true);
+    this.applicationService.create({ ...value, startDate: `${value.startDate}T00:00:00Z` }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: application => { this.creatingApplication.set(false); this.router.navigate(['/client/investments/applications', application.id]); },
+      error: () => { this.creatingApplication.set(false); this.error.set('Ocurrió un error al iniciar la solicitud de inversión.'); }
     });
   }
 

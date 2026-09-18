@@ -9,4 +9,5 @@ public class InvestmentProduct
     public InterestPaymentFrequency InterestPaymentFrequency { get; set; }
     public bool IsActive { get; set; } public DateTimeOffset CreatedAt { get; set; } public DateTimeOffset UpdatedAt { get; set; }
     public ICollection<InvestmentRate> InvestmentRates { get; set; } = new List<InvestmentRate>();
+    public ICollection<InvestmentApplication> InvestmentApplications { get; set; } = new List<InvestmentApplication>();
 }

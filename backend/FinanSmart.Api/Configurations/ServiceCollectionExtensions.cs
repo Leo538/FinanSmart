@@ -16,6 +16,8 @@ using FinanSmart.Api.Modules.Investments.Rates.Interfaces;
 using FinanSmart.Api.Modules.Investments.Rates.Services;
 using FinanSmart.Api.Modules.Investments.Simulations.Interfaces;
 using FinanSmart.Api.Modules.Investments.Simulations.Services;
+using FinanSmart.Api.Modules.Investments.Applications.Interfaces;
+using FinanSmart.Api.Modules.Investments.Applications.Services;
 
 namespace FinanSmart.Api.Configurations;
 
@@ -36,6 +38,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IInvestmentProductService, InvestmentProductService>();
         services.AddScoped<IInvestmentRateService, InvestmentRateService>();
         services.AddScoped<IInvestmentSimulationService, InvestmentSimulationService>();
+        services.AddScoped<IInvestmentApplicationService, InvestmentApplicationService>();
         return services;
     }
 }
