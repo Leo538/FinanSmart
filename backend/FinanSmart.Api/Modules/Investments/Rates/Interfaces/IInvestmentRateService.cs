@@ -1,0 +1,3 @@
+using FinanSmart.Api.Modules.Investments.Rates.DTOs;
+namespace FinanSmart.Api.Modules.Investments.Rates.Interfaces;
+public interface IInvestmentRateService { Task<IReadOnlyCollection<InvestmentRateDto>> GetAllAsync(); Task<InvestmentRateDto?> GetByIdAsync(Guid id); Task<IReadOnlyCollection<InvestmentRateDto>> GetByProductAsync(Guid productId); Task<InvestmentRateDto?> GetApplicableRateAsync(Guid productId, decimal amount, int termDays); Task<InvestmentRateDto> CreateAsync(CreateInvestmentRateDto dto); Task<bool> UpdateAsync(Guid id, UpdateInvestmentRateDto dto); Task<bool> DeleteAsync(Guid id); }

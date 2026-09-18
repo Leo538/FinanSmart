@@ -12,6 +12,8 @@ public class FinanSmartDbContext(DbContextOptions<FinanSmartDbContext> options) 
     public DbSet<CreditType> CreditTypes => Set<CreditType>();
     public DbSet<CreditRate> CreditRates => Set<CreditRate>();
     public DbSet<CreditCharge> CreditCharges => Set<CreditCharge>();
+    public DbSet<InvestmentProduct> InvestmentProducts => Set<InvestmentProduct>();
+    public DbSet<InvestmentRate> InvestmentRates => Set<InvestmentRate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -19,4 +21,3 @@ public class FinanSmartDbContext(DbContextOptions<FinanSmartDbContext> options) 
         base.OnModelCreating(modelBuilder);
     }
 }
-

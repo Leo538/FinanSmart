@@ -1,0 +1,2 @@
+namespace FinanSmart.Api.Modules.Investments.Rates.DTOs;
+public class UpdateInvestmentRateDto { public Guid InvestmentProductId {get;init;} public decimal MinimumAmount {get;init;} public decimal? MaximumAmount {get;init;} public int MinimumTermDays {get;init;} public int? MaximumTermDays {get;init;} public decimal AnnualInterestRate {get;init;} public DateTimeOffset EffectiveFrom {get;init;} public DateTimeOffset? EffectiveTo {get;init;} public bool IsActive {get;init;} }

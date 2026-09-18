@@ -10,6 +10,10 @@ using FinanSmart.Api.Modules.Credits.Simulations.Services;
 using FinanSmart.Api.Modules.Credits.Simulations.Pdf;
 using FinanSmart.Api.Modules.Institution.Interfaces;
 using FinanSmart.Api.Modules.Institution.Services;
+using FinanSmart.Api.Modules.Investments.Products.Interfaces;
+using FinanSmart.Api.Modules.Investments.Products.Services;
+using FinanSmart.Api.Modules.Investments.Rates.Interfaces;
+using FinanSmart.Api.Modules.Investments.Rates.Services;
 
 namespace FinanSmart.Api.Configurations;
 
@@ -27,6 +31,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICreditSimulationService, CreditSimulationService>();
         services.AddScoped<ICreditSimulationPdfService, CreditSimulationPdfService>();
         services.AddScoped<IInstitutionService, InstitutionService>();
+        services.AddScoped<IInvestmentProductService, InvestmentProductService>();
+        services.AddScoped<IInvestmentRateService, InvestmentRateService>();
         return services;
     }
 }
