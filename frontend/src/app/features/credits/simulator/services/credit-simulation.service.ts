@@ -9,4 +9,8 @@ export class CreditSimulationService {
   simulate(request: CreditSimulationRequest): Observable<CreditSimulationResponse> {
     return this.http.post<CreditSimulationResponse>(environment.apiUrl + '/api/credit-simulations/simulate', request);
   }
+
+  downloadPdf(request: CreditSimulationRequest): Observable<Blob> {
+    return this.http.post(environment.apiUrl + '/api/credit-simulations/pdf', request, { responseType: 'blob' });
+  }
 }

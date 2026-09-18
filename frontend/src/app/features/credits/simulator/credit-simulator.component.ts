@@ -28,6 +28,7 @@ export class CreditSimulatorComponent {
   readonly creditTypes = signal<CreditType[]>([]);
   readonly loadingTypes = signal(true);
   readonly simulating = signal(false);
+  readonly downloadingPdf = signal(false);
   readonly result = signal<CreditSimulationResponse | null>(null);
   readonly resultStale = signal(false);
   readonly error = signal('');
@@ -48,6 +49,24 @@ export class CreditSimulatorComponent {
     });
   }
   selectSystem(system: AmortizationSystem): void { this.form.controls.amortizationSystem.setValue(system); }
+  downloadPdf(): void {
+    if (!this.result() || this.resultStale() || this.downloadingPdf()) return;
+    this.downloadingPdf.set(true);
+    const value = this.form.getRawValue();
+    const request: CreditSimulationRequest = { ...value, startDate: value.startDate + 'T00:00:00Z' };
+    this.simulationService.downloadPdf(request).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `simulacion-credito-${value.amortizationSystem === 'French' ? 'frances' : 'aleman'}.pdf`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+        this.downloadingPdf.set(false);
+      },
+      error: () => { this.error.set('No fue posible generar el PDF.'); this.downloadingPdf.set(false); }
+    });
+  }
   simulate(): void {
     if (!this.isValid() || this.simulating()) { this.form.markAllAsTouched(); return; }
     this.error.set(''); this.simulating.set(true);

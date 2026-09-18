@@ -7,6 +7,7 @@ using FinanSmart.Api.Modules.Credits.CreditTypes.Services;
 using FinanSmart.Api.Modules.Credits.Simulations.Calculators;
 using FinanSmart.Api.Modules.Credits.Simulations.Interfaces;
 using FinanSmart.Api.Modules.Credits.Simulations.Services;
+using FinanSmart.Api.Modules.Credits.Simulations.Pdf;
 using FinanSmart.Api.Modules.Institution.Interfaces;
 using FinanSmart.Api.Modules.Institution.Services;
 
@@ -24,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CreditChargeCalculator>();
         services.AddScoped<ICreditComparisonService, CreditComparisonService>();
         services.AddScoped<ICreditSimulationService, CreditSimulationService>();
+        services.AddScoped<ICreditSimulationPdfService, CreditSimulationPdfService>();
         services.AddScoped<IInstitutionService, InstitutionService>();
         return services;
     }
