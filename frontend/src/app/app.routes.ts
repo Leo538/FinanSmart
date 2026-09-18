@@ -12,6 +12,7 @@ import { CreditRatesComponent } from './features/admin/credits/credit-rates/cred
 import { CreditChargesComponent } from './features/admin/credits/credit-charges/credit-charges.component';
 import { CreditSimulatorComponent } from './features/credits/simulator/credit-simulator.component';
 import { CreditComparisonComponent } from './features/credits/comparison/credit-comparison.component';
+import { InvestmentProductsComponent } from './features/admin/investments/investment-products/investment-products.component';
 
 const placeholder = (title: string, subtitle: string) => ({ component: PlaceholderPageComponent, data: { title, subtitle } });
 
@@ -27,7 +28,7 @@ export const routes: Routes = [
     { path: 'credits/charges', component: CreditChargesComponent },
     { path: 'credits/simulator', component: CreditSimulatorComponent },
     { path: 'credits/comparison', component: CreditComparisonComponent },
-    { path: 'investments/products', ...placeholder('Productos de inversión', 'Módulo en preparación') },
+    { path: 'investments/products', component: InvestmentProductsComponent },
     { path: 'investments/rates', ...placeholder('Tasas de inversión', 'Módulo en preparación') },
     { path: 'clients', ...placeholder('Clientes', 'Gestiona la información de clientes') },
     { path: 'reports', ...placeholder('Reportes', 'Consulta reportes de la plataforma') },
