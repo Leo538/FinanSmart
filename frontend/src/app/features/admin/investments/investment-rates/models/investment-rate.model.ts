@@ -1,0 +1,2 @@
+export interface InvestmentRate{id:string;investmentProductId:string;investmentProductName:string;minimumAmount:number;maximumAmount:number|null;minimumTermDays:number;maximumTermDays:number|null;annualInterestRate:number;effectiveFrom:string;effectiveTo:string|null;isActive:boolean;createdAt:string;updatedAt:string;}
+export interface InvestmentRateFormData{investmentProductId:string;minimumAmount:number;maximumAmount:number|null;minimumTermDays:number;maximumTermDays:number|null;annualInterestRate:number;effectiveFrom:string;effectiveTo:string|null;isActive:boolean;}
