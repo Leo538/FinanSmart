@@ -46,6 +46,8 @@ export class InvestmentApplicationComponent implements OnDestroy {
   readonly savingSelfie = signal(false);
   readonly verifyingIdentity = signal(false);
   readonly consentAccepted = signal(false);
+  readonly reviewAccepted = signal(false);
+  readonly submittingApplication = signal(false);
   private cameraStream: MediaStream | null = null;
   readonly form = this.formBuilder.group({
     firstName: ['', Validators.required], lastName: ['', Validators.required], identificationType: ['NationalId' as 'NationalId' | 'Passport', Validators.required],
@@ -61,7 +63,7 @@ export class InvestmentApplicationComponent implements OnDestroy {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) { this.error.set('La solicitud no existe.'); this.loading.set(false); return; }
     this.applicationService.getById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: application => { this.application.set(application); this.fillForm(application); this.loading.set(false); if (application.currentStep === 'Documents') this.loadDocuments(application.id); if (application.currentStep === 'IdentityVerification' || application.currentStep === 'Review') this.loadIdentity(application.id); },
+      next: application => { this.application.set(application); this.fillForm(application); this.loading.set(false); if (application.currentStep === 'Documents' || application.currentStep === 'Review' || application.currentStep === 'Confirmation') this.loadDocuments(application.id); if (application.currentStep === 'IdentityVerification' || application.currentStep === 'Review' || application.currentStep === 'Confirmation') this.loadIdentity(application.id); },
       error: error => { this.error.set(this.errorMessage(error)); this.loading.set(false); }
     });
   }
@@ -142,6 +144,7 @@ export class InvestmentApplicationComponent implements OnDestroy {
   discardLocalPhoto(): void { this.releaseUrl(this.localPhotoUrl()); this.localPhotoUrl.set(null); }
   saveSelfie(): void { const app = this.application(); const url = this.localPhotoUrl(); if (!app || !url || this.savingSelfie()) return; const file = this.pendingSelfie; if (!file) return; this.savingSelfie.set(true); this.identityService.uploadSelfie(app.id,file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:v=>{this.identityVerification.set(v);this.selfieUrl.set(url);this.localPhotoUrl.set(null);this.pendingSelfie=null;this.savingSelfie.set(false);},error:e=>{this.savingSelfie.set(false);this.error.set(this.identityError(e));}}); }
   verifyIdentity(): void { const app=this.application();if(!app||!this.consentAccepted()||this.verifyingIdentity())return;if(!this.identityVerification()||this.identityVerification()?.status!=='Captured'){this.error.set('Primero debes registrar una fotografía.');return;}this.verifyingIdentity.set(true);this.identityService.verify(app.id,true).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:v=>{this.identityVerification.set(v);this.applicationService.getById(app.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:x=>{this.application.set(x);this.verifyingIdentity.set(false);},error:e=>{this.verifyingIdentity.set(false);this.error.set(this.errorMessage(e));}})},error:e=>{this.verifyingIdentity.set(false);this.error.set(this.identityError(e));}}); }
+  submitApplication(): void { const app=this.application();if(!app||!this.reviewAccepted()||this.submittingApplication())return;this.submittingApplication.set(true);this.applicationService.submit(app.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:updated=>{this.application.set(updated);this.submittingApplication.set(false);},error:error=>{this.submittingApplication.set(false);this.error.set(this.submitError(error));}}); }
   private pendingSelfie: File | null = null;
   private setLocalPhoto(file: File): void { this.releaseUrl(this.localPhotoUrl()); this.pendingSelfie=file; this.localPhotoUrl.set(URL.createObjectURL(file)); }
   private loadIdentity(id: string): void { this.identityService.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:v=>{this.identityVerification.set(v);this.consentAccepted.set(v.consentAccepted);if(v.status==='Captured'||v.status==='Verified')this.identityService.getSelfie(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:b=>this.selfieUrl.set(URL.createObjectURL(b))});},error:e=>{if(e.status!==404)this.error.set(this.identityError(e));}}); }
@@ -173,4 +176,5 @@ export class InvestmentApplicationComponent implements OnDestroy {
     return 'No fue posible procesar el documento.';
   }
   private identityError(error: HttpErrorResponse): string { if(error.status===0)return 'No se pudo conectar con el servidor.';if(error.status===413)return 'La imagen no puede superar 5 MB.';if(error.status===415)return 'Solo se permiten imágenes JPG o PNG.';if(error.status===404)return 'No se encontró la solicitud.';return 'No fue posible procesar la fotografía.'; }
+  private submitError(error: HttpErrorResponse): string { if(error.status===0)return 'No se pudo conectar con el servidor.';if(error.status===400)return 'La solicitud aún no cumple todos los requisitos para ser enviada.';if(error.status===404)return 'La solicitud no existe.';return 'No fue posible enviar la solicitud.'; }
 }

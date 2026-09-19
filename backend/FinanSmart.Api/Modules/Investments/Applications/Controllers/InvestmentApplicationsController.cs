@@ -60,7 +60,27 @@ public class InvestmentApplicationsController(IInvestmentApplicationService serv
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Cancel(Guid id) => await service.CancelAsync(id)
-        ? NoContent()
-        : NotFound(new { message = "Investment application was not found." });
+    public async Task<IActionResult> Cancel(Guid id)
+    {
+        try { return await service.CancelAsync(id) ? NoContent() : NotFound(new { message = "Investment application was not found." }); }
+        catch (InvestmentApplicationReadOnlyException exception) { return BadRequest(new { message = exception.Message }); }
+    }
+
+    [HttpPost("{id:guid}/submit")]
+    public async Task<ActionResult<InvestmentApplicationDto>> Submit(Guid id)
+    {
+        try
+        {
+            var application = await service.SubmitAsync(id);
+            return application is null ? NotFound(new { message = "Investment application was not found." }) : Ok(application);
+        }
+        catch (InvestmentApplicationReadOnlyException exception)
+        {
+            return BadRequest(new { message = exception.Message });
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { message = exception.Message });
+        }
+    }
 }

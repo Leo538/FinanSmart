@@ -12,4 +12,5 @@ export class InvestmentApplicationService {
   getById(id: string) { return this.http.get<InvestmentApplication>(`${this.url}/${id}`); }
   updateApplicant(id: string, request: UpdateInvestmentApplicant) { return this.http.put<InvestmentApplication>(`${this.url}/${id}/applicant`, request); }
   cancel(id: string) { return this.http.delete<void>(`${this.url}/${id}`); }
+  submit(id: string) { return this.http.post<InvestmentApplication>(`${this.url}/${id}/submit`, {}); }
 }

@@ -9,4 +9,5 @@ public interface IInvestmentApplicationService
     Task<InvestmentApplicationDto> CreateAsync(CreateInvestmentApplicationDto dto);
     Task<InvestmentApplicationDto?> UpdateApplicantAsync(Guid id, UpdateInvestmentApplicantDto dto);
     Task<bool> CancelAsync(Guid id);
+    Task<InvestmentApplicationDto?> SubmitAsync(Guid id);
 }

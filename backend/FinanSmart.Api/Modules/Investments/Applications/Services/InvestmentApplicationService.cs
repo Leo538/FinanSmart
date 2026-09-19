@@ -63,7 +63,7 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
         ValidateApplicant(dto);
         var application = await db.InvestmentApplications.FindAsync(id);
         if (application is null) return null;
-        if (application.Status == InvestmentApplicationStatus.Cancelled) throw new InvestmentApplicationReadOnlyException();
+        if (application.Status != InvestmentApplicationStatus.Draft || application.CurrentStep != InvestmentApplicationStep.PersonalInformation) throw new InvestmentApplicationReadOnlyException();
 
         application.ApplicantFirstName = dto.FirstName.Trim();
         application.ApplicantLastName = dto.LastName.Trim();
@@ -86,10 +86,38 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
         var application = await db.InvestmentApplications.FindAsync(id);
         if (application is null) return false;
         if (application.Status == InvestmentApplicationStatus.Cancelled) return true;
+        if (application.Status == InvestmentApplicationStatus.Submitted) throw new InvestmentApplicationReadOnlyException();
         application.Status = InvestmentApplicationStatus.Cancelled;
         application.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<InvestmentApplicationDto?> SubmitAsync(Guid id)
+    {
+        var application = await db.InvestmentApplications.FindAsync(id);
+        if (application is null) return null;
+        if (application.Status == InvestmentApplicationStatus.Submitted) return Map(application);
+        if (application.Status == InvestmentApplicationStatus.Cancelled) throw new InvestmentApplicationReadOnlyException();
+        if (application.Status != InvestmentApplicationStatus.ReadyForReview || application.CurrentStep != InvestmentApplicationStep.Review || !ApplicantIsComplete(application))
+            throw new ArgumentException("The investment application does not meet all requirements for submission.");
+
+        var requiredTypes = application.IdentificationType == IdentificationType.Passport
+            ? new[] { InvestmentDocumentType.IdentityFront }
+            : new[] { InvestmentDocumentType.IdentityFront, InvestmentDocumentType.IdentityBack };
+        var uploadedTypes = await db.InvestmentApplicationDocuments.Where(document => document.InvestmentApplicationId == id && document.IsActive)
+            .Select(document => document.DocumentType).Distinct().ToListAsync();
+        var identityVerified = await db.InvestmentIdentityVerifications.AnyAsync(verification => verification.InvestmentApplicationId == id && verification.Status == IdentityVerificationStatus.Verified && verification.ConsentAccepted);
+        if (requiredTypes.Except(uploadedTypes).Any() || !identityVerified)
+            throw new ArgumentException("The investment application does not meet all requirements for submission.");
+
+        var now = DateTimeOffset.UtcNow;
+        application.Status = InvestmentApplicationStatus.Submitted;
+        application.CurrentStep = InvestmentApplicationStep.Confirmation;
+        application.SubmittedAt = now;
+        application.UpdatedAt = now;
+        await db.SaveChangesAsync();
+        return Map(application);
     }
 
     private async Task<string> GenerateApplicationNumberAsync()
@@ -110,6 +138,12 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
             !new EmailAddressAttribute().IsValid(dto.Email) || !Enum.IsDefined(dto.IdentificationType))
             throw new ArgumentException("Invalid applicant information.");
     }
+
+    private static bool ApplicantIsComplete(InvestmentApplication application) =>
+        !string.IsNullOrWhiteSpace(application.ApplicantFirstName) && !string.IsNullOrWhiteSpace(application.ApplicantLastName) &&
+        application.IdentificationType is not null && !string.IsNullOrWhiteSpace(application.IdentificationNumber) &&
+        !string.IsNullOrWhiteSpace(application.Email) && !string.IsNullOrWhiteSpace(application.Phone) &&
+        !string.IsNullOrWhiteSpace(application.Address) && !string.IsNullOrWhiteSpace(application.City);
 
     private static InvestmentApplicationDto Map(InvestmentApplication application) => new()
     {
