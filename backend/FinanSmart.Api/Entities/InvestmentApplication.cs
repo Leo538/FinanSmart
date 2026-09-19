@@ -34,4 +34,5 @@ public class InvestmentApplication
     public DateTimeOffset? SubmittedAt { get; set; }
     public InvestmentProduct InvestmentProduct { get; set; } = null!;
     public ICollection<InvestmentApplicationDocument> Documents { get; set; } = new List<InvestmentApplicationDocument>();
+    public InvestmentIdentityVerification? IdentityVerification { get; set; }
 }

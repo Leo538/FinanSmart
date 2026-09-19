@@ -20,6 +20,8 @@ using FinanSmart.Api.Modules.Investments.Applications.Interfaces;
 using FinanSmart.Api.Modules.Investments.Applications.Services;
 using FinanSmart.Api.Modules.Investments.Documents.Interfaces;
 using FinanSmart.Api.Modules.Investments.Documents.Services;
+using FinanSmart.Api.Modules.Investments.IdentityVerification.Interfaces;
+using FinanSmart.Api.Modules.Investments.IdentityVerification.Services;
 
 namespace FinanSmart.Api.Configurations;
 
@@ -42,6 +44,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IInvestmentSimulationService, InvestmentSimulationService>();
         services.AddScoped<IInvestmentApplicationService, InvestmentApplicationService>();
         services.AddScoped<IInvestmentApplicationDocumentService, InvestmentApplicationDocumentService>();
+        services.AddScoped<IInvestmentIdentityVerificationService, InvestmentIdentityVerificationService>();
         return services;
     }
 }
