@@ -10,4 +10,5 @@ public interface IInvestmentApplicationService
     Task<InvestmentApplicationDto?> UpdateApplicantAsync(Guid id, UpdateInvestmentApplicantDto dto);
     Task<bool> CancelAsync(Guid id);
     Task<InvestmentApplicationDto?> SubmitAsync(Guid id);
+    Task<InvestmentApplicationDto?> ReviewAsync(Guid id, ReviewInvestmentApplicationDto dto);
 }

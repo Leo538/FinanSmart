@@ -32,4 +32,6 @@ public class InvestmentApplicationDto
     public DateTimeOffset CreatedAt { get; init; }
     public DateTimeOffset UpdatedAt { get; init; }
     public DateTimeOffset? SubmittedAt { get; init; }
+    public DateTimeOffset? ReviewedAt { get; init; }
+    public string? ReviewNotes { get; init; }
 }

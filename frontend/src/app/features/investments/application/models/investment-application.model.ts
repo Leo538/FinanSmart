@@ -10,4 +10,5 @@ export interface InvestmentApplication {
   applicantFirstName: string | null; applicantLastName: string | null; identificationType: IdentificationType | null; identificationNumber: string | null;
   email: string | null; phone: string | null; birthDate: string | null; address: string | null; city: string | null;
   createdAt: string; updatedAt: string; submittedAt: string | null;
+  reviewedAt: string | null; reviewNotes: string | null;
 }

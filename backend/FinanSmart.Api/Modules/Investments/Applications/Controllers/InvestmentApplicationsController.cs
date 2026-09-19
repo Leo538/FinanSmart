@@ -83,4 +83,12 @@ public class InvestmentApplicationsController(IInvestmentApplicationService serv
             return BadRequest(new { message = exception.Message });
         }
     }
+
+    [HttpPost("{id:guid}/review")]
+    public async Task<ActionResult<InvestmentApplicationDto>> Review(Guid id, ReviewInvestmentApplicationDto dto)
+    {
+        try { var application = await service.ReviewAsync(id, dto); return application is null ? NotFound(new { message = "Investment application was not found." }) : Ok(application); }
+        catch (InvestmentApplicationReadOnlyException exception) { return BadRequest(new { message = exception.Message }); }
+        catch (ArgumentException exception) { return BadRequest(new { message = exception.Message }); }
+    }
 }

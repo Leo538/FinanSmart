@@ -120,6 +120,21 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
         return Map(application);
     }
 
+    public async Task<InvestmentApplicationDto?> ReviewAsync(Guid id, ReviewInvestmentApplicationDto dto)
+    {
+        var application = await db.InvestmentApplications.FindAsync(id);
+        if (application is null) return null;
+        if (application.Status != InvestmentApplicationStatus.Submitted) throw new InvestmentApplicationReadOnlyException();
+        if (!Enum.IsDefined(dto.Decision) || (dto.Decision == InvestmentApplicationReviewDecision.Reject && string.IsNullOrWhiteSpace(dto.Notes)))
+            throw new ArgumentException(dto.Decision == InvestmentApplicationReviewDecision.Reject ? "A rejection reason is required." : "Invalid review decision.");
+        application.Status = dto.Decision == InvestmentApplicationReviewDecision.Approve ? InvestmentApplicationStatus.Approved : InvestmentApplicationStatus.Rejected;
+        application.ReviewNotes = string.IsNullOrWhiteSpace(dto.Notes) ? null : dto.Notes.Trim();
+        application.ReviewedAt = DateTimeOffset.UtcNow;
+        application.UpdatedAt = application.ReviewedAt.Value;
+        await db.SaveChangesAsync();
+        return Map(application);
+    }
+
     private async Task<string> GenerateApplicationNumberAsync()
     {
         for (var attempt = 0; attempt < 5; attempt++)
@@ -156,6 +171,6 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
         ApplicantLastName = application.ApplicantLastName, IdentificationType = application.IdentificationType,
         IdentificationNumber = application.IdentificationNumber, Email = application.Email, Phone = application.Phone,
         BirthDate = application.BirthDate, Address = application.Address, City = application.City,
-        CreatedAt = application.CreatedAt, UpdatedAt = application.UpdatedAt, SubmittedAt = application.SubmittedAt
+        CreatedAt = application.CreatedAt, UpdatedAt = application.UpdatedAt, SubmittedAt = application.SubmittedAt, ReviewedAt = application.ReviewedAt, ReviewNotes = application.ReviewNotes
     };
 }
