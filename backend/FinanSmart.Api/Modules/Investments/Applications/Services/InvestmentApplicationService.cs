@@ -16,13 +16,17 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
     public async Task<IReadOnlyCollection<InvestmentApplicationDto>> GetAllAsync() => await db.InvestmentApplications
         .AsNoTracking().OrderByDescending(application => application.CreatedAt).Select(application => Map(application)).ToListAsync();
 
+    public async Task<IReadOnlyCollection<InvestmentApplicationDto>> GetMineAsync(Guid userId) => await db.InvestmentApplications
+        .AsNoTracking().Where(application => application.UserId == userId).OrderByDescending(application => application.CreatedAt)
+        .Select(application => Map(application)).ToListAsync();
+
     public async Task<InvestmentApplicationDto?> GetByIdAsync(Guid id)
     {
         var application = await db.InvestmentApplications.AsNoTracking().FirstOrDefaultAsync(application => application.Id == id);
         return application is null ? null : Map(application);
     }
 
-    public async Task<InvestmentApplicationDto> CreateAsync(CreateInvestmentApplicationDto dto)
+    public async Task<InvestmentApplicationDto> CreateAsync(CreateInvestmentApplicationDto dto, Guid userId)
     {
         var simulation = await simulationService.SimulateAsync(new InvestmentSimulationRequestDto
         {
@@ -35,6 +39,7 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
         var application = new InvestmentApplication
         {
             Id = Guid.NewGuid(),
+            UserId = userId,
             ApplicationNumber = await GenerateApplicationNumberAsync(),
             InvestmentProductId = simulation.InvestmentProductId,
             InvestmentProductName = simulation.InvestmentProductName,
@@ -57,6 +62,10 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
         await db.SaveChangesAsync();
         return Map(application);
     }
+
+    public Task<bool> CanAccessAsync(Guid applicationId, Guid userId, bool isAdmin) => db.InvestmentApplications
+        .AsNoTracking()
+        .AnyAsync(application => application.Id == applicationId && (isAdmin || application.UserId == userId));
 
     public async Task<InvestmentApplicationDto?> UpdateApplicantAsync(Guid id, UpdateInvestmentApplicantDto dto)
     {

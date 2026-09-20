@@ -1,0 +1,16 @@
+.register-card { display: grid; gap: 18px; width: min(100%, 460px); padding: 32px; }
+.register-card h1, .register-card p { margin: 0; }
+.register-card > div p, .switch-link { color: var(--color-text-secondary); }
+form, .form-group { display: grid; gap: 14px; }
+.form-group { gap: 7px; }
+.two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-error, .form-error { color: #b42318; font-size: .8rem; }
+.form-error { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: #fef3f2; }
+.switch-link { text-align: center; }
+.switch-link a { color: var(--color-primary); font-weight: 700; }
+button:disabled { cursor: wait; opacity: .7; }
+
+@media (max-width: 480px) {
+  .register-card { padding: 24px; }
+  .two-columns { grid-template-columns: 1fr; }
+}

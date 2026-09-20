@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -33,13 +33,16 @@ export class CreditComparisonComponent {
     creditTypeId: ['', Validators.required], amount: [0, Validators.required], termMonths: [0, Validators.required],
     startDate: [new Date().toISOString().slice(0, 10), Validators.required]
   });
-  readonly selectedType = computed(() => this.creditTypes().find(type => type.id === this.form.controls.creditTypeId.value) ?? null);
+  readonly selectedType = signal<CreditType | null>(null);
   constructor() {
     this.creditTypeService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: types => { this.creditTypes.set(types.filter(type => type.isActive)); this.loadingTypes.set(false); },
       error: () => { this.loadingTypes.set(false); this.error.set('No se pudo conectar con el servidor.'); }
     });
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => { if (this.result()) this.stale.set(true); });
+    this.form.controls.creditTypeId.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(id => {
+      this.selectedType.set(this.creditTypes().find(type => type.id === id) ?? null);
+    });
   }
   compare(): void {
     if (!this.isValid() || this.comparing()) { this.form.markAllAsTouched(); return; }

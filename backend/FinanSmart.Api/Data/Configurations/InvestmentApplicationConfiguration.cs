@@ -18,5 +18,9 @@ public class InvestmentApplicationConfiguration : IEntityTypeConfiguration<Inves
             .WithMany(product => product.InvestmentApplications)
             .HasForeignKey(application => application.InvestmentProductId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(application => application.User)
+            .WithMany(user => user.InvestmentApplications)
+            .HasForeignKey(application => application.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

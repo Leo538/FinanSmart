@@ -17,6 +17,7 @@ public class FinanSmartDbContext(DbContextOptions<FinanSmartDbContext> options) 
     public DbSet<InvestmentApplication> InvestmentApplications => Set<InvestmentApplication>();
     public DbSet<InvestmentApplicationDocument> InvestmentApplicationDocuments => Set<InvestmentApplicationDocument>();
     public DbSet<InvestmentIdentityVerification> InvestmentIdentityVerifications => Set<InvestmentIdentityVerification>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

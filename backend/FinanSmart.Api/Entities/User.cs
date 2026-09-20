@@ -11,5 +11,6 @@ public class User
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public ICollection<InvestmentApplication> InvestmentApplications { get; set; } = new List<InvestmentApplication>();
 }
-

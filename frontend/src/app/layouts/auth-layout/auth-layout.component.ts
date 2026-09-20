@@ -1,11 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { InstitutionStateService } from '../../core/services/institution-state.service';
 
 @Component({
   selector: 'app-auth-layout',
   imports: [RouterOutlet],
-  template: `<main class="auth-shell"><div class="auth-glow glow-one"></div><div class="auth-glow glow-two"></div><router-outlet /></main>`,
-  styles: [`.auth-shell{min-height:100dvh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,var(--color-primary-dark),var(--color-primary));position:relative;overflow:hidden}.auth-glow{position:absolute;border-radius:50%;background:rgb(24 169 153 / 18%);filter:blur(2px)}.glow-one{width:420px;height:420px;top:-180px;right:-80px}.glow-two{width:300px;height:300px;bottom:-130px;left:-80px}`]
+  template: `<main class="auth-shell"><section class="auth-brand-panel" aria-label="FinanSmart"><div class="brand-orb orb-one"></div><div class="brand-orb orb-two"></div><div class="brand-content"><div class="brand-mark">{{ initials() }}</div><p class="brand-name">{{ institution.currentInstitution()?.name || 'FinanSmart' }}</p><h1>Tu información financiera, más clara.</h1><p class="brand-message">Simula, compara e invierte con información clara.</p><div class="brand-line"><span></span><span></span><span></span></div></div></section><section class="auth-form-panel"><router-outlet /></section></main>`,
+  styles: [`.auth-shell{display:grid;grid-template-columns:45% 55%;min-height:100dvh;background:var(--surface)}.auth-brand-panel{position:relative;display:grid;place-items:center;overflow:hidden;padding:48px;background:linear-gradient(145deg,#092b46,#123b5d 57%,#176477);color:#fff}.brand-content{position:relative;z-index:1;width:min(100%,430px)}.brand-mark{display:grid;width:58px;height:58px;place-items:center;border:1px solid rgb(255 255 255 / 24%);border-radius:18px;background:rgb(255 255 255 / 13%);font-size:1.35rem;font-weight:800}.brand-name{margin:22px 0 18px;font-size:.85rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.brand-content h1{max-width:360px;margin:0;font-size:clamp(2rem,4vw,3.6rem);line-height:1.06;letter-spacing:-.04em}.brand-message{max-width:330px;margin:20px 0 0;color:#d4e8f1;font-size:1.05rem;line-height:1.6}.brand-line{display:flex;align-items:end;gap:8px;height:48px;margin-top:42px}.brand-line span{width:22px;border-radius:999px;background:var(--accent)}.brand-line span:nth-child(1){height:20px}.brand-line span:nth-child(2){height:34px}.brand-line span:nth-child(3){height:46px}.brand-orb{position:absolute;border:1px solid rgb(255 255 255 / 10%);border-radius:50%}.orb-one{width:430px;height:430px;right:-200px;top:-155px}.orb-two{width:560px;height:560px;bottom:-370px;left:-260px}.auth-form-panel{display:grid;place-items:center;padding:32px;background:linear-gradient(135deg,#fff,#f5f9fb)}@media(max-width:767px){.auth-shell{grid-template-columns:1fr}.auth-brand-panel{min-height:190px;padding:26px 24px}.brand-content{width:100%}.brand-mark{width:38px;height:38px;border-radius:12px;font-size:.95rem}.brand-name{margin:10px 0 7px;font-size:.7rem}.brand-content h1{font-size:1.55rem}.brand-message{margin-top:7px;font-size:.88rem}.brand-line{display:none}.auth-form-panel{place-items:start center;padding:24px 16px 32px}}`]
 })
-export class AuthLayoutComponent {}
-
+export class AuthLayoutComponent {
+  readonly institution = inject(InstitutionStateService);
+  constructor() { this.institution.loadInstitution(); }
+  initials(): string { return (this.institution.currentInstitution()?.name || 'FinanSmart').split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase(); }
+}

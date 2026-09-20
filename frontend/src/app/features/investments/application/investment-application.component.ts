@@ -153,7 +153,7 @@ export class InvestmentApplicationComponent implements OnDestroy {
   percent(value: number): string { return `${this.percentageFormatter.format(value)} %`; }
   methodLabel(method: string): string { return method === 'Compound' ? 'Interés compuesto' : 'Interés simple'; }
   frequencyLabel(frequency: string): string { return ({ AtMaturity: 'Al vencimiento', Monthly: 'Mensual', Quarterly: 'Trimestral', SemiAnnual: 'Semestral', Upfront: 'Anticipado' } as Record<string, string>)[frequency] ?? frequency; }
-  statusLabel(status: InvestmentApplicationStatus): string { return ({ Draft: 'Borrador', PendingDocuments: 'Pendiente documentos', PendingIdentityVerification: 'Pendiente validación', ReadyForReview: 'Lista para revisión', Submitted: 'Enviada', Approved: 'Aprobada', Rejected: 'Rechazada', Cancelled: 'Cancelada' } as Record<string, string>)[status]; }
+  statusLabel(status: InvestmentApplicationStatus): string { return ({ Draft: 'Borrador', PendingDocuments: 'Pendiente de documentos', PendingIdentityVerification: 'Pendiente de identidad', ReadyForReview: 'Lista para enviar', Submitted: 'En revisión', Approved: 'Aprobada', Rejected: 'Rechazada', Cancelled: 'Cancelada' } as Record<string, string>)[status]; }
   isReadOnly(): boolean { return this.application()?.status === 'Cancelled'; }
   isComplete(step: InvestmentApplicationStep): boolean { const current = this.application()?.currentStep ?? 'PersonalInformation'; return this.stepIndex(step) < this.stepIndex(current); }
   isCurrent(step: InvestmentApplicationStep): boolean { return this.application()?.currentStep === step; }
@@ -163,18 +163,20 @@ export class InvestmentApplicationComponent implements OnDestroy {
   }
   private errorMessage(error: HttpErrorResponse): string {
     if (error.status === 0) return 'No se pudo conectar con el servidor.';
+    if (error.status === 403) return 'No tienes acceso a esta solicitud.';
     if (error.status === 404) return 'La solicitud no existe.';
     if (error.status === 400) return 'Revisa la información ingresada.';
     return 'Ocurrió un error al procesar la solicitud.';
   }
   private documentErrorMessage(error: HttpErrorResponse): string {
     if (error.status === 0) return 'No se pudo conectar con el servidor.';
+    if (error.status === 403) return 'No tienes acceso a esta solicitud.';
     if (error.status === 404) return 'No se encontró el documento o la solicitud.';
     if (error.status === 413) return 'El archivo supera el tamaño permitido.';
     if (error.status === 415) return 'El tipo de archivo no está permitido.';
     if (error.status === 400) return 'El documento no cumple los requisitos.';
     return 'No fue posible procesar el documento.';
   }
-  private identityError(error: HttpErrorResponse): string { if(error.status===0)return 'No se pudo conectar con el servidor.';if(error.status===413)return 'La imagen no puede superar 5 MB.';if(error.status===415)return 'Solo se permiten imágenes JPG o PNG.';if(error.status===404)return 'No se encontró la solicitud.';return 'No fue posible procesar la fotografía.'; }
-  private submitError(error: HttpErrorResponse): string { if(error.status===0)return 'No se pudo conectar con el servidor.';if(error.status===400)return 'La solicitud aún no cumple todos los requisitos para ser enviada.';if(error.status===404)return 'La solicitud no existe.';return 'No fue posible enviar la solicitud.'; }
+  private identityError(error: HttpErrorResponse): string { if(error.status===0)return 'No se pudo conectar con el servidor.';if(error.status===403)return 'No tienes acceso a esta solicitud.';if(error.status===413)return 'La imagen no puede superar 5 MB.';if(error.status===415)return 'Solo se permiten imágenes JPG o PNG.';if(error.status===404)return 'No se encontró la solicitud.';return 'No fue posible procesar la fotografía.'; }
+  private submitError(error: HttpErrorResponse): string { if(error.status===0)return 'No se pudo conectar con el servidor.';if(error.status===403)return 'No tienes acceso a esta solicitud.';if(error.status===400)return 'La solicitud aún no cumple todos los requisitos para ser enviada.';if(error.status===404)return 'La solicitud no existe.';return 'No fue posible enviar la solicitud.'; }
 }

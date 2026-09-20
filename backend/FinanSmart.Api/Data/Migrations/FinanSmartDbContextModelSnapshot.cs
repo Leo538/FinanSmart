@@ -291,12 +291,17 @@ namespace FinanSmart.Api.Data.Migrations
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationNumber")
                         .IsUnique();
 
                     b.HasIndex("InvestmentProductId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("InvestmentApplications");
                 });
@@ -498,6 +503,41 @@ namespace FinanSmart.Api.Data.Migrations
                     b.ToTable("InvestmentRates");
                 });
 
+            modelBuilder.Entity("FinanSmart.Api.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReplacedByTokenId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("FinanSmart.Api.Entities.Role", b =>
                 {
                     b.Property<Guid>("Id")
@@ -606,7 +646,14 @@ namespace FinanSmart.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("FinanSmart.Api.Entities.User", "User")
+                        .WithMany("InvestmentApplications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("InvestmentProduct");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("FinanSmart.Api.Entities.InvestmentApplicationDocument", b =>
@@ -640,6 +687,17 @@ namespace FinanSmart.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("InvestmentProduct");
+                });
+
+            modelBuilder.Entity("FinanSmart.Api.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("FinanSmart.Api.Entities.User", "User")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("FinanSmart.Api.Entities.UserRole", b =>
@@ -689,6 +747,10 @@ namespace FinanSmart.Api.Data.Migrations
 
             modelBuilder.Entity("FinanSmart.Api.Entities.User", b =>
                 {
+                    b.Navigation("InvestmentApplications");
+
+                    b.Navigation("RefreshTokens");
+
                     b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618

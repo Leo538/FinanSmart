@@ -5,6 +5,7 @@ namespace FinanSmart.Api.Entities;
 public class InvestmentApplication
 {
     public Guid Id { get; set; }
+    public Guid? UserId { get; set; }
     public string ApplicationNumber { get; set; } = string.Empty;
     public Guid InvestmentProductId { get; set; }
     public string InvestmentProductName { get; set; } = string.Empty;
@@ -35,6 +36,7 @@ public class InvestmentApplication
     public DateTimeOffset? ReviewedAt { get; set; }
     public string? ReviewNotes { get; set; }
     public InvestmentProduct InvestmentProduct { get; set; } = null!;
+    public User? User { get; set; }
     public ICollection<InvestmentApplicationDocument> Documents { get; set; } = new List<InvestmentApplicationDocument>();
     public InvestmentIdentityVerification? IdentityVerification { get; set; }
 }

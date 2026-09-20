@@ -1,5 +1,5 @@
-.empty-state { display: grid; justify-items: center; gap: 8px; padding: 36px 20px; text-align: center; color: var(--color-text-secondary); }
-.empty-state-mark { width: 42px; height: 42px; border: 2px solid var(--color-border); border-radius: 50%; }
+.empty-state { display: grid; justify-items: center; gap: 8px; padding: 34px 20px; text-align: center; color: var(--color-text-secondary); }
+.empty-state-mark { position:relative; width:46px; height:40px; border:0; border-radius:12px; background:var(--primary-soft); }
+.empty-state-mark:before,.empty-state-mark:after{position:absolute;content:'';background:var(--primary);border-radius:99px}.empty-state-mark:before{width:22px;height:3px;left:12px;top:13px}.empty-state-mark:after{width:14px;height:3px;left:12px;top:23px;opacity:.55}
 .loading-spinner { width: 28px; height: 28px; border: 3px solid var(--color-primary-light); border-top-color: var(--color-accent); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-

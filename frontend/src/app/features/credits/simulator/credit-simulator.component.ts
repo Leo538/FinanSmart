@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -9,103 +9,22 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { CreditType } from '../../admin/credits/credit-types/models/credit-type.model';
 import { CreditTypeService } from '../../admin/credits/credit-types/services/credit-type.service';
+import { CreditRateService } from '../../admin/credits/credit-rates/services/credit-rate.service';
 import { AmortizationInstallment, AmortizationSystem, CreditSimulationRequest, CreditSimulationResponse } from './models/credit-simulation.model';
 import { CreditSimulationService } from './services/credit-simulation.service';
 
-@Component({
-  selector: 'app-credit-simulator',
-  imports: [ReactiveFormsModule, DatePipe, PageHeaderComponent, LoadingSpinnerComponent, EmptyStateComponent, StatCardComponent],
-  templateUrl: './credit-simulator.component.html',
-  styleUrl: './credit-simulator.component.scss'
-})
+@Component({selector:'app-credit-simulator',imports:[ReactiveFormsModule,DatePipe,PageHeaderComponent,LoadingSpinnerComponent,EmptyStateComponent,StatCardComponent],templateUrl:'./credit-simulator.component.html',styleUrl:'./credit-simulator.component.scss'})
 export class CreditSimulatorComponent {
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly formBuilder = inject(NonNullableFormBuilder);
-  private readonly creditTypeService = inject(CreditTypeService);
-  private readonly simulationService = inject(CreditSimulationService);
-  private readonly currencyFormatter = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' });
-  private readonly percentageFormatter = new Intl.NumberFormat('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  readonly creditTypes = signal<CreditType[]>([]);
-  readonly loadingTypes = signal(true);
-  readonly simulating = signal(false);
-  readonly downloadingPdf = signal(false);
-  readonly result = signal<CreditSimulationResponse | null>(null);
-  readonly resultStale = signal(false);
-  readonly error = signal('');
-  readonly expandedInstallment = signal<number | null>(null);
-  readonly form = this.formBuilder.group({
-    creditTypeId: ['', Validators.required], amount: [0, Validators.required], termMonths: [0, Validators.required],
-    amortizationSystem: ['French' as AmortizationSystem, Validators.required],
-    startDate: [new Date().toISOString().slice(0, 10), Validators.required]
-  });
-  readonly selectedType = computed(() => this.creditTypes().find(type => type.id === this.form.controls.creditTypeId.value) ?? null);
-  constructor() {
-    this.creditTypeService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: types => { this.creditTypes.set(types.filter(type => type.isActive)); this.loadingTypes.set(false); },
-      error: () => { this.loadingTypes.set(false); this.error.set('No se pudo conectar con el servidor.'); }
-    });
-    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      if (this.result()) this.resultStale.set(true);
-    });
-  }
-  selectSystem(system: AmortizationSystem): void { this.form.controls.amortizationSystem.setValue(system); }
-  downloadPdf(): void {
-    if (!this.result() || this.resultStale() || this.downloadingPdf()) return;
-    this.downloadingPdf.set(true);
-    const value = this.form.getRawValue();
-    const request: CreditSimulationRequest = { ...value, startDate: value.startDate + 'T00:00:00Z' };
-    this.simulationService.downloadPdf(request).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: blob => {
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = `simulacion-credito-${value.amortizationSystem === 'French' ? 'frances' : 'aleman'}.pdf`;
-        anchor.click();
-        URL.revokeObjectURL(url);
-        this.downloadingPdf.set(false);
-      },
-      error: () => { this.error.set('No fue posible generar el PDF.'); this.downloadingPdf.set(false); }
-    });
-  }
-  simulate(): void {
-    if (!this.isValid() || this.simulating()) { this.form.markAllAsTouched(); return; }
-    this.error.set(''); this.simulating.set(true);
-    const value = this.form.getRawValue();
-    const request: CreditSimulationRequest = { ...value, startDate: value.startDate + 'T00:00:00Z' };
-    this.simulationService.simulate(request).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: result => { this.result.set(result); this.resultStale.set(false); this.simulating.set(false); this.expandedInstallment.set(null); },
-      error: error => { this.simulating.set(false); this.error.set(this.errorMessage(error)); }
-    });
-  }
-  isValid(): boolean {
-    const type = this.selectedType(); const value = this.form.getRawValue();
-    return this.form.valid && !!type && value.amount > 0 && value.amount >= type.minimumAmount && value.amount <= type.maximumAmount
-      && Number.isInteger(value.termMonths) && value.termMonths >= type.minimumTermMonths && value.termMonths <= type.maximumTermMonths;
-  }
-  amountError(): string {
-    const type = this.selectedType(); const amount = this.form.controls.amount.value;
-    if (!type || amount <= 0) return 'Ingresa un monto válido.';
-    if (amount < type.minimumAmount) return `El monto mínimo para este crédito es ${this.money(type.minimumAmount)}.`;
-    if (amount > type.maximumAmount) return `El monto máximo para este crédito es ${this.money(type.maximumAmount)}.`;
-    return '';
-  }
-  termError(): string {
-    const type = this.selectedType(); const term = this.form.controls.termMonths.value;
-    if (!type || !Number.isInteger(term) || term <= 0) return 'Ingresa un plazo válido.';
-    if (term < type.minimumTermMonths || term > type.maximumTermMonths) return `El plazo debe estar entre ${type.minimumTermMonths} y ${type.maximumTermMonths} meses.`;
-    return '';
-  }
-  money(value: number): string { return this.currencyFormatter.format(value); }
-  percent(value: number): string { return this.percentageFormatter.format(value) + ' %'; }
-  systemLabel(system: AmortizationSystem): string { return system === 'French' ? 'Sistema Francés' : 'Sistema Alemán'; }
-  systemDescription(system: AmortizationSystem): string { return system === 'French' ? 'La cuota financiera se mantiene prácticamente constante. Al inicio se paga más interés y menos capital.' : 'El abono a capital es constante y las cuotas disminuyen progresivamente.'; }
-  toggleCharges(installment: AmortizationInstallment): void { this.expandedInstallment.update(current => current === installment.installmentNumber ? null : installment.installmentNumber); }
-  private errorMessage(error: HttpErrorResponse): string {
-    if (error.status === 0) return 'No se pudo conectar con el servidor.';
-    const message = typeof error.error === 'object' && error.error !== null && 'message' in error.error ? String(error.error.message).toLowerCase() : '';
-    if (message.includes('rate')) return 'No existe una tasa vigente para el tipo de crédito seleccionado.';
-    if (error.status === 404 || message.includes('inactive')) return 'El tipo de crédito seleccionado no está disponible.';
-    if (error.status === 400) return 'Los parámetros del crédito no cumplen las condiciones configuradas.';
-    return 'Ocurrió un error al procesar la simulación.';
-  }
+  private readonly destroy=inject(DestroyRef); private readonly fb=inject(NonNullableFormBuilder); private readonly typeApi=inject(CreditTypeService); private readonly rateApi=inject(CreditRateService); private readonly api=inject(CreditSimulationService); private readonly currency=new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}); private readonly percentFormat=new Intl.NumberFormat('es-EC',{minimumFractionDigits:2,maximumFractionDigits:2});
+  readonly creditTypes=signal<CreditType[]>([]); readonly selectedType=signal<CreditType|null>(null); readonly currentRate=signal<number|null>(null); readonly rateChecked=signal(false); readonly loadingTypes=signal(true); readonly simulating=signal(false); readonly downloadingPdf=signal(false); readonly result=signal<CreditSimulationResponse|null>(null); readonly resultStale=signal(false); readonly error=signal(''); readonly expandedInstallment=signal<number|null>(null);
+  readonly form=this.fb.group({creditTypeId:['',Validators.required],amount:[0,Validators.required],termMonths:[0,Validators.required],amortizationSystem:['French' as AmortizationSystem,Validators.required],startDate:[new Date().toISOString().slice(0,10),Validators.required]});
+  constructor(){this.typeApi.getAll().pipe(takeUntilDestroyed(this.destroy)).subscribe({next:types=>{this.creditTypes.set(types.filter(x=>x.isActive).map(x=>({...x,minimumAmount:Number(x.minimumAmount),maximumAmount:Number(x.maximumAmount),minimumTermMonths:Number(x.minimumTermMonths),maximumTermMonths:Number(x.maximumTermMonths)})));this.loadingTypes.set(false);this.configureType(this.form.controls.creditTypeId.value);},error:()=>{this.error.set('No se pudo conectar con el servidor.');this.loadingTypes.set(false);}});this.form.controls.creditTypeId.valueChanges.pipe(takeUntilDestroyed(this.destroy)).subscribe(id=>this.configureType(id));this.form.valueChanges.pipe(takeUntilDestroyed(this.destroy)).subscribe(()=>{if(this.result())this.resultStale.set(true);});}
+  private configureType(id:string){const type=this.creditTypes().find(x=>x.id===id)??null;this.selectedType.set(type);this.currentRate.set(null);this.rateChecked.set(false);this.form.controls.amount.setValidators(type?[Validators.required,Validators.min(type.minimumAmount),Validators.max(type.maximumAmount)]:[Validators.required,Validators.min(.01)]);this.form.controls.termMonths.setValidators(type?[Validators.required,Validators.min(type.minimumTermMonths),Validators.max(type.maximumTermMonths)]:[Validators.required,Validators.min(1)]);this.form.controls.amount.updateValueAndValidity({emitEvent:false});this.form.controls.termMonths.updateValueAndValidity({emitEvent:false});if(type)this.rateApi.getCurrentRate(type.id).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:rate=>{this.currentRate.set(Number(rate.annualInterestRate));this.rateChecked.set(true);},error:()=>this.rateChecked.set(true)});}
+  isValid():boolean{const t=this.selectedType(),v=this.form.getRawValue();return !!t&&this.form.valid&&this.rateChecked()&&this.currentRate()!==null&&v.amount>=t.minimumAmount&&v.amount<=t.maximumAmount&&Number.isInteger(v.termMonths)&&v.termMonths>=t.minimumTermMonths&&v.termMonths<=t.maximumTermMonths;}
+  amountError(){const t=this.selectedType(),v=this.form.controls.amount.value;if(!t||v<=0)return 'Selecciona un tipo e ingresa un monto positivo.';return v<t.minimumAmount||v>t.maximumAmount?`El monto permitido para ${t.name} es de ${this.money(t.minimumAmount)} a ${this.money(t.maximumAmount)}.`:'';}
+  termError(){const t=this.selectedType(),v=this.form.controls.termMonths.value;if(!t||!Number.isInteger(v)||v<=0)return 'Selecciona un tipo e ingresa un plazo entero positivo.';return v<t.minimumTermMonths||v>t.maximumTermMonths?`El plazo permitido para ${t.name} es de ${t.minimumTermMonths} a ${t.maximumTermMonths} meses.`:'';}
+  selectSystem(s:AmortizationSystem){this.form.controls.amortizationSystem.setValue(s);} money(x:number){return this.currency.format(x);} percent(x:number){return this.percentFormat.format(x)+' %';} systemLabel(s:AmortizationSystem){return s==='French'?'Sistema Francés':'Sistema Alemán';} systemDescription(s:AmortizationSystem){return s==='French'?'La cuota financiera se mantiene prácticamente constante.':'El abono a capital es constante y las cuotas disminuyen progresivamente.';} toggleCharges(i:AmortizationInstallment){this.expandedInstallment.update(x=>x===i.installmentNumber?null:i.installmentNumber);}
+  simulate(){if(!this.isValid()||this.simulating()){this.form.markAllAsTouched();return;}this.simulating.set(true);this.error.set('');const v=this.form.getRawValue();this.api.simulate({...v,startDate:v.startDate+'T00:00:00Z'} as CreditSimulationRequest).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:r=>{this.result.set(r);this.resultStale.set(false);this.simulating.set(false);},error:e=>{this.error.set(this.errorMessage(e));this.simulating.set(false);}});}
+  downloadPdf(){if(!this.result()||this.resultStale())return;this.downloadingPdf.set(true);const v=this.form.getRawValue();this.api.downloadPdf({...v,startDate:v.startDate+'T00:00:00Z'} as CreditSimulationRequest).pipe(takeUntilDestroyed(this.destroy)).subscribe({next:b=>{const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='simulacion-credito.pdf';a.click();URL.revokeObjectURL(u);this.downloadingPdf.set(false);},error:()=>{this.error.set('No fue posible generar el PDF.');this.downloadingPdf.set(false);}});}
+  newSimulation(){this.result.set(null);this.resultStale.set(false);} private errorMessage(e:HttpErrorResponse){return e.status===404?'No existe una tasa vigente para el tipo de crédito seleccionado.':'No fue posible procesar la simulación.';}
 }

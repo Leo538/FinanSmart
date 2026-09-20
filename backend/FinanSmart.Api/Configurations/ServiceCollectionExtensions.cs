@@ -24,6 +24,10 @@ using FinanSmart.Api.Modules.Investments.IdentityVerification.Interfaces;
 using FinanSmart.Api.Modules.Investments.IdentityVerification.Services;
 using FinanSmart.Api.Modules.Admin.Dashboard.Interfaces;
 using FinanSmart.Api.Modules.Admin.Dashboard.Services;
+using FinanSmart.Api.Entities;
+using FinanSmart.Api.Modules.Auth.Interfaces;
+using FinanSmart.Api.Modules.Auth.Services;
+using Microsoft.AspNetCore.Identity;
 
 namespace FinanSmart.Api.Configurations;
 
@@ -48,6 +52,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IInvestmentApplicationDocumentService, InvestmentApplicationDocumentService>();
         services.AddScoped<IInvestmentIdentityVerificationService, InvestmentIdentityVerificationService>();
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+        services.AddScoped<PasswordHasher<User>>();
+        services.AddScoped<IAuthService, AuthService>();
         return services;
     }
 }

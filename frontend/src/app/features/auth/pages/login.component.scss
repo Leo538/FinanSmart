@@ -1,0 +1,40 @@
+.login-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 18px;
+  width: min(100%, 420px);
+  padding: 32px;
+}
+
+.login-brand {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.login-brand > span {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.login-brand strong { color: var(--color-primary); letter-spacing: .08em; }
+.login-brand p, .register-link { color: var(--color-text-secondary); font-size: .875rem; }
+form, .form-group { display: grid; gap: 14px; }
+.form-group { gap: 7px; }
+.field-error, .login-error { color: #b42318; font-size: .8rem; }
+.login-error, .success-message { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); }
+.login-error { background: #fef3f2; }
+.success-message { background: #ecfdf3; color: #067647; font-size: .875rem; }
+.register-link { margin: 0; text-align: center; }
+.register-link a { color: var(--color-primary); font-weight: 700; }
+button:disabled { cursor: wait; opacity: .7; }
