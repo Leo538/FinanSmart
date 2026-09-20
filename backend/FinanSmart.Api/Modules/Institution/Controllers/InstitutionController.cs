@@ -2,6 +2,7 @@ using FinanSmart.Api.Common.Exceptions;
 using FinanSmart.Api.Modules.Institution.DTOs;
 using FinanSmart.Api.Modules.Institution.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FinanSmart.Api.Modules.Institution.Controllers;
 
@@ -22,6 +23,7 @@ public class InstitutionController(IInstitutionService institutionService) : Con
         return institution is null ? NotFound() : Ok(institution);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<InstitutionDto>> Create(CreateInstitutionDto dto)
     {
@@ -40,6 +42,7 @@ public class InstitutionController(IInstitutionService institutionService) : Con
         }
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateInstitutionDto dto)
     {
@@ -57,10 +60,10 @@ public class InstitutionController(IInstitutionService institutionService) : Con
         }
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
         return await institutionService.DeleteAsync(id) ? NoContent() : NotFound();
     }
 }
-

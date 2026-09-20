@@ -2,6 +2,7 @@ using FinanSmart.Api.Common.Exceptions;
 using FinanSmart.Api.Modules.Credits.CreditCharges.DTOs;
 using FinanSmart.Api.Modules.Credits.CreditCharges.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FinanSmart.Api.Modules.Credits.CreditCharges.Controllers;
 
@@ -28,6 +29,7 @@ public class CreditChargesController(ICreditChargeService creditChargeService) :
         return Ok(await creditChargeService.GetByCreditTypeAsync(creditTypeId));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<CreditChargeDto>> Create(CreateCreditChargeDto dto)
     {
@@ -50,6 +52,7 @@ public class CreditChargesController(ICreditChargeService creditChargeService) :
         }
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateCreditChargeDto dto)
     {
@@ -71,10 +74,10 @@ public class CreditChargesController(ICreditChargeService creditChargeService) :
         }
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
         return await creditChargeService.DeleteAsync(id) ? NoContent() : NotFound();
     }
 }
-

@@ -2,6 +2,7 @@ using FinanSmart.Api.Common.Exceptions;
 using FinanSmart.Api.Modules.Credits.CreditRates.DTOs;
 using FinanSmart.Api.Modules.Credits.CreditRates.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FinanSmart.Api.Modules.Credits.CreditRates.Controllers;
 
@@ -35,6 +36,7 @@ public class CreditRatesController(ICreditRateService creditRateService) : Contr
         return rate is null ? NotFound() : Ok(rate);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<CreditRateDto>> Create(CreateCreditRateDto dto)
     {
@@ -57,6 +59,7 @@ public class CreditRatesController(ICreditRateService creditRateService) : Contr
         }
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateCreditRateDto dto)
     {
@@ -78,10 +81,10 @@ public class CreditRatesController(ICreditRateService creditRateService) : Contr
         }
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
         return await creditRateService.DeleteAsync(id) ? NoContent() : NotFound();
     }
 }
-

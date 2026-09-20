@@ -11,7 +11,9 @@ namespace FinanSmart.Api.Modules.Credits.Simulations.Pdf;
 
 public class CreditSimulationPdfService(
     ICreditSimulationService creditSimulationService,
-    IInstitutionService institutionService) : ICreditSimulationPdfService
+    IInstitutionService institutionService,
+    IHttpClientFactory httpClientFactory,
+    IWebHostEnvironment environment) : ICreditSimulationPdfService
 {
     private const string DefaultPrimaryColor = "#123B5D";
 
@@ -20,6 +22,7 @@ public class CreditSimulationPdfService(
         var simulation = await creditSimulationService.SimulateAsync(request);
         var institution = (await institutionService.GetAllAsync()).FirstOrDefault(item => item.IsActive);
         var primaryColor = IsHexColor(institution?.PrimaryColor) ? institution!.PrimaryColor! : DefaultPrimaryColor;
+        var logo = await TryLoadLogoAsync(institution?.LogoUrl);
 
         QuestPDF.Settings.License = LicenseType.Community;
 
@@ -29,8 +32,8 @@ public class CreditSimulationPdfService(
             {
                 page.Size(PageSizes.A4);
                 page.Margin(32);
-                page.DefaultTextStyle(style => style.FontSize(9).FontFamily("Arial"));
-                page.Header().Element(container => ComposeHeader(container, institution, primaryColor));
+                page.DefaultTextStyle(style => style.FontSize(9));
+                page.Header().Element(container => ComposeHeader(container, institution, primaryColor, logo));
                 page.Content().PaddingVertical(12).Column(column =>
                 {
                     column.Spacing(14);
@@ -45,11 +48,15 @@ public class CreditSimulationPdfService(
         }).GeneratePdf();
     }
 
-    private static void ComposeHeader(IContainer container, InstitutionDto? institution, string primaryColor)
+    private static void ComposeHeader(IContainer container, InstitutionDto? institution, string primaryColor, byte[]? logo)
     {
         var name = institution?.Name ?? "FinanSmart";
         container.BorderBottom(2).BorderColor(primaryColor).PaddingBottom(10).Row(row =>
         {
+            if (logo is not null)
+            {
+                row.ConstantItem(52).Height(52).Image(logo).FitArea();
+            }
             row.RelativeItem().Column(column =>
             {
                 column.Item().Text(name).FontSize(18).Bold().FontColor(primaryColor);
@@ -208,4 +215,36 @@ public class CreditSimulationPdfService(
     private static string FormatChargeType(ChargeType type) => type switch { ChargeType.FixedAmount => "Valor fijo", ChargeType.PercentageOfPrincipal => "Porcentaje sobre capital", _ => "Porcentaje sobre cuota" };
     private static string FormatFrequency(ChargeFrequency frequency) => frequency == ChargeFrequency.Monthly ? "Mensual" : "Una sola vez";
     private static bool IsHexColor(string? value) => value is { Length: 7 } && value[0] == '#' && value[1..].All(Uri.IsHexDigit);
+
+    private async Task<byte[]?> TryLoadLogoAsync(string? logoUrl)
+    {
+        if (string.IsNullOrWhiteSpace(logoUrl)) return null;
+
+        try
+        {
+            if (logoUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+            {
+                var separator = logoUrl.IndexOf(',');
+                return separator >= 0 ? Convert.FromBase64String(logoUrl[(separator + 1)..]) : null;
+            }
+
+            if (Uri.TryCreate(logoUrl, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https")
+            {
+                using var client = httpClientFactory.CreateClient();
+                client.Timeout = TimeSpan.FromSeconds(3);
+                using var response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
+                if (!response.IsSuccessStatusCode || response.Content.Headers.ContentType?.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) != true)
+                    return null;
+                return await response.Content.ReadAsByteArrayAsync();
+            }
+
+            var root = Path.GetFullPath(environment.ContentRootPath);
+            var path = Path.GetFullPath(Path.Combine(root, logoUrl.TrimStart('/', '\\')));
+            return path.StartsWith(root, StringComparison.OrdinalIgnoreCase) && File.Exists(path) ? await File.ReadAllBytesAsync(path) : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
