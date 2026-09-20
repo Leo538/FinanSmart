@@ -13,6 +13,8 @@ import { StatCardComponent } from '../../../shared/components/stat-card/stat-car
 import { InvestmentSimulationResponse } from './models/investment-simulation.model';
 import { InvestmentSimulationService } from './services/investment-simulation.service';
 import { InvestmentApplicationService } from '../application/services/investment-application.service';
+import { InvestmentRate } from '../../admin/investments/investment-rates/models/investment-rate.model';
+import { InvestmentRateService } from '../../admin/investments/investment-rates/services/investment-rate.service';
 
 @Component({
   selector: 'app-investment-simulator',
@@ -26,6 +28,7 @@ export class InvestmentSimulatorComponent {
   private readonly productService = inject(InvestmentProductService);
   private readonly simulationService = inject(InvestmentSimulationService);
   private readonly applicationService = inject(InvestmentApplicationService);
+  private readonly rateService = inject(InvestmentRateService);
   private readonly router = inject(Router);
   private readonly currencyFormatter = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' });
   private readonly percentageFormatter = new Intl.NumberFormat('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -37,6 +40,10 @@ export class InvestmentSimulatorComponent {
   readonly result = signal<InvestmentSimulationResponse | null>(null);
   readonly resultStale = signal(false);
   readonly error = signal('');
+  readonly applicableRate = signal<InvestmentRate | null>(null);
+  readonly checkingRate = signal(false);
+  readonly noApplicableRate = signal(false);
+  private rateTimer: ReturnType<typeof setTimeout> | null = null;
   readonly form = this.formBuilder.group({
     investmentProductId: ['', Validators.required], amount: [0, Validators.required], termDays: [0, Validators.required],
     startDate: [new Date().toISOString().slice(0, 10), Validators.required]
@@ -62,11 +69,12 @@ export class InvestmentSimulatorComponent {
     });
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.result()) this.resultStale.set(true);
+      this.scheduleApplicableRate();
     });
   }
 
   simulate(): void {
-    if (!this.isValid() || this.simulating()) { this.form.markAllAsTouched(); return; }
+    if (!this.isValid() || !this.applicableRate() || this.simulating()) { this.form.markAllAsTouched(); return; }
     this.error.set(''); this.simulating.set(true);
     const value = this.form.getRawValue();
     this.simulationService.simulate({ ...value, startDate: `${value.startDate}T00:00:00Z` }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -91,21 +99,23 @@ export class InvestmentSimulatorComponent {
   }
   amountError(): string {
     const product = this.selectedProduct(); const amount = this.form.controls.amount.value;
-    if (amount <= 0) return 'Ingresa un monto válido.';
+    if (amount <= 0) return 'Ingresa un monto positivo.';
     if (!product) return '';
-    if (amount < product.minimumAmount) return `El monto mínimo es ${this.money(product.minimumAmount)}.`;
-    if (product.maximumAmount !== null && amount > product.maximumAmount) return `El monto máximo es ${this.money(product.maximumAmount)}.`;
+    if (amount < product.minimumAmount || (product.maximumAmount !== null && amount > product.maximumAmount)) return this.amountRangeMessage(product);
     return '';
   }
   termError(): string {
     const product = this.selectedProduct(); const termDays = this.form.controls.termDays.value;
     if (!Number.isInteger(termDays) || termDays <= 0) return 'Ingresa un plazo entero y positivo.';
     if (!product) return '';
-    if (termDays < product.minimumTermDays) return `El plazo mínimo es ${product.minimumTermDays} días.`;
-    if (product.maximumTermDays !== null && termDays > product.maximumTermDays) return `El plazo máximo es ${product.maximumTermDays} días.`;
+    if (termDays < product.minimumTermDays || (product.maximumTermDays !== null && termDays > product.maximumTermDays)) return this.termRangeMessage(product);
     return '';
   }
   money(value: number): string { return this.currencyFormatter.format(value); }
+  amountRange(product: InvestmentProduct): string { return product.maximumAmount === null ? `Desde ${this.money(product.minimumAmount)}` : `${this.money(product.minimumAmount)} - ${this.money(product.maximumAmount)}`; }
+  termRange(product: InvestmentProduct): string { return product.maximumTermDays === null ? `Desde ${product.minimumTermDays} días` : `${product.minimumTermDays} - ${product.maximumTermDays} días`; }
+  amountRangeMessage(product: InvestmentProduct): string { return product.maximumAmount === null ? `El monto mínimo permitido es ${this.money(product.minimumAmount)}.` : `El monto permitido para ${product.name} es de ${this.money(product.minimumAmount)} a ${this.money(product.maximumAmount)}.`; }
+  termRangeMessage(product: InvestmentProduct): string { return product.maximumTermDays === null ? `El plazo mínimo permitido es ${product.minimumTermDays} días.` : `El plazo permitido es de ${product.minimumTermDays} a ${product.maximumTermDays} días.`; }
   percent(value: number): string { return `${this.percentageFormatter.format(value)} %`; }
   calculationMethodLabel(method: InterestCalculationMethod | string): string { return method === 'Compound' ? 'Interés compuesto' : 'Interés simple'; }
   paymentFrequencyLabel(frequency: InterestPaymentFrequency | string): string { return ({ AtMaturity: 'Al vencimiento', Monthly: 'Mensual', Quarterly: 'Trimestral', SemiAnnual: 'Semestral', Upfront: 'Anticipado' } as Record<string, string>)[frequency] ?? frequency; }
@@ -132,6 +142,18 @@ export class InvestmentSimulatorComponent {
     }
     this.form.controls.amount.updateValueAndValidity({ emitEvent: false });
     this.form.controls.termDays.updateValueAndValidity({ emitEvent: false });
+    this.scheduleApplicableRate();
+  }
+  private scheduleApplicableRate(): void {
+    if (this.rateTimer) clearTimeout(this.rateTimer);
+    this.applicableRate.set(null); this.noApplicableRate.set(false);
+    const product = this.selectedProduct(); const value = this.form.getRawValue();
+    if (!product || this.form.controls.amount.invalid || this.form.controls.termDays.invalid || !Number.isInteger(value.termDays)) { this.checkingRate.set(false); return; }
+    this.checkingRate.set(true);
+    this.rateTimer = setTimeout(() => this.rateService.getApplicableRate(product.id, value.amount, value.termDays).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: rate => { const current = this.form.getRawValue(); if (this.selectedProduct()?.id === product.id && current.amount === value.amount && current.termDays === value.termDays) { this.applicableRate.set(rate); this.noApplicableRate.set(false); } this.checkingRate.set(false); },
+      error: error => { if (error.status === 404) this.noApplicableRate.set(true); this.checkingRate.set(false); }
+    }), 250);
   }
   private errorMessage(error: HttpErrorResponse): string {
     if (error.status === 0) return 'No se pudo conectar con el servidor.';

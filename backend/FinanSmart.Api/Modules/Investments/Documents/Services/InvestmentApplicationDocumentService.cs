@@ -30,6 +30,7 @@ public class InvestmentApplicationDocumentService(FinanSmartDbContext db, IWebHo
         var application = await EnsureApplicationExists(applicationId);
         EnsureEditable(application);
         ValidateFile(documentType, file);
+        await ValidateImageContentAsync(file);
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         var storedFileName = $"{Guid.NewGuid():N}{extension}";
         var relativePath = Path.Combine(applicationId.ToString(), storedFileName);
@@ -109,6 +110,17 @@ public class InvestmentApplicationDocumentService(FinanSmartDbContext db, IWebHo
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!AllowedFiles.TryGetValue(extension, out var expectedContentType) || !string.Equals(file.ContentType, expectedContentType, StringComparison.OrdinalIgnoreCase))
             throw new InvestmentDocumentValidationException("The file type is not allowed.", 415);
+    }
+    private static async Task ValidateImageContentAsync(IFormFile file)
+    {
+        if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)) return;
+        await using var stream = file.OpenReadStream();
+        var header = new byte[12];
+        var read = await stream.ReadAsync(header);
+        var isJpeg = read >= 3 && header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF;
+        var isPng = read >= 8 && header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47 &&
+                    header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A;
+        if (!isJpeg && !isPng) throw new InvestmentDocumentValidationException("The image file is invalid.", 415);
     }
     private async Task<InvestmentDocumentRequirementsDto> BuildRequirementsAsync(InvestmentApplication application)
     {

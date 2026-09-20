@@ -30,6 +30,12 @@ public class InvestmentApplication
     public DateOnly? BirthDate { get; set; }
     public string? Address { get; set; }
     public string? City { get; set; }
+    public SourceOfFunds? SourceOfFunds { get; set; }
+    public string? OtherSourceOfFunds { get; set; }
+    public bool InformationAccuracyAccepted { get; set; }
+    public bool TermsAccepted { get; set; }
+    public bool DataProcessingAccepted { get; set; }
+    public DateTimeOffset? DeclarationsAcceptedAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset? SubmittedAt { get; set; }

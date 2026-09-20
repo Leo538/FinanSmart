@@ -57,6 +57,20 @@ public class InvestmentApplicationsController(IInvestmentApplicationService serv
         catch (ArgumentException exception) { return BadRequest(new { message = exception.Message }); }
     }
 
+    [Authorize(Roles = "Client")]
+    [HttpPut("{id:guid}/declarations")]
+    public async Task<ActionResult<InvestmentApplicationDto>> UpdateDeclarations(Guid id, UpdateInvestmentDeclarationsDto dto)
+    {
+        if (!await service.CanAccessAsync(id, GetUserId(), false)) return Forbid();
+        try
+        {
+            var application = await service.UpdateDeclarationsAsync(id, dto);
+            return application is null ? NotFound(new { message = "Investment application was not found." }) : Ok(application);
+        }
+        catch (InvestmentApplicationReadOnlyException exception) { return BadRequest(new { message = exception.Message }); }
+        catch (ArgumentException exception) { return BadRequest(new { message = exception.Message }); }
+    }
+
     [Authorize(Roles = "Client,Admin")]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Cancel(Guid id)

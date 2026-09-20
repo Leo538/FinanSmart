@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using FinanSmart.Api.Common.Enums;
 using FinanSmart.Api.Common.Exceptions;
+using FinanSmart.Api.Common.Validation;
 using FinanSmart.Api.Data.Context;
 using FinanSmart.Api.Entities;
 using FinanSmart.Api.Modules.Investments.Applications.DTOs;
@@ -102,6 +103,28 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
         return true;
     }
 
+    public async Task<InvestmentApplicationDto?> UpdateDeclarationsAsync(Guid id, UpdateInvestmentDeclarationsDto dto)
+    {
+        ValidateDeclarations(dto);
+        var application = await db.InvestmentApplications.FindAsync(id);
+        if (application is null) return null;
+        if (application.Status != InvestmentApplicationStatus.PendingIdentityVerification || application.CurrentStep != InvestmentApplicationStep.Declarations)
+            throw new InvestmentApplicationReadOnlyException();
+
+        var now = DateTimeOffset.UtcNow;
+        application.SourceOfFunds = dto.SourceOfFunds;
+        application.OtherSourceOfFunds = dto.SourceOfFunds == SourceOfFunds.Other ? dto.OtherSourceOfFunds!.Trim() : null;
+        application.InformationAccuracyAccepted = dto.InformationAccuracyAccepted;
+        application.TermsAccepted = dto.TermsAccepted;
+        application.DataProcessingAccepted = dto.DataProcessingAccepted;
+        application.DeclarationsAcceptedAt = now;
+        application.CurrentStep = InvestmentApplicationStep.Review;
+        application.Status = InvestmentApplicationStatus.ReadyForReview;
+        application.UpdatedAt = now;
+        await db.SaveChangesAsync();
+        return Map(application);
+    }
+
     public async Task<InvestmentApplicationDto?> SubmitAsync(Guid id)
     {
         var application = await db.InvestmentApplications.FindAsync(id);
@@ -117,7 +140,7 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
         var uploadedTypes = await db.InvestmentApplicationDocuments.Where(document => document.InvestmentApplicationId == id && document.IsActive)
             .Select(document => document.DocumentType).Distinct().ToListAsync();
         var identityVerified = await db.InvestmentIdentityVerifications.AnyAsync(verification => verification.InvestmentApplicationId == id && verification.Status == IdentityVerificationStatus.Verified && verification.ConsentAccepted);
-        if (requiredTypes.Except(uploadedTypes).Any() || !identityVerified)
+        if (requiredTypes.Except(uploadedTypes).Any() || !identityVerified || !DeclarationsAreComplete(application))
             throw new ArgumentException("The investment application does not meet all requirements for submission.");
 
         var now = DateTimeOffset.UtcNow;
@@ -159,7 +182,9 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
         if (string.IsNullOrWhiteSpace(dto.FirstName) || string.IsNullOrWhiteSpace(dto.LastName) ||
             string.IsNullOrWhiteSpace(dto.IdentificationNumber) || string.IsNullOrWhiteSpace(dto.Email) ||
             string.IsNullOrWhiteSpace(dto.Phone) || string.IsNullOrWhiteSpace(dto.Address) || string.IsNullOrWhiteSpace(dto.City) ||
-            !new EmailAddressAttribute().IsValid(dto.Email) || !Enum.IsDefined(dto.IdentificationType))
+            !new EmailAddressAttribute().IsValid(dto.Email) || !Enum.IsDefined(dto.IdentificationType) ||
+            (dto.IdentificationType == IdentificationType.NationalId && !EcuadorNationalIdValidator.IsValid(dto.IdentificationNumber)) ||
+            (dto.BirthDate is not null && dto.BirthDate > DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-18)))
             throw new ArgumentException("Invalid applicant information.");
     }
 
@@ -168,6 +193,21 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
         application.IdentificationType is not null && !string.IsNullOrWhiteSpace(application.IdentificationNumber) &&
         !string.IsNullOrWhiteSpace(application.Email) && !string.IsNullOrWhiteSpace(application.Phone) &&
         !string.IsNullOrWhiteSpace(application.Address) && !string.IsNullOrWhiteSpace(application.City);
+
+    private static bool DeclarationsAreComplete(InvestmentApplication application) =>
+        application.SourceOfFunds is not null && application.InformationAccuracyAccepted && application.TermsAccepted &&
+        application.DataProcessingAccepted && application.DeclarationsAcceptedAt is not null &&
+        (application.SourceOfFunds != SourceOfFunds.Other || !string.IsNullOrWhiteSpace(application.OtherSourceOfFunds));
+
+    private static void ValidateDeclarations(UpdateInvestmentDeclarationsDto dto)
+    {
+        if (dto.SourceOfFunds is null || !Enum.IsDefined(dto.SourceOfFunds.Value))
+            throw new ArgumentException("A source of funds is required.");
+        if (!dto.InformationAccuracyAccepted || !dto.TermsAccepted || !dto.DataProcessingAccepted)
+            throw new ArgumentException("All declarations must be accepted.");
+        if (dto.SourceOfFunds == SourceOfFunds.Other && string.IsNullOrWhiteSpace(dto.OtherSourceOfFunds))
+            throw new ArgumentException("Please specify the other source of funds.");
+    }
 
     private static InvestmentApplicationDto Map(InvestmentApplication application) => new()
     {
@@ -180,6 +220,9 @@ public class InvestmentApplicationService(FinanSmartDbContext db, IInvestmentSim
         ApplicantLastName = application.ApplicantLastName, IdentificationType = application.IdentificationType,
         IdentificationNumber = application.IdentificationNumber, Email = application.Email, Phone = application.Phone,
         BirthDate = application.BirthDate, Address = application.Address, City = application.City,
+        SourceOfFunds = application.SourceOfFunds, OtherSourceOfFunds = application.OtherSourceOfFunds,
+        InformationAccuracyAccepted = application.InformationAccuracyAccepted, TermsAccepted = application.TermsAccepted,
+        DataProcessingAccepted = application.DataProcessingAccepted, DeclarationsAcceptedAt = application.DeclarationsAcceptedAt,
         CreatedAt = application.CreatedAt, UpdatedAt = application.UpdatedAt, SubmittedAt = application.SubmittedAt, ReviewedAt = application.ReviewedAt, ReviewNotes = application.ReviewNotes
     };
 }

@@ -6,6 +6,7 @@ public enum InvestmentApplicationStep
     PersonalInformation,
     Documents,
     IdentityVerification,
+    Declarations,
     Review,
     Confirmation
 }

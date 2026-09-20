@@ -10,6 +10,7 @@ public interface IInvestmentApplicationService
     Task<InvestmentApplicationDto> CreateAsync(CreateInvestmentApplicationDto dto, Guid userId);
     Task<bool> CanAccessAsync(Guid applicationId, Guid userId, bool isAdmin);
     Task<InvestmentApplicationDto?> UpdateApplicantAsync(Guid id, UpdateInvestmentApplicantDto dto);
+    Task<InvestmentApplicationDto?> UpdateDeclarationsAsync(Guid id, UpdateInvestmentDeclarationsDto dto);
     Task<bool> CancelAsync(Guid id);
     Task<InvestmentApplicationDto?> SubmitAsync(Guid id);
     Task<InvestmentApplicationDto?> ReviewAsync(Guid id, ReviewInvestmentApplicationDto dto);
