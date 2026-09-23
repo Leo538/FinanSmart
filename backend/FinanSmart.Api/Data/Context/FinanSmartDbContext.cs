@@ -12,6 +12,8 @@ public class FinanSmartDbContext(DbContextOptions<FinanSmartDbContext> options) 
     public DbSet<CreditType> CreditTypes => Set<CreditType>();
     public DbSet<CreditRate> CreditRates => Set<CreditRate>();
     public DbSet<CreditCharge> CreditCharges => Set<CreditCharge>();
+    public DbSet<CreditInsurance> CreditInsurances => Set<CreditInsurance>();
+    public DbSet<CreditTypeInsurance> CreditTypeInsurances => Set<CreditTypeInsurance>();
     public DbSet<InvestmentProduct> InvestmentProducts => Set<InvestmentProduct>();
     public DbSet<InvestmentRate> InvestmentRates => Set<InvestmentRate>();
     public DbSet<InvestmentApplication> InvestmentApplications => Set<InvestmentApplication>();

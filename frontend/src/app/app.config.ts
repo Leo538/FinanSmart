@@ -5,6 +5,7 @@ import { provideAppInitializer, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { authInterceptor } from './core/auth/interceptors/auth.interceptor';
 import { AuthStateService } from './core/auth/services/auth-state.service';
+import { InstitutionStateService } from './core/services/institution-state.service';
 
 import { routes } from './app.routes';
 
@@ -14,6 +15,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideRouter(routes),
-    provideAppInitializer(() => firstValueFrom(inject(AuthStateService).restoreSession()))
+    provideAppInitializer(() => firstValueFrom(inject(AuthStateService).restoreSession())),
+    provideAppInitializer(() => firstValueFrom(inject(InstitutionStateService).loadInstitution()))
   ]
 };

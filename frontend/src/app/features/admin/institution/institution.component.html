@@ -54,7 +54,12 @@
           <div class="form-group full">
             <label class="form-label" for="logoUrl">URL del logo</label>
             <input id="logoUrl" class="form-control" type="url" formControlName="logoUrl" placeholder="https://..." />
-            <span class="form-help">La carga de archivos estará disponible próximamente.</span>
+            <div class="logo-upload-actions">
+              <label class="btn btn-secondary btn-sm" for="logoFile">{{ logoUploading() ? 'Cargando...' : 'Subir o reemplazar logo' }}</label>
+              <input id="logoFile" type="file" accept="image/jpeg,image/png,image/webp" (change)="uploadLogo($event)" [disabled]="logoUploading()" />
+              @if (form.controls.logoUrl.value) { <button class="btn btn-ghost btn-sm" type="button" (click)="removeLogo()" [disabled]="logoUploading()">Restaurar iniciales</button> }
+            </div>
+            <span class="form-help">JPG, PNG o WEBP. Máximo 2 MB. También puedes mantener una URL externa.</span>
           </div>
 
           <div class="color-field">

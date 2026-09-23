@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -11,25 +11,144 @@ import { InvestmentApplicationService } from '../../../investments/application/s
 import { InvestmentApplicationDocumentService } from '../../../investments/application/services/investment-application-document.service';
 import { InvestmentIdentityVerificationService } from '../../../investments/application/services/investment-identity-verification.service';
 
+interface FilePreview { title: string; url: string; isImage: boolean; }
+
 @Component({
-  selector: 'app-investment-applications', standalone: true,
+  selector: 'app-investment-applications',
+  standalone: true,
   imports: [FormsModule, DatePipe, RouterLink, PageHeaderComponent],
-  template: `<main class="page-container"><app-page-header [title]="selected() ? 'Solicitud de inversión' : 'Solicitudes de inversión'" subtitle="Revisa y gestiona las solicitudes enviadas por los clientes."/>
-  @if (!selected()) { <section class="card"><div class="filters"><input class="form-control" [(ngModel)]="query" placeholder="Buscar solicitud o cliente"/><select class="form-select" [(ngModel)]="status"><option value="">Todos los estados</option><option value="Submitted">En revisión</option><option value="Approved">Aprobadas</option><option value="Rejected">Rechazadas</option></select></div><div class="table-container"><table class="data-table"><thead><tr><th>Solicitud</th><th>Cliente</th><th>Producto</th><th>Monto</th><th>Estado</th><th></th></tr></thead><tbody>@for (item of filtered(); track item.id) { <tr><td>{{item.applicationNumber}}</td><td>{{item.applicantFirstName}} {{item.applicantLastName}}</td><td>{{item.investmentProductName}}</td><td>{{money(item.amount)}}</td><td>{{label(item.status)}}</td><td><a class="btn btn-secondary btn-sm" [routerLink]="['/admin/investments/applications',item.id]">Ver detalle</a></td></tr> }</tbody></table></div></section> }
-  @else if (selected(); as item) { <a class="btn btn-secondary" routerLink="/admin/investments/applications">← Volver a solicitudes</a><section class="detail-grid"><article class="card"><h2>Solicitante</h2><dl><div><dt>Nombre</dt><dd>{{item.applicantFirstName || 'Sin datos'}} {{item.applicantLastName || ''}}</dd></div><div><dt>Identificación</dt><dd>{{item.identificationNumber || 'Sin datos'}}</dd></div><div><dt>Correo</dt><dd>{{item.email || 'Sin datos'}}</dd></div><div><dt>Teléfono</dt><dd>{{item.phone || 'Sin datos'}}</dd></div></dl></article><article class="card"><h2>Inversión</h2><dl><div><dt>Producto</dt><dd>{{item.investmentProductName}}</dd></div><div><dt>Monto</dt><dd>{{money(item.amount)}}</dd></div><div><dt>Plazo</dt><dd>{{item.termDays}} días</dd></div><div><dt>Tasa</dt><dd>{{item.annualInterestRate}} %</dd></div><div><dt>Total recibido</dt><dd>{{money(item.totalReceived)}}</dd></div><div><dt>Estado</dt><dd>{{label(item.status)}}</dd></div></dl></article><article class="card wide"><h2>Documentos</h2>@if (!documents().length) { <p class="muted">Esta solicitud no tiene documentos cargados.</p> } @else { @for (document of documents(); track document.id) { <div class="document-row"><span>{{documentLabel(document.documentType)}} · {{document.originalFileName}}</span><button class="btn btn-secondary btn-sm" (click)="downloadDocument(item.id,document)">Ver / Descargar</button></div> } }</article><article class="card"><h2>Validación de identidad</h2>@if (identity(); as verification) { <dl><div><dt>Estado</dt><dd>{{identityLabel(verification.status)}}</dd></div><div><dt>Consentimiento</dt><dd>{{verification.consentAccepted ? 'Aceptado' : 'Pendiente'}}</dd></div>@if (verification.verifiedAt) { <div><dt>Verificada</dt><dd>{{verification.verifiedAt | date:'dd/MM/yyyy HH:mm':'UTC'}}</dd></div> }</dl> } @else { <p class="muted">No hay validación registrada.</p> }</article><article class="card"><h2>Declaraciones</h2>@if (item.declarationsAcceptedAt) { <dl><div><dt>Origen de fondos</dt><dd>{{sourceLabel(item.sourceOfFunds)}}</dd></div>@if (item.sourceOfFunds === 'Other') { <div><dt>Detalle</dt><dd>{{item.otherSourceOfFunds}}</dd></div> }<div><dt>Información correcta</dt><dd>{{item.informationAccuracyAccepted ? 'Aceptado' : 'Pendiente'}}</dd></div><div><dt>Términos</dt><dd>{{item.termsAccepted ? 'Aceptado' : 'Pendiente'}}</dd></div><div><dt>Tratamiento de datos</dt><dd>{{item.dataProcessingAccepted ? 'Autorizado' : 'Pendiente'}}</dd></div><div><dt>Fecha de aceptación</dt><dd>{{item.declarationsAcceptedAt | date:'dd/MM/yyyy HH:mm':'UTC'}}</dd></div></dl> } @else { <p class="muted">No hay declaraciones registradas.</p> }</article>@if (item.status === 'Submitted') { <article class="card wide"><h2>Decisión administrativa</h2><textarea class="form-control" [(ngModel)]="notes" placeholder="Observación obligatoria al rechazar"></textarea><div class="actions"><button class="btn btn-secondary" [disabled]="!notes.trim()" (click)="decide('Reject')">Rechazar</button><button class="btn btn-primary" (click)="decide('Approve')">Aprobar</button></div></article> }</section> }</main>`,
-  styles: [`.filters,.actions{display:flex;gap:12px;padding:16px}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:20px}.detail-grid .card{padding:20px}.wide{grid-column:span 2}.detail-grid h2{margin-top:0;font-size:1.1rem}.detail-grid dl{margin:0}.detail-grid dl div{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--border)}dt,.muted{color:var(--text-muted)}dd{margin:0;text-align:right;font-weight:600}.document-row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}@media(max-width:800px){.detail-grid{grid-template-columns:1fr}.wide{grid-column:auto}.filters,.actions{flex-direction:column}.document-row{flex-direction:column}}`]
+  templateUrl: './investment-applications.component.html',
+  styleUrl: './investment-applications.component.scss'
 })
-export class InvestmentApplicationsComponent {
-  private readonly applicationsService = inject(InvestmentApplicationService); private readonly documentsService = inject(InvestmentApplicationDocumentService); private readonly identityService = inject(InvestmentIdentityVerificationService); private readonly route = inject(ActivatedRoute); private readonly destroyRef = inject(DestroyRef);
-  readonly items = signal<InvestmentApplication[]>([]); readonly selected = signal<InvestmentApplication | null>(null); readonly documents = signal<InvestmentApplicationDocument[]>([]); readonly identity = signal<InvestmentIdentityVerification | null>(null); query = ''; status = ''; notes = '';
-  constructor() { this.applicationsService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(items => { this.items.set(items); const id = this.route.snapshot.paramMap.get('id'); const selected = id ? items.find(item => item.id === id) ?? null : null; this.selected.set(selected); if (selected) this.loadRelated(selected.id); }); }
-  filtered() { return this.items().filter(item => (!this.status || item.status === this.status) && `${item.applicationNumber} ${item.applicantFirstName ?? ''} ${item.applicantLastName ?? ''}`.toLowerCase().includes(this.query.toLowerCase())); }
-  money(value: number) { return new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(value); }
-  label(status: string) { return ({ Submitted: 'En revisión', Approved: 'Aprobada', Rejected: 'Rechazada', Cancelled: 'Cancelada', Draft: 'Borrador', PendingDocuments: 'Pendiente de documentos', PendingIdentityVerification: 'Pendiente de identidad o declaraciones', ReadyForReview: 'Lista para enviar' } as Record<string, string>)[status] ?? status; }
-  sourceLabel(source: SourceOfFunds | null) { return ({ Salary: 'Sueldo', Savings: 'Ahorros', BusinessActivity: 'Actividad comercial', Other: 'Otros' } as Record<string, string>)[source ?? ''] ?? 'No registrado'; }
-  identityLabel(status: string) { return ({ Pending: 'Pendiente', Captured: 'Capturada', Verified: 'Verificada', Rejected: 'Rechazada' } as Record<string, string>)[status] ?? status; }
-  documentLabel(type: string) { return ({ IdentityFront: 'Documento de identidad — frontal', IdentityBack: 'Documento de identidad — reverso', AdditionalDocument: 'Documento adicional' } as Record<string, string>)[type] ?? type; }
-  decide(decision: 'Approve' | 'Reject') { const item = this.selected(); if (!item || (decision === 'Reject' && !this.notes.trim())) return; this.applicationsService.review(item.id, decision, this.notes || null).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(updated => this.selected.set(updated)); }
-  downloadDocument(applicationId: string, document: InvestmentApplicationDocument) { this.documentsService.download(applicationId, document.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(blob => { const url = URL.createObjectURL(blob); const link = globalThis.document.createElement('a'); link.href = url; link.download = document.originalFileName; link.click(); URL.revokeObjectURL(url); }); }
-  private loadRelated(id: string) { this.documentsService.getAll(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(documents => this.documents.set(documents)); this.identityService.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: identity => this.identity.set(identity) }); }
+export class InvestmentApplicationsComponent implements OnDestroy {
+  private readonly applicationsService = inject(InvestmentApplicationService);
+  private readonly documentsService = inject(InvestmentApplicationDocumentService);
+  private readonly identityService = inject(InvestmentIdentityVerificationService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly thumbnailUrls = new Map<string, string>();
+
+  readonly items = signal<InvestmentApplication[]>([]);
+  readonly selected = signal<InvestmentApplication | null>(null);
+  readonly documents = signal<InvestmentApplicationDocument[]>([]);
+  readonly identity = signal<InvestmentIdentityVerification | null>(null);
+  readonly thumbnails = signal<Record<string, string>>({});
+  readonly selfieUrl = signal<string | null>(null);
+  readonly preview = signal<FilePreview | null>(null);
+  query = '';
+  status = '';
+  notes = '';
+  page = 1;
+  readonly pageSize = 8;
+
+  constructor() {
+    this.applicationsService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(items => {
+      this.items.set(items);
+      const id = this.route.snapshot.paramMap.get('id');
+      const application = id ? items.find(item => item.id === id) ?? null : null;
+      this.selected.set(application);
+      if (application) this.loadRelated(application.id);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.thumbnailUrls.forEach(url => URL.revokeObjectURL(url));
+    const selfieUrl = this.selfieUrl();
+    if (selfieUrl) URL.revokeObjectURL(selfieUrl);
+    const preview = this.preview();
+    if (preview) URL.revokeObjectURL(preview.url);
+  }
+
+  filtered(): InvestmentApplication[] {
+    const term = this.query.trim().toLowerCase();
+    return this.items().filter(item =>
+      (!this.status || item.status === this.status) &&
+      (!term || `${item.applicationNumber} ${item.applicantFirstName ?? ''} ${item.applicantLastName ?? ''} ${item.investmentProductName}`.toLowerCase().includes(term))
+    );
+  }
+
+  paged(): InvestmentApplication[] {
+    const start = (this.page - 1) * this.pageSize;
+    return this.filtered().slice(start, start + this.pageSize);
+  }
+
+  pages(): number { return Math.max(1, Math.ceil(this.filtered().length / this.pageSize)); }
+  previousPage(): void { this.page = Math.max(1, this.page - 1); }
+  nextPage(): void { this.page = Math.min(this.pages(), this.page + 1); }
+  resetPage(): void { this.page = 1; }
+  money(value: number): string { return new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(value); }
+  isImage(document: InvestmentApplicationDocument): boolean { return document.contentType.startsWith('image/'); }
+  thumbnail(documentId: string): string | null { return this.thumbnails()[documentId] ?? null; }
+
+  label(status: string): string {
+    return ({ Submitted: 'En revisión', Approved: 'Aprobada', Rejected: 'Rechazada', Cancelled: 'Cancelada', Draft: 'Borrador', PendingDocuments: 'Pendiente de documentos', PendingIdentityVerification: 'Pendiente de identidad o declaraciones', ReadyForReview: 'Lista para enviar' } as Record<string, string>)[status] ?? status;
+  }
+  sourceLabel(source: SourceOfFunds | null): string {
+    return ({ Salary: 'Sueldo', Savings: 'Ahorros', BusinessActivity: 'Actividad comercial', Other: 'Otros' } as Record<string, string>)[source ?? ''] ?? 'No registrado';
+  }
+  identityLabel(status: string): string { return ({ Pending: 'Pendiente', Captured: 'Capturada', Verified: 'Verificada', Rejected: 'Rechazada' } as Record<string, string>)[status] ?? status; }
+  documentLabel(type: string): string { return ({ IdentityFront: 'Documento de identidad — frontal', IdentityBack: 'Documento de identidad — reverso', AdditionalDocument: 'Documento adicional' } as Record<string, string>)[type] ?? type; }
+
+  decide(decision: 'Approve' | 'Reject'): void {
+    const item = this.selected();
+    if (!item || (decision === 'Reject' && !this.notes.trim())) return;
+    this.applicationsService.review(item.id, decision, this.notes || null).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(updated => this.selected.set(updated));
+  }
+
+  openDocument(applicationId: string, document: InvestmentApplicationDocument): void {
+    this.documentsService.download(applicationId, document.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(blob => {
+      this.closePreview();
+      this.preview.set({ title: document.originalFileName, url: URL.createObjectURL(blob), isImage: this.isImage(document) });
+    });
+  }
+
+  closePreview(): void {
+    const preview = this.preview();
+    if (preview) URL.revokeObjectURL(preview.url);
+    this.preview.set(null);
+  }
+
+  downloadDocument(applicationId: string, document: InvestmentApplicationDocument): void {
+    this.documentsService.download(applicationId, document.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(blob => {
+      const url = URL.createObjectURL(blob);
+      const link = globalThis.document.createElement('a');
+      link.href = url;
+      link.download = document.originalFileName;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  private loadRelated(id: string): void {
+    this.documentsService.getAll(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(documents => {
+      this.documents.set(documents);
+      documents.filter(document => this.isImage(document)).forEach(document => this.loadThumbnail(id, document));
+    });
+    this.identityService.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: identity => {
+        this.identity.set(identity);
+        if (identity.selfieContentType?.startsWith('image/')) this.loadSelfie(id);
+      }
+    });
+  }
+
+  private loadThumbnail(applicationId: string, document: InvestmentApplicationDocument): void {
+    this.documentsService.download(applicationId, document.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(blob => {
+      const previous = this.thumbnailUrls.get(document.id);
+      if (previous) URL.revokeObjectURL(previous);
+      const url = URL.createObjectURL(blob);
+      this.thumbnailUrls.set(document.id, url);
+      this.thumbnails.update(thumbnails => ({ ...thumbnails, [document.id]: url }));
+    });
+  }
+
+  private loadSelfie(applicationId: string): void {
+    this.identityService.getSelfie(applicationId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: blob => {
+        const previous = this.selfieUrl();
+        if (previous) URL.revokeObjectURL(previous);
+        this.selfieUrl.set(URL.createObjectURL(blob));
+      }
+    });
+  }
 }

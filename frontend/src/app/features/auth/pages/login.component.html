@@ -1,8 +1,8 @@
 <section class="login-card card">
   <div class="login-brand">
-    <span>F</span>
-    <strong>FINANSMART</strong>
-    <p>Tu plataforma financiera inteligente.</p>
+    <span>@if (institution.currentInstitution()?.logoUrl && !logoFailed()) { <img [src]="institution.currentInstitution()?.logoUrl" alt="Logo institucional" (error)="logoFailed.set(true)" /> } @else { {{ initials() }} }</span>
+    <strong>{{ institution.currentInstitution()?.name || 'FinanSmart' }}</strong>
+    <p>Accede a tu plataforma financiera.</p>
   </div>
 
   @if (registered()) {

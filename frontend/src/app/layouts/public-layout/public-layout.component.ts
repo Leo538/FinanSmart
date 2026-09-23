@@ -1,0 +1,13 @@
+import { Component, inject, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { InstitutionStateService } from '../../core/services/institution-state.service';
+
+@Component({
+  selector: 'app-public-layout', standalone: true, imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  template: `<div class="public-shell"><header class="public-header"><a class="public-brand" routerLink="/simulators/credit"><span>@if(institution.currentInstitution()?.logoUrl && !logoFailed()){<img [src]="institution.currentInstitution()?.logoUrl" alt="Logo institucional" (error)="logoFailed.set(true)">}@else{ {{ initials() }} }</span><strong>{{ institution.currentInstitution()?.name || 'FinanSmart' }}</strong></a><nav><a routerLink="/simulators/credit" routerLinkActive="active">Simular crédito</a><a routerLink="/simulators/comparison" routerLinkActive="active">Comparar sistemas</a><a routerLink="/simulators/investment" routerLinkActive="active">Simular inversión</a></nav><a class="login-link" routerLink="/login">Iniciar sesión</a></header><router-outlet/></div>`,
+  styles: [`.public-shell{min-height:100dvh;background:var(--background)}.public-header{display:flex;align-items:center;gap:30px;min-height:72px;padding:0 max(24px,calc((100% - 1240px)/2));border-bottom:1px solid var(--border);background:rgb(255 255 255 / 94%);backdrop-filter:blur(10px)}.public-brand{display:flex;align-items:center;gap:9px;color:var(--primary);font-weight:800;letter-spacing:.01em}.public-brand span{display:grid;place-items:center;width:32px;height:32px;overflow:hidden;border-radius:10px;background:var(--primary);color:#fff}.public-brand img{width:100%;height:100%;object-fit:contain;background:#fff}.public-header nav{display:flex;flex:1;gap:24px}.public-header nav a{position:relative;padding:26px 0;color:var(--text-muted);font-size:.88rem}.public-header nav a.active{color:var(--primary);font-weight:800}.public-header nav a.active:after{position:absolute;right:0;bottom:0;left:0;height:3px;background:var(--accent);content:''}.login-link{border:1px solid var(--primary);border-radius:9px;padding:9px 14px;color:var(--primary);font-weight:700;font-size:.88rem}@media(max-width:700px){.public-header{gap:14px;padding:0 16px;overflow-x:auto}.public-header nav{gap:16px;white-space:nowrap}.public-header nav a{padding:24px 0}.public-brand strong{display:none}.login-link{white-space:nowrap}}`]
+})
+export class PublicLayoutComponent {
+  readonly institution = inject(InstitutionStateService); readonly logoFailed = signal(false);
+  initials(): string { return (this.institution.currentInstitution()?.name || 'FinanSmart').split(' ').filter(Boolean).slice(0, 2).map(word => word[0]).join('').toUpperCase(); }
+}

@@ -31,10 +31,10 @@ public class CreditSimulationPdfService(
             document.Page(page =>
             {
                 page.Size(PageSizes.A4);
-                page.Margin(32);
+                page.Margin(28);
                 page.DefaultTextStyle(style => style.FontSize(9));
                 page.Header().Element(container => ComposeHeader(container, institution, primaryColor, logo));
-                page.Content().PaddingVertical(12).Column(column =>
+                page.Content().PaddingVertical(14).Column(column =>
                 {
                     column.Spacing(14);
                     ComposeTitle(column, simulation, primaryColor);
@@ -51,23 +51,21 @@ public class CreditSimulationPdfService(
     private static void ComposeHeader(IContainer container, InstitutionDto? institution, string primaryColor, byte[]? logo)
     {
         var name = institution?.Name ?? "FinanSmart";
-        container.BorderBottom(2).BorderColor(primaryColor).PaddingBottom(10).Row(row =>
+        container.Background(primaryColor).Padding(14).Row(row =>
         {
             if (logo is not null)
             {
-                row.ConstantItem(52).Height(52).Image(logo).FitArea();
+                row.ConstantItem(44).Height(44).Background(Colors.White).Padding(4).Image(logo).FitArea();
             }
             row.RelativeItem().Column(column =>
             {
-                column.Item().Text(name).FontSize(18).Bold().FontColor(primaryColor);
-                column.Item().Text("Configuración financiera y simulación de crédito").FontColor(Colors.Grey.Darken1);
+                column.Item().Text(name).FontSize(17).Bold().FontColor(Colors.White);
+                column.Item().Text("Simulación financiera de crédito").FontColor(Colors.White);
             });
             row.RelativeItem().AlignRight().Column(column =>
             {
-                if (!string.IsNullOrWhiteSpace(institution?.Ruc)) column.Item().Text($"RUC: {institution.Ruc}");
-                if (!string.IsNullOrWhiteSpace(institution?.Address)) column.Item().Text(institution.Address);
-                if (!string.IsNullOrWhiteSpace(institution?.Email)) column.Item().Text(institution.Email);
-                if (!string.IsNullOrWhiteSpace(institution?.Phone)) column.Item().Text(institution.Phone);
+                if (!string.IsNullOrWhiteSpace(institution?.Ruc)) column.Item().Text($"RUC: {institution.Ruc}").FontColor(Colors.White);
+                if (!string.IsNullOrWhiteSpace(institution?.Email)) column.Item().Text(institution.Email).FontColor(Colors.White);
             });
         });
     }
@@ -80,7 +78,7 @@ public class CreditSimulationPdfService(
 
     private static void ComposeCreditInformation(ColumnDescriptor column, CreditSimulationResponseDto simulation, string primaryColor)
     {
-        column.Item().Text("Datos del crédito").Bold().FontColor(primaryColor);
+        column.Item().Text("Condiciones del crédito").Bold().FontColor(primaryColor);
         column.Item().Table(table =>
         {
             table.ColumnsDefinition(columns => { columns.RelativeColumn(); columns.RelativeColumn(); });
@@ -88,15 +86,15 @@ public class CreditSimulationPdfService(
             AddInfoCell(table, "Monto solicitado", FormatMoney(simulation.RequestedAmount));
             AddInfoCell(table, "Plazo", $"{simulation.TermMonths} meses");
             AddInfoCell(table, "Sistema", FormatSystem(simulation.AmortizationSystem));
-            AddInfoCell(table, "Tasa anual", FormatPercentage(simulation.AnnualInterestRate));
-            AddInfoCell(table, "Tasa mensual", FormatPercentage(simulation.MonthlyInterestRate));
+            AddInfoCell(table, "Tasa anual vigente", FormatPercentage(simulation.AnnualInterestRate));
+            AddInfoCell(table, "Tasa mensual equivalente", FormatPercentage(simulation.MonthlyInterestRate));
             AddInfoCell(table, "Fecha de inicio", FormatDate(simulation.StartDate));
         });
     }
 
     private static void AddInfoCell(TableDescriptor table, string label, string value)
     {
-        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(6).Column(column =>
+        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(8).Column(column =>
         {
             column.Item().Text(label).FontSize(8).FontColor(Colors.Grey.Darken1);
             column.Item().Text(value).SemiBold();
@@ -106,13 +104,13 @@ public class CreditSimulationPdfService(
     private static void ComposeFinancialSummary(ColumnDescriptor column, CreditSimulationResponseDto simulation, string primaryColor)
     {
         column.Item().Text("Resumen financiero").Bold().FontColor(primaryColor);
-        column.Item().Background(Colors.Grey.Lighten4).Padding(10).Table(table =>
+        column.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Background(Colors.Grey.Lighten4).Padding(10).Table(table =>
         {
             table.ColumnsDefinition(columns => { columns.RelativeColumn(); columns.RelativeColumn(); columns.RelativeColumn(); columns.RelativeColumn(); });
-            AddSummaryCell(table, "Capital", FormatMoney(simulation.TotalPrincipal), primaryColor);
+            AddSummaryCell(table, "Capital financiado", FormatMoney(simulation.TotalPrincipal), primaryColor);
             AddSummaryCell(table, "Intereses", FormatMoney(simulation.TotalInterest), primaryColor);
             AddSummaryCell(table, "Cargos", FormatMoney(simulation.TotalCharges), primaryColor);
-            AddSummaryCell(table, "Total a pagar", FormatMoney(simulation.TotalPayment), primaryColor);
+            AddSummaryCell(table, "Total estimado", FormatMoney(simulation.TotalPayment), primaryColor);
         });
         column.Item().Row(row =>
         {
@@ -147,7 +145,7 @@ public class CreditSimulationPdfService(
             .ToList();
         if (charges.Count == 0) return;
 
-        column.Item().Text("Cargos aplicados").Bold().FontColor(primaryColor);
+        column.Item().Text("Cargos incluidos en la proyección").Bold().FontColor(primaryColor);
         column.Item().Table(table =>
         {
             table.ColumnsDefinition(columns => { columns.RelativeColumn(2); columns.RelativeColumn(2); columns.RelativeColumn(); columns.RelativeColumn(); });

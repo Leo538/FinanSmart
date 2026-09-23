@@ -26,6 +26,7 @@ export class InstitutionComponent {
   readonly feedback = signal('');
   readonly feedbackType = signal<'success' | 'error'>('success');
   readonly logoFailed = signal(false);
+  readonly logoUploading = signal(false);
   readonly form = this.formBuilder.group({
     name: ['', Validators.required],
     ruc: ['', Validators.required],
@@ -58,6 +59,49 @@ export class InstitutionComponent {
 
   setColor(control: 'primaryColor' | 'secondaryColor', event: Event): void {
     this.form.controls[control].setValue((event.target as HTMLInputElement).value);
+  }
+
+  uploadLogo(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    const institution = this.selectedInstitution();
+    if (!file || !institution || this.logoUploading()) {
+      if (!institution) this.setFeedback('Guarda primero la institución antes de cargar el logo.', 'error');
+      return;
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
+      this.setFeedback('Selecciona una imagen JPG, PNG o WEBP de hasta 2 MB.', 'error');
+      return;
+    }
+    this.logoUploading.set(true);
+    this.institutionService.uploadLogo(institution.id, file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: updated => {
+        this.logoUploading.set(false);
+        this.logoFailed.set(false);
+        this.form.controls.logoUrl.setValue(updated.logoUrl ?? '');
+        this.selectedInstitution.set(updated);
+        this.institutionState.setInstitution(updated);
+        this.setFeedback('Logo institucional actualizado.', 'success');
+      },
+      error: () => { this.logoUploading.set(false); this.setFeedback('No fue posible cargar el logo.', 'error'); }
+    });
+  }
+
+  removeLogo(): void {
+    const institution = this.selectedInstitution();
+    if (!institution || this.logoUploading()) return;
+    this.logoUploading.set(true);
+    this.institutionService.deleteLogo(institution.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        const updated = { ...institution, logoUrl: null };
+        this.logoUploading.set(false);
+        this.logoFailed.set(false);
+        this.form.controls.logoUrl.setValue('');
+        this.selectedInstitution.set(updated);
+        this.institutionState.setInstitution(updated);
+        this.setFeedback('Logo eliminado. Se usarán las iniciales como respaldo.', 'success');
+      },
+      error: () => { this.logoUploading.set(false); this.setFeedback('No fue posible eliminar el logo.', 'error'); }
+    });
   }
 
   initials(name: string): string {

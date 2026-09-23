@@ -66,6 +66,57 @@ namespace FinanSmart.Api.Data.Migrations
                     b.ToTable("CreditCharges");
                 });
 
+            modelBuilder.Entity("FinanSmart.Api.Entities.CreditInsurance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CalculationBasis")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("FixedAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Frequency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("InsuranceType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<decimal?>("Rate")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("CreditInsurances");
+                });
+
             modelBuilder.Entity("FinanSmart.Api.Entities.CreditRate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -140,6 +191,24 @@ namespace FinanSmart.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CreditTypes");
+                });
+
+            modelBuilder.Entity("FinanSmart.Api.Entities.CreditTypeInsurance", b =>
+                {
+                    b.Property<Guid>("CreditTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreditInsuranceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("CreditTypeId", "CreditInsuranceId");
+
+                    b.HasIndex("CreditInsuranceId");
+
+                    b.ToTable("CreditTypeInsurances");
                 });
 
             modelBuilder.Entity("FinanSmart.Api.Entities.Institution", b =>
@@ -340,6 +409,27 @@ namespace FinanSmart.Api.Data.Migrations
                     b.Property<int>("DocumentType")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ExtractedCountryRegion")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly?>("ExtractedDateOfBirth")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ExtractedDocumentNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExtractedDocumentType")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly?>("ExtractedExpirationDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ExtractedFirstName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExtractedLastName")
+                        .HasColumnType("text");
+
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
 
@@ -363,6 +453,16 @@ namespace FinanSmart.Api.Data.Migrations
 
                     b.Property<DateTimeOffset>("UploadedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ValidatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ValidationMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ValidationStatus")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -656,6 +756,25 @@ namespace FinanSmart.Api.Data.Migrations
                     b.Navigation("CreditType");
                 });
 
+            modelBuilder.Entity("FinanSmart.Api.Entities.CreditTypeInsurance", b =>
+                {
+                    b.HasOne("FinanSmart.Api.Entities.CreditInsurance", "CreditInsurance")
+                        .WithMany("CreditTypeInsurances")
+                        .HasForeignKey("CreditInsuranceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FinanSmart.Api.Entities.CreditType", "CreditType")
+                        .WithMany("CreditTypeInsurances")
+                        .HasForeignKey("CreditTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreditInsurance");
+
+                    b.Navigation("CreditType");
+                });
+
             modelBuilder.Entity("FinanSmart.Api.Entities.InvestmentApplication", b =>
                 {
                     b.HasOne("FinanSmart.Api.Entities.InvestmentProduct", "InvestmentProduct")
@@ -737,11 +856,18 @@ namespace FinanSmart.Api.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("FinanSmart.Api.Entities.CreditInsurance", b =>
+                {
+                    b.Navigation("CreditTypeInsurances");
+                });
+
             modelBuilder.Entity("FinanSmart.Api.Entities.CreditType", b =>
                 {
                     b.Navigation("CreditCharges");
 
                     b.Navigation("CreditRates");
+
+                    b.Navigation("CreditTypeInsurances");
                 });
 
             modelBuilder.Entity("FinanSmart.Api.Entities.InvestmentApplication", b =>

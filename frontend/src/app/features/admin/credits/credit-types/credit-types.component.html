@@ -1,9 +1,9 @@
 <main class="page-container">
   <app-page-header
-    title="Tipos de crédito"
+    title="Productos de crédito"
     subtitle="Configura los productos crediticios disponibles para los clientes."
   >
-    <button class="btn btn-primary btn-md" type="button" (click)="openCreate()">+ Nuevo tipo de crédito</button>
+    <button class="btn btn-primary btn-md" type="button" (click)="openCreate()">+ Nuevo producto de crédito</button>
   </app-page-header>
 
   @if (feedback()) {
@@ -23,7 +23,7 @@
         title="No hay tipos de crédito registrados."
         description="Agrega el primer producto crediticio para comenzar."
       >
-        <button class="btn btn-primary btn-md" type="button" (click)="openCreate()">Nuevo tipo de crédito</button>
+        <button class="btn btn-primary btn-md" type="button" (click)="openCreate()">Nuevo producto de crédito</button>
       </app-empty-state>
     } @else {
       <div class="table-container">
@@ -73,8 +73,8 @@
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="credit-type-modal-title" (click)="$event.stopPropagation()">
       <header class="modal-header">
         <div>
-          <h2 id="credit-type-modal-title">{{ editingCreditType() ? 'Editar tipo de crédito' : 'Nuevo tipo de crédito' }}</h2>
-          <p>Define las condiciones generales del producto.</p>
+          <h2 id="credit-type-modal-title">{{ editingCreditType() ? 'Editar producto de crédito' : 'Nuevo producto de crédito' }}</h2>
+          <p>Configura las condiciones, tasa, seguros y cargos del producto.</p>
         </div>
         <button class="btn btn-ghost btn-sm close-button" type="button" aria-label="Cerrar formulario" (click)="closeForm()" [disabled]="saving()">×</button>
       </header>
@@ -134,6 +134,33 @@
                 }
               </div>
             </div>
+          </section>
+
+          <section class="form-section configuration-section">
+            <div class="section-heading"><div><p class="eyebrow">Tasa</p><h3>Tasa vigente</h3></div><button class="btn btn-secondary btn-sm" type="button" (click)="configureRate()">Configurar tasa</button></div>
+            @if (currentRate(); as rate) {
+              <p class="rate-value">{{ rate.annualInterestRate | number:'1.2-2' }} % <span>anual vigente</span></p>
+            } @else {
+              <p class="configuration-empty">El producto todavía no tiene una tasa configurada.</p>
+            }
+          </section>
+
+          <section class="form-section configuration-section">
+            <div class="section-heading"><div><p class="eyebrow">Seguros asociados</p><h3>Protecciones del producto</h3></div><button class="btn btn-secondary btn-sm" type="button" disabled>+ Agregar seguro</button></div>
+            <p class="configuration-empty">Guarda el producto para asociar seguros desde el catálogo institucional.</p>
+          </section>
+
+          <section class="form-section configuration-section">
+            <div class="section-heading"><div><p class="eyebrow">Otros cargos</p><h3>Cargos asociados</h3></div><button class="btn btn-secondary btn-sm" type="button" (click)="configureCharges()">+ Agregar cargo</button></div>
+            @if (associatedCharges().length) {
+              <div class="configuration-list">
+                @for (charge of associatedCharges(); track charge.id) {
+                  <div><strong>{{ charge.name }}</strong><span>{{ charge.chargeType === 'FixedAmount' ? formatAmount(charge.value) : charge.value + '%' }} · {{ charge.frequency === 'Monthly' ? 'mensual' : 'único' }}</span></div>
+                }
+              </div>
+            } @else {
+              <p class="configuration-empty">No hay cargos activos asociados a este producto.</p>
+            }
           </section>
 
           <section class="form-section">

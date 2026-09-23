@@ -28,12 +28,15 @@ using FinanSmart.Api.Entities;
 using FinanSmart.Api.Modules.Auth.Interfaces;
 using FinanSmart.Api.Modules.Auth.Services;
 using Microsoft.AspNetCore.Identity;
+using Azure;
+using Azure.AI.DocumentIntelligence;
+using FinanSmart.Api.Modules.Investments.Documents;
 
 namespace FinanSmart.Api.Configurations;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<ICreditChargeService, CreditChargeService>();
         services.AddScoped<ICreditRateService, CreditRateService>();
@@ -50,6 +53,14 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IInvestmentSimulationService, InvestmentSimulationService>();
         services.AddScoped<IInvestmentApplicationService, InvestmentApplicationService>();
         services.AddScoped<IInvestmentApplicationDocumentService, InvestmentApplicationDocumentService>();
+        services.Configure<DocumentValidationOptions>(configuration.GetSection(DocumentValidationOptions.SectionName));
+        services.AddSingleton(sp =>
+        {
+            var endpoint = configuration["AzureDocumentIntelligence:Endpoint"] ?? throw new InvalidOperationException("Azure Document Intelligence endpoint is not configured.");
+            var key = configuration["AzureDocumentIntelligence:Key"] ?? throw new InvalidOperationException("Azure Document Intelligence key is not configured.");
+            return new DocumentIntelligenceClient(new Uri(endpoint), new AzureKeyCredential(key));
+        });
+        services.AddScoped<IAzureDocumentValidationService, AzureDocumentValidationService>();
         services.AddScoped<IInvestmentIdentityVerificationService, InvestmentIdentityVerificationService>();
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
         services.AddScoped<PasswordHasher<User>>();

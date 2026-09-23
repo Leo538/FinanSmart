@@ -14,5 +14,5 @@ public class CreditType
     public DateTimeOffset UpdatedAt { get; set; }
     public ICollection<CreditRate> CreditRates { get; set; } = new List<CreditRate>();
     public ICollection<CreditCharge> CreditCharges { get; set; } = new List<CreditCharge>();
+    public ICollection<CreditTypeInsurance> CreditTypeInsurances { get; set; } = new List<CreditTypeInsurance>();
 }
-

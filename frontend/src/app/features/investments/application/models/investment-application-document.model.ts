@@ -1,3 +1,4 @@
 export type InvestmentDocumentType = 'IdentityFront' | 'IdentityBack' | 'AdditionalDocument';
-export interface InvestmentApplicationDocument { id: string; investmentApplicationId: string; documentType: InvestmentDocumentType; originalFileName: string; contentType: string; fileSize: number; uploadedAt: string; isActive: boolean; }
+export type DocumentValidationStatus = 'Pending' | 'Analyzing' | 'Valid' | 'Invalid' | 'RequiresManualReview';
+export interface InvestmentApplicationDocument { id: string; investmentApplicationId: string; documentType: InvestmentDocumentType; originalFileName: string; contentType: string; fileSize: number; uploadedAt: string; isActive: boolean; validationStatus: DocumentValidationStatus | null; extractedDocumentNumber: string | null; extractedFirstName: string | null; extractedLastName: string | null; extractedDateOfBirth: string | null; validationMessage: string | null; validatedAt: string | null; }
 export interface InvestmentDocumentRequirements { requiredTypes: InvestmentDocumentType[]; uploadedTypes: InvestmentDocumentType[]; missingTypes: InvestmentDocumentType[]; isComplete: boolean; }

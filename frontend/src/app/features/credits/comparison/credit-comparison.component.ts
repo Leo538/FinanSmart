@@ -1,5 +1,6 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
@@ -7,6 +8,7 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { CreditType } from '../../admin/credits/credit-types/models/credit-type.model';
 import { CreditTypeService } from '../../admin/credits/credit-types/services/credit-type.service';
+import { CreditRateService } from '../../admin/credits/credit-rates/services/credit-rate.service';
 import { AmortizationComparisonSummary, CreditComparisonRequest, CreditComparisonResponse } from './models/credit-comparison.model';
 import { CreditComparisonService } from './services/credit-comparison.service';
 
@@ -21,6 +23,8 @@ export class CreditComparisonComponent {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly creditTypeService = inject(CreditTypeService);
   private readonly comparisonService = inject(CreditComparisonService);
+  private readonly rateService = inject(CreditRateService);
+  private readonly router = inject(Router);
   private readonly currencyFormatter = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' });
   private readonly percentageFormatter = new Intl.NumberFormat('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   readonly creditTypes = signal<CreditType[]>([]);
@@ -29,20 +33,22 @@ export class CreditComparisonComponent {
   readonly result = signal<CreditComparisonResponse | null>(null);
   readonly stale = signal(false);
   readonly error = signal('');
+  readonly minimumStartDate = new Date().toISOString().slice(0, 10);
   readonly form = this.formBuilder.group({
     creditTypeId: ['', Validators.required], amount: [0, Validators.required], termMonths: [0, Validators.required],
-    startDate: [new Date().toISOString().slice(0, 10), Validators.required]
+    startDate: [this.minimumStartDate, Validators.required]
   });
   readonly selectedType = signal<CreditType | null>(null);
+  readonly currentRate = signal<number | null>(null);
+  readonly rateChecked = signal(false);
+  isPublic(): boolean { return this.router.url.startsWith('/simulators/'); }
   constructor() {
     this.creditTypeService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: types => { this.creditTypes.set(types.filter(type => type.isActive)); this.loadingTypes.set(false); },
+      next: types => { this.creditTypes.set(types.filter(type => type.isActive).map(type => ({ ...type, minimumAmount: Number(type.minimumAmount), maximumAmount: Number(type.maximumAmount), minimumTermMonths: Number(type.minimumTermMonths), maximumTermMonths: Number(type.maximumTermMonths) }))); this.loadingTypes.set(false); },
       error: () => { this.loadingTypes.set(false); this.error.set('No se pudo conectar con el servidor.'); }
     });
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => { if (this.result()) this.stale.set(true); });
-    this.form.controls.creditTypeId.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(id => {
-      this.selectedType.set(this.creditTypes().find(type => type.id === id) ?? null);
-    });
+    this.form.controls.creditTypeId.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(id => this.configureType(id));
   }
   compare(): void {
     if (!this.isValid() || this.comparing()) { this.form.markAllAsTouched(); return; }
@@ -56,11 +62,12 @@ export class CreditComparisonComponent {
   }
   isValid(): boolean {
     const type = this.selectedType(); const raw = this.form.getRawValue();
-    return this.form.valid && !!type && raw.amount > 0 && raw.amount >= type.minimumAmount && raw.amount <= type.maximumAmount
-      && Number.isInteger(raw.termMonths) && raw.termMonths >= type.minimumTermMonths && raw.termMonths <= type.maximumTermMonths;
+    return this.form.valid && this.isStartDateValid() && !!type && this.rateChecked() && this.currentRate() !== null && raw.amount > 0 && raw.amount >= type.minimumAmount && (type.maximumAmount === null || raw.amount <= type.maximumAmount)
+      && Number.isInteger(raw.termMonths) && raw.termMonths >= type.minimumTermMonths && (type.maximumTermMonths === null || raw.termMonths <= type.maximumTermMonths);
   }
   amountError(): string { const type = this.selectedType(); const value = this.form.controls.amount.value; if (!type || value <= 0) return 'Ingresa un monto válido.'; if (value < type.minimumAmount) return `El monto mínimo para este crédito es ${this.money(type.minimumAmount)}.`; return value > type.maximumAmount ? `El monto máximo para este crédito es ${this.money(type.maximumAmount)}.` : ''; }
   termError(): string { const type = this.selectedType(); const value = this.form.controls.termMonths.value; if (!type || !Number.isInteger(value) || value <= 0) return 'Ingresa un plazo válido.'; return value < type.minimumTermMonths || value > type.maximumTermMonths ? `El plazo debe estar entre ${type.minimumTermMonths} y ${type.maximumTermMonths} meses.` : ''; }
+  isStartDateValid(): boolean { return this.form.controls.startDate.value >= this.minimumStartDate; }
   money(value: number): string { return this.currencyFormatter.format(value); }
   signedMoney(value: number): string { return (value >= 0 ? '+ ' : '- ') + this.money(Math.abs(value)); }
   percent(value: number): string { return this.percentageFormatter.format(value) + ' %'; }
@@ -73,6 +80,17 @@ export class CreditComparisonComponent {
       { label: 'Cargos', french: result.french.totalCharges, german: result.german.totalCharges, difference: result.chargesDifference },
       { label: 'Total a pagar', french: result.french.totalPayment, german: result.german.totalPayment, difference: result.totalPaymentDifference }
     ];
+  }
+  private configureType(id: string): void {
+    const type = this.creditTypes().find(item => item.id === id) ?? null;
+    this.selectedType.set(type); this.currentRate.set(null); this.rateChecked.set(false);
+    const amountValidators = type ? [Validators.required, Validators.min(type.minimumAmount)] : [Validators.required, Validators.min(.01)];
+    const termValidators = type ? [Validators.required, Validators.min(type.minimumTermMonths)] : [Validators.required, Validators.min(1)];
+    if (type?.maximumAmount !== null && type) amountValidators.push(Validators.max(type.maximumAmount));
+    if (type?.maximumTermMonths !== null && type) termValidators.push(Validators.max(type.maximumTermMonths));
+    this.form.controls.amount.setValidators(amountValidators); this.form.controls.termMonths.setValidators(termValidators);
+    this.form.controls.amount.updateValueAndValidity({ emitEvent: false }); this.form.controls.termMonths.updateValueAndValidity({ emitEvent: false });
+    if (type) this.rateService.getCurrentRate(type.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: rate => { this.currentRate.set(Number(rate.annualInterestRate)); this.rateChecked.set(true); }, error: () => this.rateChecked.set(true) });
   }
   private errorMessage(error: HttpErrorResponse): string {
     if (error.status === 0) return 'No se pudo conectar con el servidor.';

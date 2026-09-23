@@ -1,5 +1,5 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,6 +9,11 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { CreditType, CreditTypeFormData } from './models/credit-type.model';
 import { CreditTypeService } from './services/credit-type.service';
+import { CreditRateService } from '../credit-rates/services/credit-rate.service';
+import { CreditRate } from '../credit-rates/models/credit-rate.model';
+import { CreditChargeService } from '../credit-charges/services/credit-charge.service';
+import { CreditCharge } from '../credit-charges/models/credit-charge.model';
+import { Router } from '@angular/router';
 
 const rangeValidator = (minimumControl: string, maximumControl: string, errorName: string): ValidatorFn =>
   group => {
@@ -22,7 +27,7 @@ const positiveValidator: ValidatorFn = control =>
 
 @Component({
   selector: 'app-credit-types',
-  imports: [ReactiveFormsModule, DatePipe, PageHeaderComponent, LoadingSpinnerComponent, EmptyStateComponent, StatusBadgeComponent],
+  imports: [ReactiveFormsModule, DatePipe, DecimalPipe, PageHeaderComponent, LoadingSpinnerComponent, EmptyStateComponent, StatusBadgeComponent],
   templateUrl: './credit-types.component.html',
   styleUrl: './credit-types.component.scss'
 })
@@ -30,6 +35,9 @@ export class CreditTypesComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly creditTypeService = inject(CreditTypeService);
+  private readonly creditRateService = inject(CreditRateService);
+  private readonly creditChargeService = inject(CreditChargeService);
+  private readonly router = inject(Router);
   private readonly currencyFormatter = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' });
 
   readonly creditTypes = signal<CreditType[]>([]);
@@ -41,6 +49,8 @@ export class CreditTypesComponent {
   readonly editingCreditType = signal<CreditType | null>(null);
   readonly feedback = signal('');
   readonly feedbackType = signal<'success' | 'error'>('success');
+  readonly currentRate = signal<CreditRate | null>(null);
+  readonly associatedCharges = signal<CreditCharge[]>([]);
   readonly form = this.formBuilder.group({
     name: ['', Validators.required],
     description: [''],
@@ -86,6 +96,8 @@ export class CreditTypesComponent {
       maximumTermMonths: 0,
       isActive: true
     });
+    this.currentRate.set(null);
+    this.associatedCharges.set([]);
     this.modalOpen.set(true);
   }
 
@@ -100,6 +112,7 @@ export class CreditTypesComponent {
       maximumTermMonths: creditType.maximumTermMonths,
       isActive: creditType.isActive
     });
+    this.loadProductConfiguration(creditType.id);
     this.modalOpen.set(true);
   }
 
@@ -185,6 +198,16 @@ export class CreditTypesComponent {
 
   formatAmount(amount: number): string {
     return this.currencyFormatter.format(amount);
+  }
+
+  configureRate(): void { void this.router.navigateByUrl('/admin/credits/rates'); }
+  configureCharges(): void { void this.router.navigateByUrl('/admin/credits/charges'); }
+
+  private loadProductConfiguration(creditTypeId: string): void {
+    this.currentRate.set(null);
+    this.associatedCharges.set([]);
+    this.creditRateService.getCurrentRate(creditTypeId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: rate => this.currentRate.set(rate) });
+    this.creditChargeService.getByCreditType(creditTypeId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: charges => this.associatedCharges.set(charges.filter(charge => charge.isActive)) });
   }
 
   private setFeedback(message: string, type: 'success' | 'error'): void {

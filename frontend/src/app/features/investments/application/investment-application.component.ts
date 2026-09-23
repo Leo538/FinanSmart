@@ -50,6 +50,7 @@ export class InvestmentApplicationComponent implements OnDestroy {
   readonly documents = signal<InvestmentApplicationDocument[]>([]);
   readonly requirements = signal<InvestmentDocumentRequirements | null>(null);
   readonly uploadingType = signal<InvestmentDocumentType | null>(null);
+  readonly uploadingFileName = signal('');
   readonly completingDocuments = signal(false);
   readonly documentCameraActive = signal(false);
   readonly documentCaptureType = signal<InvestmentDocumentType | null>(null);
@@ -64,6 +65,7 @@ export class InvestmentApplicationComponent implements OnDestroy {
   readonly faceReady = signal(false);
   readonly faceStabilityProgress = signal(0);
   readonly localPhotoUrl = signal<string | null>(null);
+  readonly selfieValidated = signal(false);
   readonly selfieUrl = signal<string | null>(null);
   readonly savingSelfie = signal(false);
   readonly verifyingIdentity = signal(false);
@@ -158,14 +160,14 @@ export class InvestmentApplicationComponent implements OnDestroy {
   async chooseFile(event: Event, type: InvestmentDocumentType): Promise<void> {
     const application = this.application(); const file = (event.target as HTMLInputElement).files?.[0];
     if (!application || !file || this.isReadOnly() || this.uploadingType()) return;
-    const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
+    const allowed = type === 'AdditionalDocument' ? ['image/jpeg', 'image/png', 'application/pdf'] : ['image/jpeg', 'image/png'];
     if (!allowed.includes(file.type)) { this.error.set('Solo se permiten archivos JPG, PNG o PDF.'); return; }
     if (file.size > 5 * 1024 * 1024) { this.error.set('El archivo no puede superar 5 MB.'); return; }
     if (file.type !== 'application/pdf' && !await this.validateDocumentImageFile(file, type)) return;
-    this.uploadingType.set(type); this.error.set('');
+    this.uploadingType.set(type); this.uploadingFileName.set(file.name); this.error.set('');
     this.documentService.upload(application.id, type, file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { this.uploadingType.set(null); this.loadDocuments(application.id); },
-      error: error => { this.uploadingType.set(null); this.error.set(this.documentErrorMessage(error)); }
+      next: () => { this.uploadingType.set(null); this.uploadingFileName.set(''); this.loadDocuments(application.id); },
+      error: error => { this.uploadingType.set(null); this.uploadingFileName.set(''); this.error.set(this.documentErrorMessage(error)); }
     });
   }
   deleteDocument(document: InvestmentApplicationDocument): void {
@@ -188,6 +190,8 @@ export class InvestmentApplicationComponent implements OnDestroy {
     });
   }
   documentLabel(type: InvestmentDocumentType): string { return ({ IdentityFront: 'Cédula frontal', IdentityBack: 'Cédula reverso', AdditionalDocument: 'Comprobante de domicilio u otro documento de respaldo (opcional)' } as Record<InvestmentDocumentType, string>)[type]; }
+  documentValidationLabel(document: InvestmentApplicationDocument): string { return ({ Valid: 'Documento validado', Invalid: 'No pudimos validar el documento', RequiresManualReview: 'Documento requiere revisión', Pending: 'Pendiente de análisis', Analyzing: 'Analizando documento...' } as Record<string, string>)[document.validationStatus ?? 'Pending']; }
+  maskDocumentNumber(value: string | null): string { return value ? `••••••${value.slice(-4)}` : ''; }
   fileSize(size: number): string { return `${(size / 1024 / 1024).toLocaleString('es-EC', { maximumFractionDigits: 2 })} MB`; }
   sourceOfFundsLabel(source: SourceOfFunds | null): string { return this.sourceOfFundsOptions.find(option => option.value === source)?.label ?? 'No registrado'; }
   async startCamera(): Promise<void> {
@@ -200,17 +204,17 @@ export class InvestmentApplicationComponent implements OnDestroy {
         if (!video || !this.cameraStream) return;
         video.srcObject = this.cameraStream; await video.play();
         const FaceDetector = (globalThis as typeof globalThis & { FaceDetector?: FaceDetectorConstructor }).FaceDetector;
-        if (!FaceDetector) { this.faceDetectionAvailable.set(false); this.faceGuideMessage.set('La detección automática no está disponible en este navegador. Puedes capturar o seleccionar una fotografía.'); return; }
+        if (!FaceDetector) { this.faceDetectionAvailable.set(false); this.faceGuideMessage.set('La detección automática no está disponible; captura una selfie en vivo con la cámara.'); return; }
         this.faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 2 }); this.faceDetectionAvailable.set(true); this.detectFace(video);
       });
     } catch { this.error.set('No se pudo acceder a la cámara. Puedes seleccionar una fotografía desde tu dispositivo.'); }
   }
   stopCamera(): void { if (this.detectionTimer) clearTimeout(this.detectionTimer); this.detectionTimer = null; this.faceDetector = null; this.detectionBusy = false; this.stableSince = null; this.lastFaceCenter = null; this.cameraStream?.getTracks().forEach(track => track.stop()); this.cameraStream = null; this.cameraActive.set(false); }
   repeatPhoto(): void { this.discardLocalPhoto(); this.startCamera(); }
-  captureSelfie(): void { const video = globalThis.document.querySelector<HTMLVideoElement>('#identityCamera'); if (!video || !video.videoWidth) return; const canvas = globalThis.document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d')?.drawImage(video, 0, 0); canvas.toBlob(blob => { if (!blob) return; this.setLocalPhoto(new File([blob], 'selfie.jpg', { type: 'image/jpeg' })); }, 'image/jpeg', .9); this.stopCamera(); }
-  async selectSelfie(event: Event): Promise<void> { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; if (!await this.validateImageFile(file)) return; this.stopCamera(); this.setLocalPhoto(file); }
-  discardLocalPhoto(): void { this.releaseUrl(this.localPhotoUrl()); this.localPhotoUrl.set(null); this.pendingSelfie = null; }
-  saveSelfie(): void { const app = this.application(); const url = this.localPhotoUrl(); if (!app || !url || this.savingSelfie()) return; const file = this.pendingSelfie; if (!file) return; this.savingSelfie.set(true); this.identityService.uploadSelfie(app.id,file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:v=>{this.identityVerification.set(v);this.selfieUrl.set(url);this.localPhotoUrl.set(null);this.pendingSelfie=null;this.savingSelfie.set(false);},error:e=>{this.savingSelfie.set(false);this.error.set(this.identityError(e));}}); }
+  captureSelfie(): void { const video = globalThis.document.querySelector<HTMLVideoElement>('#identityCamera'); if (!video || !video.videoWidth) { this.error.set('No se pudo leer la cámara. Intenta activarla nuevamente.'); return; } if (this.faceDetector && !this.faceReady()) { this.error.set('Espera a que se confirme un rostro correctamente posicionado.'); return; } const canvas = globalThis.document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d')?.drawImage(video, 0, 0); canvas.toBlob(blob => { if (!blob) return; this.selfieValidated.set(true); this.setLocalPhoto(new File([blob], 'selfie.jpg', { type: 'image/jpeg' })); }, 'image/jpeg', .9); this.stopCamera(); }
+  async selectSelfie(event: Event): Promise<void> { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; if (!await this.validateSelfieFile(file)) return; this.stopCamera(); this.selfieValidated.set(true); this.setLocalPhoto(file); }
+  discardLocalPhoto(): void { this.releaseUrl(this.localPhotoUrl()); this.localPhotoUrl.set(null); this.pendingSelfie = null; this.selfieValidated.set(false); }
+  saveSelfie(): void { const app = this.application(); const url = this.localPhotoUrl(); if (!app || !url || this.savingSelfie() || !this.selfieValidated()) { this.error.set('La fotografía debe contener un solo rostro validado.'); return; } const file = this.pendingSelfie; if (!file) return; this.savingSelfie.set(true); this.identityService.uploadSelfie(app.id,file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:v=>{this.identityVerification.set(v);this.selfieUrl.set(url);this.localPhotoUrl.set(null);this.pendingSelfie=null;this.selfieValidated.set(false);this.savingSelfie.set(false);},error:e=>{this.savingSelfie.set(false);this.error.set(this.identityError(e));}}); }
   verifyIdentity(): void { const app=this.application();if(!app||!this.consentAccepted()||this.verifyingIdentity())return;if(!this.identityVerification()||this.identityVerification()?.status!=='Captured'){this.error.set('Primero debes registrar una fotografía.');return;}this.verifyingIdentity.set(true);this.identityService.verify(app.id,true).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:v=>{this.identityVerification.set(v);this.applicationService.getById(app.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:x=>{this.application.set(x);this.verifyingIdentity.set(false);},error:e=>{this.verifyingIdentity.set(false);this.error.set(this.errorMessage(e));}})},error:e=>{this.verifyingIdentity.set(false);this.error.set(this.identityError(e));}}); }
   declarationsReady(): boolean {
     const value = this.declarationsForm.getRawValue();
@@ -259,6 +263,21 @@ export class InvestmentApplicationComponent implements OnDestroy {
     const progress = Math.min(1, (now - this.stableSince) / 1200); this.faceStabilityProgress.set(progress); this.faceReady.set(true); this.faceGuideMessage.set(progress >= 1 ? 'Rostro correctamente posicionado.' : 'Mantén la posición...');
     if (progress >= 1) this.captureSelfie();
   }
+  private async validateSelfieFile(file: File): Promise<boolean> {
+    if (!await this.validateImageFile(file)) return false;
+    const Detector = (globalThis as typeof globalThis & { FaceDetector?: FaceDetectorConstructor }).FaceDetector;
+    if (!Detector) { this.error.set(''); await this.startCamera(); return false; }
+    let bitmap: ImageBitmap | null = null;
+    try {
+      bitmap = await createImageBitmap(file);
+      const faces = await new Detector({ fastMode: false, maxDetectedFaces: 2 }).detect(bitmap);
+      if (faces.length !== 1) { this.error.set(faces.length ? 'La fotografía debe contener únicamente un rostro.' : 'No se detectó un rostro. No subas una cédula ni otro documento.'); return false; }
+      const faceRatio = faces[0].boundingBox.width / bitmap.width;
+      if (faceRatio < .22 || faceRatio > .68) { this.error.set('El rostro debe verse centrado y ocupar una parte clara de la fotografía.'); return false; }
+      return true;
+    } catch { this.error.set('No se pudo validar el rostro en la fotografía.'); return false; }
+    finally { bitmap?.close(); }
+  }
   private async validateImageFile(file: File): Promise<boolean> {
     if (!['image/jpeg', 'image/png'].includes(file.type)) { this.error.set('Solo se permiten imágenes JPG o PNG.'); return false; }
     if (!file.size) { this.error.set('La imagen está vacía.'); return false; }
@@ -304,6 +323,7 @@ export class InvestmentApplicationComponent implements OnDestroy {
     this.declarationsForm.patchValue({ sourceOfFunds: application.sourceOfFunds, otherSourceOfFunds: application.otherSourceOfFunds ?? '', informationAccuracyAccepted: application.informationAccuracyAccepted, termsAccepted: application.termsAccepted, dataProcessingAccepted: application.dataProcessingAccepted });
   }
   private errorMessage(error: HttpErrorResponse): string {
+    if (typeof error.error?.message === 'string') return error.error.message;
     if (error.status === 0) return 'No se pudo conectar con el servidor.';
     if (error.status === 403) return 'No tienes acceso a esta solicitud.';
     if (error.status === 404) return 'La solicitud no existe.';
@@ -311,6 +331,7 @@ export class InvestmentApplicationComponent implements OnDestroy {
     return 'Ocurrió un error al procesar la solicitud.';
   }
   private documentErrorMessage(error: HttpErrorResponse): string {
+    if (typeof error.error?.message === 'string') return error.error.message;
     if (error.status === 0) return 'No se pudo conectar con el servidor.';
     if (error.status === 403) return 'No tienes acceso a esta solicitud.';
     if (error.status === 404) return 'No se encontró el documento o la solicitud.';

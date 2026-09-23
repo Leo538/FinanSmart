@@ -1,7 +1,7 @@
 <section class="register-card card">
   <div>
     <h1>Crear cuenta</h1>
-    <p>Regístrate para acceder a FinanSmart como cliente.</p>
+    <p>Regístrate para acceder a {{ institution.currentInstitution()?.name || 'FinanSmart' }} como cliente.</p>
   </div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate>

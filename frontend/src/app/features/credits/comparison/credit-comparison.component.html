@@ -1,5 +1,6 @@
-<main class="page-container">
+<main class="page-container" [class.public-comparison]="isPublic()">
   <app-page-header title="Comparar sistemas de amortización" subtitle="Analiza las diferencias entre los sistemas Francés y Alemán para el mismo crédito." />
+  @if (isPublic()) { <section class="public-hero"><span>DECIDE CON INFORMACI&#211;N</span><h1>Compara tus opciones de pago.</h1><p>Conoce las diferencias reales entre los sistemas Franc&#233;s y Alem&#225;n antes de solicitar un cr&#233;dito.</p></section> }
   @if (error()) { <p class="feedback error" role="alert">{{ error() }}</p> }
   @if (loadingTypes()) { <div class="loading-area"><app-loading-spinner label="Cargando tipos de crédito" /></div> }
   @else {
@@ -7,7 +8,6 @@
       <div class="form-group"><label class="form-label" for="comparisonType">Tipo de crédito</label><select id="comparisonType" class="form-select" formControlName="creditTypeId"><option value="">Selecciona un tipo</option>@for (type of creditTypes(); track type.id) { <option [value]="type.id">{{ type.name }}</option> }</select>@if (form.controls.creditTypeId.touched && form.controls.creditTypeId.invalid) { <span class="form-error">Selecciona un tipo de crédito.</span> }</div>
       <div class="form-group"><label class="form-label" for="comparisonAmount">Monto solicitado</label><input id="comparisonAmount" class="form-control" type="number" min="0" step="0.01" formControlName="amount" />@if (form.controls.amount.touched && amountError()) { <span class="form-error">{{ amountError() }}</span> }</div>
       <div class="form-group"><label class="form-label" for="comparisonTerm">Plazo en meses</label><input id="comparisonTerm" class="form-control" type="number" min="1" step="1" formControlName="termMonths" />@if (form.controls.termMonths.touched && termError()) { <span class="form-error">{{ termError() }}</span> }</div>
-      <div class="form-group"><label class="form-label" for="comparisonDate">Fecha de inicio</label><input id="comparisonDate" class="form-control" type="date" formControlName="startDate" /></div>
       <button class="btn btn-primary btn-md" type="submit" [disabled]="comparing()">{{ comparing() ? 'Comparando...' : 'Comparar sistemas' }}</button>
     </div>@if (selectedType(); as type) { <div class="type-info"><strong>{{ type.name }}</strong><span>Monto: {{ money(type.minimumAmount) }} - {{ money(type.maximumAmount) }}</span><span>Plazo: {{ type.minimumTermMonths }} - {{ type.maximumTermMonths }} meses</span><small>La tasa vigente será obtenida automáticamente.</small></div> }@if (comparing()) { <div class="inline-loading"><app-loading-spinner label="Procesando comparación" /></div> }</form>
     @if (!result()) { <section class="card initial-state"><app-empty-state title="No hay una comparación generada." description="Ingresa los parámetros del crédito para analizar ambos sistemas de amortización." /></section> }

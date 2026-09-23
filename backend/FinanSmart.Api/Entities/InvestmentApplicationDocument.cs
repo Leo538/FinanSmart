@@ -15,5 +15,15 @@ public class InvestmentApplicationDocument
     public bool IsActive { get; set; }
     public DateTimeOffset UploadedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
+    public DocumentValidationStatus? ValidationStatus { get; set; }
+    public string? ExtractedDocumentNumber { get; set; }
+    public string? ExtractedFirstName { get; set; }
+    public string? ExtractedLastName { get; set; }
+    public DateOnly? ExtractedDateOfBirth { get; set; }
+    public DateOnly? ExtractedExpirationDate { get; set; }
+    public string? ExtractedCountryRegion { get; set; }
+    public string? ExtractedDocumentType { get; set; }
+    public string? ValidationMessage { get; set; }
+    public DateTimeOffset? ValidatedAt { get; set; }
     public InvestmentApplication InvestmentApplication { get; set; } = null!;
 }

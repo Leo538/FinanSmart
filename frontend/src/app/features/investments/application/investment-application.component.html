@@ -12,7 +12,43 @@
       <article class="card snapshot"><div class="card-header"><h2>Resumen de inversión</h2></div><div class="card-body"><dl><div><dt>Producto</dt><dd>{{ item.investmentProductName }}</dd></div><div><dt>Monto</dt><dd>{{ money(item.amount) }}</dd></div><div><dt>Plazo</dt><dd>{{ item.termDays }} días</dd></div><div><dt>Tasa</dt><dd>{{ percent(item.annualInterestRate) }}</dd></div><div><dt>Intereses estimados</dt><dd>{{ money(item.totalInterest) }}</dd></div><div class="snapshot-total"><dt>Total recibido</dt><dd>{{ money(item.totalReceived) }}</dd></div></dl></div></article>
       <article class="card personal-card"><div class="card-header"><h2>Datos personales</h2></div>@if (item.currentStep === 'PersonalInformation') { <form class="card-body applicant-form" [formGroup]="form" (ngSubmit)="saveApplicant()"><div class="form-group"><label>Nombres</label><input class="form-control" formControlName="firstName" /></div><div class="form-group"><label>Apellidos</label><input class="form-control" formControlName="lastName" /></div><div class="form-group"><label>Identificación</label><input class="form-control" formControlName="identificationNumber" /></div><div class="form-group"><label>Correo</label><input class="form-control" formControlName="email" /></div><div class="form-group"><label>Teléfono</label><input class="form-control" formControlName="phone" /></div><div class="form-group"><label>Ciudad</label><input class="form-control" formControlName="city" /></div><div class="form-group full"><label>Dirección</label><input class="form-control" formControlName="address" /></div><div class="form-actions"><button class="btn btn-primary" type="submit">Guardar y continuar</button></div></form> } @else { <div class="card-body completed-message"><p>Datos personales registrados.</p></div> }</article>
     </section>
-    @if (item.currentStep === 'Documents') { <section class="card documents"><div class="card-header"><h2>Documentos requeridos</h2></div><div class="card-body">@for (type of requiredDocumentTypes(); track type) { <article class="document-item"><div><strong>{{ documentLabel(type) }}</strong>@if (documentFor(type); as fileDocument) { <span>{{ fileDocument.originalFileName }} · {{ fileSize(fileDocument.fileSize) }}</span> } @else { <span>Pendiente</span> }</div>@if (documentFor(type); as fileDocument) { <div class="document-actions"><button class="btn btn-secondary btn-sm" type="button" (click)="downloadDocument(fileDocument)">Descargar</button><label class="btn btn-secondary btn-sm">Reemplazar<input type="file" accept="image/jpeg,image/png,application/pdf" (change)="chooseFile($event,type)" /></label><button class="text-danger" type="button" (click)="deleteDocument(fileDocument)">Eliminar</button></div> } @else { <label class="btn btn-primary btn-sm">Seleccionar archivo<input type="file" accept="image/jpeg,image/png,application/pdf" (change)="chooseFile($event,type)" /></label> }</article> }<button class="btn btn-primary" type="button" [disabled]="!requirements()?.isComplete || completingDocuments()" (click)="completeDocuments()">{{ completingDocuments() ? 'Guardando...' : 'Continuar con validación de identidad' }}</button></div></section> }
+    @if (item.currentStep === 'Documents') {
+      <section class="card documents">
+        <div class="card-header"><h2>Documentos requeridos</h2></div>
+        <div class="card-body">
+          @if (uploadingType()) {
+            <p class="document-uploading"><strong>Validando cédula con Azure…</strong><span>{{ uploadingFileName() }} · El archivo aún no se ha guardado.</span></p>
+          }
+          @for (type of requiredDocumentTypes(); track type) {
+            @if (documentFor(type); as fileDocument) {
+              <article class="document-item">
+                <div>
+                  <strong>{{ documentLabel(type) }}</strong>
+                  <span>{{ fileDocument.originalFileName }} · {{ fileSize(fileDocument.fileSize) }}</span>
+                  @if (type !== 'AdditionalDocument') {
+                    <span class="document-validation" [class.valid]="fileDocument.validationStatus === 'Valid'" [class.review]="fileDocument.validationStatus === 'RequiresManualReview'" [class.invalid]="fileDocument.validationStatus === 'Invalid'">{{ documentValidationLabel(fileDocument) }}</span>
+                    @if (fileDocument.extractedDocumentNumber) { <small>Número: {{ maskDocumentNumber(fileDocument.extractedDocumentNumber) }}</small> }
+                    @if (fileDocument.validationMessage) { <small>{{ fileDocument.validationMessage }}</small> }
+                  }
+                </div>
+                <div class="document-actions">
+                  <button class="btn btn-secondary btn-sm" type="button" (click)="downloadDocument(fileDocument)">Descargar</button>
+                  <label class="btn btn-secondary btn-sm">Reemplazar<input type="file" [accept]="type === 'AdditionalDocument' ? 'image/jpeg,image/png,application/pdf' : 'image/jpeg,image/png'" (change)="chooseFile($event,type)" /></label>
+                  <button class="text-danger" type="button" (click)="deleteDocument(fileDocument)">Eliminar</button>
+                </div>
+              </article>
+            } @else {
+              <article class="document-item">
+                <div><strong>{{ documentLabel(type) }}</strong><span>Pendiente</span></div>
+                <label class="btn btn-primary btn-sm">Seleccionar archivo<input type="file" [accept]="type === 'AdditionalDocument' ? 'image/jpeg,image/png,application/pdf' : 'image/jpeg,image/png'" (change)="chooseFile($event,type)" /></label>
+              </article>
+            }
+          }
+          @if (!requirements()?.isComplete && !uploadingType()) { <p class="document-required-note">Falta validar correctamente los documentos requeridos.</p> }
+          <button class="btn btn-primary" type="button" [disabled]="!requirements()?.isComplete || completingDocuments() || !!uploadingType()" (click)="completeDocuments()">{{ completingDocuments() ? 'Guardando...' : 'Continuar con validación de identidad' }}</button>
+        </div>
+      </section>
+    }
     @if (item.currentStep === 'Documents') { <section class="card document-capture"><p>FinanSmart verifica formato, calidad y características visuales básicas del documento. La autenticidad será revisada durante el proceso de aprobación.</p>@if (documentPreviewUrl(); as preview) { <img [src]="preview" alt="Vista previa del documento" /><div class="identity-actions"><button class="btn btn-secondary" type="button" (click)="repeatDocumentPhoto()">Repetir foto</button><button class="btn btn-primary" type="button" (click)="useDocumentPhoto()">Usar esta fotografía</button></div> } @else if (documentCameraActive()) { <div class="document-stage"><video id="documentCamera" autoplay playsinline muted></video><div class="document-guide" [class.ready]="documentReady()"></div></div><strong [class.document-ready]="documentReady()">{{ documentGuideMessage() }}</strong><div class="stability"><span [style.width.%]="documentProgress()*100"></span></div><button class="btn btn-secondary" type="button" (click)="stopDocumentCamera()">Cancelar cámara</button> } @else { <div class="identity-actions"><button class="btn btn-secondary" type="button" (click)="startDocumentCamera('IdentityFront')">Tomar fotografía frontal</button><button class="btn btn-secondary" type="button" (click)="startDocumentCamera('IdentityBack')">Tomar fotografía reverso</button></div> }</section> }
     @if (item.currentStep === 'IdentityVerification') {
       <section class="card identity-card"><div class="card-header"><h2>Verificación de identidad</h2></div><div class="card-body"><p>Usaremos la cámara únicamente para capturar una fotografía de identidad durante esta solicitud.</p>

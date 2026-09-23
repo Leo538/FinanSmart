@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { map, shareReplay, tap } from 'rxjs/operators';
+import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { Institution } from '../../features/admin/institution/models/institution.model';
 import { InstitutionService } from '../../features/admin/institution/services/institution.service';
 import { ThemeService } from './theme.service';
@@ -29,6 +29,11 @@ export class InstitutionStateService {
           this.loaded.set(true);
         }),
         map(({ managedInstitution }) => managedInstitution),
+        catchError(() => {
+          this.setInstitution(null);
+          this.loaded.set(true);
+          return of(null);
+        }),
         shareReplay({ bufferSize: 1, refCount: false })
       );
     }

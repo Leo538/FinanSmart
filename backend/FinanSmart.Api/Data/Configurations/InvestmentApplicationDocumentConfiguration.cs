@@ -8,6 +8,8 @@ public class InvestmentApplicationDocumentConfiguration : IEntityTypeConfigurati
 {
     public void Configure(EntityTypeBuilder<InvestmentApplicationDocument> builder)
     {
+        builder.Property(document => document.ValidationStatus).HasConversion<string>();
+        builder.Property(document => document.ValidationMessage).HasMaxLength(500);
         builder.HasIndex(document => document.InvestmentApplicationId);
         builder.HasIndex(document => new { document.InvestmentApplicationId, document.DocumentType, document.IsActive });
         builder.HasOne(document => document.InvestmentApplication)

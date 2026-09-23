@@ -2,6 +2,7 @@
   --primary: #123b5d;
   --primary-dark: #092b46;
   --primary-soft: #e8f1f7;
+  --primary-contrast: #ffffff;
   --background: #f4f7fb;
   --surface: #ffffff;
   --surface-muted: #f8fafc;
@@ -15,8 +16,14 @@
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
   --shadow-sm: 0 2px 8px rgb(15 42 65 / 6%);
   --shadow-md: 0 14px 35px rgb(15 42 65 / 12%);
+  --shadow-focus: 0 0 0 3px var(--primary-soft);
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
   --color-primary-light: var(--primary-soft);

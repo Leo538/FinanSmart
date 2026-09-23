@@ -4,6 +4,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthStateService } from '../../../core/auth/services/auth-state.service';
 import { InvestmentProduct, InterestCalculationMethod, InterestPaymentFrequency } from '../../admin/investments/investment-products/models/investment-product.model';
 import { InvestmentProductService } from '../../admin/investments/investment-products/services/investment-product.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -30,6 +31,7 @@ export class InvestmentSimulatorComponent {
   private readonly applicationService = inject(InvestmentApplicationService);
   private readonly rateService = inject(InvestmentRateService);
   private readonly router = inject(Router);
+  private readonly authState = inject(AuthStateService);
   private readonly currencyFormatter = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' });
   private readonly percentageFormatter = new Intl.NumberFormat('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   readonly products = signal<InvestmentProduct[]>([]);
@@ -43,10 +45,13 @@ export class InvestmentSimulatorComponent {
   readonly applicableRate = signal<InvestmentRate | null>(null);
   readonly checkingRate = signal(false);
   readonly noApplicableRate = signal(false);
+  readonly minimumStartDate = new Date().toISOString().slice(0, 10);
+  readonly termUnit = signal<'days' | 'months'>('days');
+  isPublic(): boolean { return this.router.url.startsWith('/simulators/'); }
   private rateTimer: ReturnType<typeof setTimeout> | null = null;
   readonly form = this.formBuilder.group({
     investmentProductId: ['', Validators.required], amount: [0, Validators.required], termDays: [0, Validators.required],
-    startDate: [new Date().toISOString().slice(0, 10), Validators.required]
+    startDate: [this.minimumStartDate, Validators.required]
   });
 
   constructor() {
@@ -58,6 +63,7 @@ export class InvestmentSimulatorComponent {
           minimumTermDays: Number(product.minimumTermDays), maximumTermDays: product.maximumTermDays === null ? null : Number(product.maximumTermDays)
         }));
         this.products.set(activeProducts);
+        this.restorePendingSimulation();
         this.updateSelectedProduct(this.form.controls.investmentProductId.value);
         this.loadingProducts.set(false);
       },
@@ -77,7 +83,7 @@ export class InvestmentSimulatorComponent {
     if (!this.isValid() || !this.applicableRate() || this.simulating()) { this.form.markAllAsTouched(); return; }
     this.error.set(''); this.simulating.set(true);
     const value = this.form.getRawValue();
-    this.simulationService.simulate({ ...value, startDate: `${value.startDate}T00:00:00Z` }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.simulationService.simulate({ ...value, termDays: this.normalizedTermDays(), startDate: `${value.startDate}T00:00:00Z` }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: result => { this.result.set(result); this.resultStale.set(false); this.simulating.set(false); },
       error: error => { this.simulating.set(false); this.error.set(this.errorMessage(error)); }
     });
@@ -86,8 +92,13 @@ export class InvestmentSimulatorComponent {
   createApplication(): void {
     if (!this.result() || this.resultStale() || this.error() || this.creatingApplication()) return;
     const value = this.form.getRawValue();
+    if (!this.authState.hasRole('Client')) {
+      sessionStorage.setItem('finansmart.pendingInvestmentSimulation', JSON.stringify({ ...value, termUnit: this.termUnit() }));
+      void this.router.navigate(['/login'], { queryParams: { returnUrl: '/simulators/investment' } });
+      return;
+    }
     this.creatingApplication.set(true);
-    this.applicationService.create({ ...value, startDate: `${value.startDate}T00:00:00Z` }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.applicationService.create({ ...value, termDays: this.normalizedTermDays(), startDate: `${value.startDate}T00:00:00Z` }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: application => { this.creatingApplication.set(false); this.router.navigate(['/client/investments/applications', application.id]); },
       error: () => { this.creatingApplication.set(false); this.error.set('Ocurrió un error al iniciar la solicitud de inversión.'); }
     });
@@ -95,8 +106,10 @@ export class InvestmentSimulatorComponent {
 
   isValid(): boolean {
     const product = this.selectedProduct(); const value = this.form.getRawValue();
-    return this.form.valid && !!product && Number.isFinite(value.amount) && Number.isFinite(value.termDays) && Number.isInteger(value.termDays);
+    const termDays = this.normalizedTermDays();
+    return this.form.valid && this.isStartDateValid() && !!product && Number.isFinite(value.amount) && Number.isFinite(termDays) && Number.isInteger(termDays);
   }
+  isStartDateValid(): boolean { return this.form.controls.startDate.value >= this.minimumStartDate; }
   amountError(): string {
     const product = this.selectedProduct(); const amount = this.form.controls.amount.value;
     if (amount <= 0) return 'Ingresa un monto positivo.';
@@ -105,7 +118,7 @@ export class InvestmentSimulatorComponent {
     return '';
   }
   termError(): string {
-    const product = this.selectedProduct(); const termDays = this.form.controls.termDays.value;
+    const product = this.selectedProduct(); const termDays = this.normalizedTermDays();
     if (!Number.isInteger(termDays) || termDays <= 0) return 'Ingresa un plazo entero y positivo.';
     if (!product) return '';
     if (termDays < product.minimumTermDays || (product.maximumTermDays !== null && termDays > product.maximumTermDays)) return this.termRangeMessage(product);
@@ -113,10 +126,23 @@ export class InvestmentSimulatorComponent {
   }
   money(value: number): string { return this.currencyFormatter.format(value); }
   amountRange(product: InvestmentProduct): string { return product.maximumAmount === null ? `Desde ${this.money(product.minimumAmount)}` : `${this.money(product.minimumAmount)} - ${this.money(product.maximumAmount)}`; }
-  termRange(product: InvestmentProduct): string { return product.maximumTermDays === null ? `Desde ${product.minimumTermDays} días` : `${product.minimumTermDays} - ${product.maximumTermDays} días`; }
+  termRange(product: InvestmentProduct): string {
+    const minimum = this.termUnit() === 'months' ? Math.ceil(product.minimumTermDays / 30) : product.minimumTermDays;
+    const maximum = product.maximumTermDays === null ? null : this.termUnit() === 'months' ? Math.floor(product.maximumTermDays / 30) : product.maximumTermDays;
+    return maximum === null ? `Desde ${minimum} ${this.termUnitLabel()}` : `${minimum} - ${maximum} ${this.termUnitLabel()}`;
+  }
   amountRangeMessage(product: InvestmentProduct): string { return product.maximumAmount === null ? `El monto mínimo permitido es ${this.money(product.minimumAmount)}.` : `El monto permitido para ${product.name} es de ${this.money(product.minimumAmount)} a ${this.money(product.maximumAmount)}.`; }
-  termRangeMessage(product: InvestmentProduct): string { return product.maximumTermDays === null ? `El plazo mínimo permitido es ${product.minimumTermDays} días.` : `El plazo permitido es de ${product.minimumTermDays} a ${product.maximumTermDays} días.`; }
+  termRangeMessage(product: InvestmentProduct): string { return `El plazo permitido es ${this.termRange(product)}.`; }
   percent(value: number): string { return `${this.percentageFormatter.format(value)} %`; }
+  setTermUnit(unit: 'days' | 'months'): void {
+    if (unit === this.termUnit()) return;
+    const value = this.form.controls.termDays.value;
+    this.form.controls.termDays.setValue(unit === 'months' ? Math.max(1, Math.ceil(value / 30)) : value * 30);
+    this.termUnit.set(unit);
+    this.updateSelectedProduct(this.form.controls.investmentProductId.value);
+  }
+  termUnitLabel(): string { return this.termUnit() === 'months' ? 'meses' : 'días'; }
+  normalizedTermDays(): number { return this.termUnit() === 'months' ? this.form.controls.termDays.value * 30 : this.form.controls.termDays.value; }
   calculationMethodLabel(method: InterestCalculationMethod | string): string { return method === 'Compound' ? 'Interés compuesto' : 'Interés simple'; }
   paymentFrequencyLabel(frequency: InterestPaymentFrequency | string): string { return ({ AtMaturity: 'Al vencimiento', Monthly: 'Mensual', Quarterly: 'Trimestral', SemiAnnual: 'Semestral', Upfront: 'Anticipado' } as Record<string, string>)[frequency] ?? frequency; }
   paymentTypeLabel(paymentType: string): string { return ({ Interest: 'Pago de intereses', Maturity: 'Vencimiento', Upfront: 'Pago anticipado' } as Record<string, string>)[paymentType] ?? paymentType; }
@@ -130,9 +156,11 @@ export class InvestmentSimulatorComponent {
       this.form.controls.termDays.setValidators([Validators.required, Validators.min(1)]);
     } else {
       const amountValidators = [Validators.required, Validators.min(product.minimumAmount)];
-      const termValidators = [Validators.required, Validators.min(product.minimumTermDays)];
+      const minimumTerm = this.termUnit() === 'months' ? Math.ceil(product.minimumTermDays / 30) : product.minimumTermDays;
+      const maximumTerm = product.maximumTermDays === null ? null : this.termUnit() === 'months' ? Math.floor(product.maximumTermDays / 30) : product.maximumTermDays;
+      const termValidators = [Validators.required, Validators.min(minimumTerm)];
       if (product.maximumAmount !== null) amountValidators.push(Validators.max(product.maximumAmount));
-      if (product.maximumTermDays !== null) termValidators.push(Validators.max(product.maximumTermDays));
+      if (maximumTerm !== null) termValidators.push(Validators.max(maximumTerm));
       this.form.controls.amount.setValidators(amountValidators);
       this.form.controls.termDays.setValidators(termValidators);
       console.debug('[Investment simulator] Selected product limits', {
@@ -144,14 +172,27 @@ export class InvestmentSimulatorComponent {
     this.form.controls.termDays.updateValueAndValidity({ emitEvent: false });
     this.scheduleApplicableRate();
   }
+  private restorePendingSimulation(): void {
+    if (!this.authState.hasRole('Client')) return;
+    const pending = sessionStorage.getItem('finansmart.pendingInvestmentSimulation');
+    if (!pending) return;
+    try {
+      const value = JSON.parse(pending) as { investmentProductId?: string; amount?: number; termDays?: number; startDate?: string; termUnit?: 'days' | 'months' };
+      if (value.investmentProductId && Number.isFinite(value.amount) && Number.isInteger(value.termDays) && value.startDate) {
+        if (value.termUnit === 'months') this.termUnit.set('months');
+        this.form.patchValue(value);
+      }
+    } catch { /* An invalid browser value must not interrupt the simulator. */ }
+    sessionStorage.removeItem('finansmart.pendingInvestmentSimulation');
+  }
   private scheduleApplicableRate(): void {
     if (this.rateTimer) clearTimeout(this.rateTimer);
     this.applicableRate.set(null); this.noApplicableRate.set(false);
-    const product = this.selectedProduct(); const value = this.form.getRawValue();
-    if (!product || this.form.controls.amount.invalid || this.form.controls.termDays.invalid || !Number.isInteger(value.termDays)) { this.checkingRate.set(false); return; }
+    const product = this.selectedProduct(); const value = this.form.getRawValue(); const termDays = this.normalizedTermDays();
+    if (!product || this.form.controls.amount.invalid || this.form.controls.termDays.invalid || !Number.isInteger(termDays)) { this.checkingRate.set(false); return; }
     this.checkingRate.set(true);
-    this.rateTimer = setTimeout(() => this.rateService.getApplicableRate(product.id, value.amount, value.termDays).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: rate => { const current = this.form.getRawValue(); if (this.selectedProduct()?.id === product.id && current.amount === value.amount && current.termDays === value.termDays) { this.applicableRate.set(rate); this.noApplicableRate.set(false); } this.checkingRate.set(false); },
+    this.rateTimer = setTimeout(() => this.rateService.getApplicableRate(product.id, value.amount, termDays).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: rate => { const current = this.form.getRawValue(); if (this.selectedProduct()?.id === product.id && current.amount === value.amount && this.normalizedTermDays() === termDays) { this.applicableRate.set(rate); this.noApplicableRate.set(false); } this.checkingRate.set(false); },
       error: error => { if (error.status === 404) this.noApplicableRate.set(true); this.checkingRate.set(false); }
     }), 250);
   }
