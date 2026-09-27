@@ -299,18 +299,36 @@ main.public-simulator.credit-tool .schedule-header { align-items: center; margin
 main.public-simulator.credit-tool .schedule-header h2 { margin-bottom: 6px; }
 main.public-simulator.credit-tool .schedule-header .btn { flex: none; min-height: 44px; border: 1px solid #b9d1d5; border-radius: 999px; background: #fff; color: var(--brand-primary); font-family: var(--font-family-base); font-weight: 700; }
 main.public-simulator.credit-tool .schedule-header .btn:hover { background: var(--primary-soft); }
-main.public-simulator.credit-tool .amortization-table { min-width: 1120px; font-family: var(--font-family-base); }
-main.public-simulator.credit-tool .amortization-table th { padding: 16px 13px; background: var(--brand-primary); color: #fff; font-size: .74rem; font-weight: 700; letter-spacing: 0; line-height: 1.3; text-transform: none; white-space: nowrap; }
-main.public-simulator.credit-tool .amortization-table td { padding: 16px 13px; color: #344f59; font-size: .83rem; line-height: 1.45; white-space: nowrap; }
+main.public-simulator.credit-tool .schedule-note { margin: 13px 2px 0; color: var(--text-secondary); font-size: .78rem; line-height: 1.5; }
+main.public-simulator.credit-tool .amortization-table { min-width: 1120px; border-collapse: separate; border-spacing: 0; font-family: var(--font-family-base); font-variant-numeric: tabular-nums; }
+main.public-simulator.credit-tool .amortization-table th { padding: 17px 14px; background: var(--brand-primary); color: var(--primary-contrast); font-size: .73rem; font-weight: 700; letter-spacing: 0; line-height: 1.3; text-transform: none; white-space: nowrap; }
+main.public-simulator.credit-tool .amortization-table td { padding: 15px 14px; border-bottom: 1px solid #e3ecee; color: #344f59; font-size: .83rem; line-height: 1.4; white-space: nowrap; }
+main.public-simulator.credit-tool .amortization-table th:first-child,
+main.public-simulator.credit-tool .amortization-table td:first-child { width: 54px; text-align: center; }
 main.public-simulator.credit-tool .amortization-table td strong { color: #173c49; }
-main.public-simulator.credit-tool .amortization-table tbody tr:not(.charge-detail):hover td { background: #eef7f7; }
-main.public-simulator.credit-tool .amortization-table .charge-button { padding: 0; border: 0; background: transparent; color: var(--brand-primary); font-family: inherit; font-size: .82rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+main.public-simulator.credit-tool .amortization-table .payment-cell strong { color: var(--brand-primary); font-weight: 800; }
+main.public-simulator.credit-tool .amortization-table tbody tr:not(.charge-detail):hover td,
+main.public-simulator.credit-tool .amortization-table tbody tr.is-expanded td { background: #eaf5f5; }
+main.public-simulator.credit-tool .amortization-table .charge-button { display: inline-grid; justify-items: end; gap: 2px; padding: 0; border: 0; background: transparent; color: var(--brand-primary); font-family: inherit; font-size: .82rem; font-weight: 750; cursor: pointer; }
+main.public-simulator.credit-tool .amortization-table .charge-button small { color: var(--landing-accent-dark); font-size: .71rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+main.public-simulator.credit-tool .amortization-table .charge-button:hover small { color: var(--brand-primary-hover); }
 main.public-simulator.credit-tool .amortization-table .charge-button:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 4px; }
-main.public-simulator.credit-tool .amortization-table .charge-detail td { padding: 18px !important; background: #f1f8f8 !important; white-space: normal; }
-main.public-simulator.credit-tool .amortization-table .charge-detail td > div { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-main.public-simulator.credit-tool .amortization-table .charge-detail span { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; border: 1px solid #d6e7e9; border-radius: 999px; background: #fff; color: #365761; line-height: 1.35; white-space: normal; }
-main.public-simulator.credit-tool .amortization-table .charge-detail .charges-total { border-color: var(--brand-primary); background: var(--brand-primary); color: #fff; }
-main.public-simulator.credit-tool .amortization-table .charge-detail .charges-total strong { color: #fff; }
+main.public-simulator.credit-tool .amortization-table .charge-detail td { padding: 0 !important; border-bottom: 1px solid #d6e7e9; background: #f1f8f8 !important; text-align: left; white-space: normal; }
+main.public-simulator.credit-tool .charge-breakdown { display: grid; grid-template-columns: minmax(190px, .5fr) minmax(0, 1.5fr); gap: 28px; align-items: start; padding: 22px 26px; border-left: 3px solid var(--brand-primary); }
+main.public-simulator.credit-tool .charge-breakdown__heading { display: grid; gap: 7px; }
+main.public-simulator.credit-tool .charge-breakdown__heading strong { color: var(--text-primary); font-size: .91rem; }
+main.public-simulator.credit-tool .charge-breakdown__heading span { max-width: 230px; color: var(--text-secondary); font-size: .76rem; line-height: 1.5; }
+main.public-simulator.credit-tool .charge-breakdown__list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; margin: 0; }
+main.public-simulator.credit-tool .charge-breakdown__list > div { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; min-width: 0; padding: 9px 0; border-bottom: 1px solid #d8e8ea; }
+main.public-simulator.credit-tool .charge-breakdown__list dt { min-width: 0; color: #365761; font-size: .79rem; line-height: 1.35; }
+main.public-simulator.credit-tool .charge-breakdown__list dd { flex: none; margin: 0; color: var(--text-primary); font-size: .82rem; font-weight: 750; text-align: right; }
+main.public-simulator.credit-tool .charge-breakdown__list .charges-total { grid-column: 1 / -1; margin-top: 5px; padding: 11px 14px; border: 0; border-radius: 10px; background: #e0eff0; }
+main.public-simulator.credit-tool .charge-breakdown__list .charges-total dt,
+main.public-simulator.credit-tool .charge-breakdown__list .charges-total dd { color: var(--brand-primary); font-weight: 800; }
+main.public-simulator.credit-tool .amortization-table tfoot th,
+main.public-simulator.credit-tool .amortization-table tfoot td { padding: 16px 14px; border-top: 2px solid var(--brand-primary); border-bottom: 0; background: #e9f3f4 !important; color: var(--text-primary); font-size: .84rem; font-weight: 800; text-align: right; white-space: nowrap; }
+main.public-simulator.credit-tool .amortization-table tfoot th { border-radius: 0 !important; color: var(--text-primary) !important; text-align: left !important; }
+main.public-simulator.credit-tool .amortization-table tfoot td { color: var(--text-primary) !important; }
 
 @media (max-width: 900px) {
   :is(.public-simulator.credit-tool, .public-simulator.investment-page, .public-comparison.comparison-page) .public-tool-hero { grid-template-columns: minmax(0, 1fr) 230px; gap: 24px; min-height: 300px; padding: 40px; }

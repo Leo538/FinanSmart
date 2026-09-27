@@ -1,21 +1,40 @@
 # FinanSmart
 
-Aplicación de simulación de créditos e inversiones con Angular 20, ASP.NET Core 9 y PostgreSQL.
+FinanSmart es una plataforma para explorar opciones financieras antes de tomar una decisión. Permite simular créditos con los sistemas Francés y Alemán, comparar cuotas y descargar la tabla de amortización en PDF. También permite proyectar inversiones, iniciar una solicitud y seguir su estado. Incluye una página informativa, acceso para clientes y un panel de administración para configurar productos, tasas e identidad visual.
 
-## Desarrollo local
+Está desarrollada con Angular 20, ASP.NET Core 9 y PostgreSQL.
 
-Requisitos: .NET 9, Node.js con npm y PostgreSQL.
+## Antes de iniciar
 
-1. Copia `backend/FinanSmart.Api/appsettings.Development.example.json` como `backend/FinanSmart.Api/appsettings.Development.json`.
-2. En el archivo local, configura `ConnectionStrings:DefaultConnection` con tu base de datos y `Jwt:Key` con una clave aleatoria larga. El archivo local está excluido de Git. También puedes usar las variables de entorno `ConnectionStrings__DefaultConnection` y `Jwt__Key`.
-3. Aplica las migraciones: `dotnet ef database update --project backend/FinanSmart.Api`.
-4. Inicia la API: `dotnet run --project backend/FinanSmart.Api --launch-profile http`. Escucha en `http://localhost:5246`.
-5. En `frontend`, ejecuta `npm ci` y `npm start`. La web de desarrollo abre en `http://localhost:4200` y llama a la API local.
+Necesitas .NET 9, Node.js con npm y PostgreSQL. Copia `backend/FinanSmart.Api/appsettings.Development.example.json` a `backend/FinanSmart.Api/appsettings.Development.json` y configura allí la conexión a PostgreSQL y `Jwt:Key`. Ese archivo local y `Storage` no se suben al repositorio.
 
-La API requiere PostgreSQL y una clave JWT para funcionar; no se incluyen credenciales en el repositorio. Si falta alguna configuración obligatoria, muestra un error al iniciar. El directorio `Storage` se crea automáticamente y no se versiona. Solo los logos institucionales se sirven públicamente; los documentos de solicitudes se entregan mediante los endpoints autorizados.
+Aplica las migraciones desde la raíz del proyecto:
 
-## Producción
+```powershell
+dotnet ef database update --project .\backend\FinanSmart.Api
+```
 
-Ejecuta `npm run build` en `frontend`. La compilación de producción usa rutas relativas `/api`, por lo que la API debe estar en el mismo origen o detrás de un proxy que envíe `/api` y `/storage/institution-logos` al backend. Configura la conexión a PostgreSQL y `Jwt__Key` como secretos del entorno de despliegue. No uses `appsettings.Development.json` en producción.
+## Iniciar el backend
 
-Los archivos generados (`bin`, `obj`, `dist`, `node_modules`), la configuración local y `backend/FinanSmart.Api/Storage` están excluidos de Git. Si este repositorio se publicó antes de esta limpieza, los documentos que ya estuvieran en commits anteriores seguirán en el historial: purgar ese historial requiere una operación de Git separada y coordinada antes de publicarlo.
+Abre una terminal en la raíz del proyecto:
+
+```powershell
+cd .\backend
+dotnet run --project .\FinanSmart.Api
+```
+
+La API estará en `http://localhost:5246`.
+
+## Iniciar el frontend
+
+Abre otra terminal en la raíz del proyecto:
+
+```powershell
+cd .\frontend
+npm ci
+ng serve
+```
+
+Abre `http://localhost:4200`. Si `ng` no está disponible en tu terminal, usa `npx ng serve`.
+
+Para producción, `npm run build` genera el frontend con rutas `/api` relativas al mismo origen. Si el repositorio ya se publicó antes de excluir la configuración local y los documentos, recuerda que esos archivos pueden seguir en el historial antiguo de Git.

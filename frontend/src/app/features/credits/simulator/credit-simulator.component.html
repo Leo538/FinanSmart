@@ -28,7 +28,7 @@
             <p class="system-description">{{ simulation.amortizationSystem === 'French' ? 'Cuota financiera prácticamente constante.' : 'Cuotas decrecientes con capital constante.' }}</p>
             <section class="estimate-section compact-summary"><dl><div><dt>Monto solicitado</dt><dd>{{ money(simulation.requestedAmount) }}</dd></div><div><dt>Plazo</dt><dd>{{ simulation.termMonths }} meses</dd></div><div><dt>Tasa anual</dt><dd>{{ percent(simulation.annualInterestRate) }}</dd></div><div><dt>Intereses totales</dt><dd>{{ money(simulation.totalInterest) }}</dd></div><div><dt>Seguros y cargos</dt><dd>{{ money(simulation.totalCharges) }}</dd></div><div class="summary-total"><dt>Total estimado a pagar</dt><dd>{{ money(simulation.totalPayment) }}</dd></div></dl></section>
             <button class="breakdown-toggle" type="button" (click)="showBreakdown.set(!showBreakdown())" [attr.aria-expanded]="showBreakdown()">{{ showBreakdown() ? 'Ocultar desglose' : 'Ver desglose' }}</button>
-            @if (showBreakdown()) {<section class="estimate-section breakdown-content"><h3>Seguros y cargos</h3>@if (chargeTotals(simulation).length) {<dl>@for (charge of chargeTotals(simulation); track charge[0]) {<div><dt>{{ charge[0] }}</dt><dd>{{ money(charge[1]) }}</dd></div>}</dl>} @else {<p>No hay seguros ni cargos aplicados.</p>}<h3>Fechas</h3><dl><div><dt>Fecha de inicio</dt><dd>{{ simulation.startDate | date:'dd/MM/yyyy':'UTC' }}</dd></div><div><dt>Primera cuota</dt><dd>{{ simulation.installments[0]?.dueDate | date:'dd/MM/yyyy':'UTC' }}</dd></div><div><dt>Última cuota</dt><dd>{{ simulation.installments[simulation.installments.length - 1]?.dueDate | date:'dd/MM/yyyy':'UTC' }}</dd></div></dl></section>}
+            @if (showBreakdown()) {<section class="estimate-section breakdown-content"><h3>Seguros y cargos</h3>@if (chargeTotals(simulation).length) {<dl>@for (charge of chargeTotals(simulation); track charge[0]) {<div><dt>{{ chargeLabel(charge[0]) }}</dt><dd>{{ money(charge[1]) }}</dd></div>}</dl>} @else {<p>No hay seguros ni cargos aplicados.</p>}<h3>Fechas</h3><dl><div><dt>Fecha de inicio</dt><dd>{{ simulation.startDate | date:'dd/MM/yyyy':'UTC' }}</dd></div><div><dt>Primera cuota</dt><dd>{{ simulation.installments[0]?.dueDate | date:'dd/MM/yyyy':'UTC' }}</dd></div><div><dt>Última cuota</dt><dd>{{ simulation.installments[simulation.installments.length - 1]?.dueDate | date:'dd/MM/yyyy':'UTC' }}</dd></div></dl></section>}
             <div class="result-actions"><button class="btn btn-outline btn-sm" type="button" (click)="viewTable()">Ver amortización</button><button class="btn btn-ghost btn-sm" type="button" (click)="downloadPdf()" [disabled]="downloadingPdf()">{{ downloadingPdf() ? 'Generando PDF...' : 'Descargar PDF' }}</button></div>
           </div>
         }
@@ -36,9 +36,39 @@
     </section>
 
     @if (result(); as simulation) { @if (!resultStale() && showTable()) {
-      <section id="amortization-table" class="tool-schedule"><div class="schedule-header"><div><p class="section-kicker">Cronograma</p><h2>Tabla de amortización</h2><span>Detalle de pagos para {{ simulation.creditTypeName }}</span></div><button class="btn btn-outline btn-sm" type="button" (click)="downloadPdf()" [disabled]="downloadingPdf()">{{ downloadingPdf() ? 'Generando PDF...' : 'Descargar PDF' }}</button></div><div class="table-container"><table class="data-table amortization-table"><thead><tr><th scope="col">N.&#186;</th><th scope="col">Fecha</th><th scope="col">Saldo inicial</th><th scope="col">Capital</th><th scope="col">Interés</th><th scope="col">Cuota financiera</th><th scope="col">Cargos</th><th scope="col">Pago total</th><th scope="col">Saldo final</th></tr></thead><tbody>
-        @for (installment of simulation.installments; track installment.installmentNumber) { <tr><td>{{ installment.installmentNumber }}</td><td>{{ installment.dueDate | date:'dd/MM/yyyy':'UTC' }}</td><td>{{ money(installment.openingBalance) }}</td><td>{{ money(installment.principalPayment) }}</td><td>{{ money(installment.interestPayment) }}</td><td>{{ money(installment.basePayment) }}</td><td>@if (installment.charges.length) { <button class="charge-button" type="button" (click)="toggleCharges(installment)" [attr.aria-expanded]="expandedInstallment() === installment.installmentNumber">{{ money(installment.additionalCharges) }} · Ver cargos</button> } @else { {{ money(installment.additionalCharges) }} }</td><td><strong>{{ money(installment.totalPayment) }}</strong></td><td>{{ money(installment.closingBalance) }}</td></tr>@if (expandedInstallment() === installment.installmentNumber) { <tr class="charge-detail"><td colspan="9"><div>@for (charge of installment.charges; track charge.creditChargeId) { <span>{{ charge.name }} <strong>{{ money(charge.calculatedAmount) }}</strong></span> }<span class="charges-total">Total cargos <strong>{{ money(installment.additionalCharges) }}</strong></span></div></td></tr> } }
-      </tbody></table></div></section>
+      <section id="amortization-table" class="tool-schedule">
+        <div class="schedule-header">
+          <div><p class="section-kicker">Cronograma</p><h2>Tabla de amortización</h2><span>{{ simulation.installments.length }} cuotas · {{ systemLabel(simulation.amortizationSystem) }} · {{ simulation.creditTypeName }}</span></div>
+          <button class="btn btn-outline btn-sm" type="button" (click)="downloadPdf()" [disabled]="downloadingPdf()">{{ downloadingPdf() ? 'Generando PDF...' : 'Descargar PDF' }}</button>
+        </div>
+        <div class="table-container">
+          <table class="data-table amortization-table">
+            <thead><tr><th scope="col">N.&#186;</th><th scope="col">Fecha</th><th scope="col">Saldo inicial</th><th scope="col">Capital</th><th scope="col">Interés</th><th scope="col">Cuota financiera</th><th scope="col">Cargos</th><th scope="col">Pago total</th><th scope="col">Saldo final</th></tr></thead>
+            <tbody>
+              @for (installment of simulation.installments; track installment.installmentNumber) {
+                <tr [class.is-expanded]="expandedInstallment() === installment.installmentNumber">
+                  <td>{{ installment.installmentNumber }}</td><td>{{ installment.dueDate | date:'dd/MM/yyyy':'UTC' }}</td><td>{{ money(installment.openingBalance) }}</td><td>{{ money(installment.principalPayment) }}</td><td>{{ money(installment.interestPayment) }}</td><td>{{ money(installment.basePayment) }}</td>
+                  <td>@if (installment.charges.length) { <button class="charge-button" type="button" (click)="toggleCharges(installment)" [attr.aria-expanded]="expandedInstallment() === installment.installmentNumber" [attr.aria-controls]="'charge-detail-' + installment.installmentNumber"><span>{{ money(installment.additionalCharges) }}</span><small>{{ expandedInstallment() === installment.installmentNumber ? 'Ocultar' : 'Ver detalle' }}</small></button> } @else { {{ money(installment.additionalCharges) }} }</td>
+                  <td class="payment-cell"><strong>{{ money(installment.totalPayment) }}</strong></td><td>{{ money(installment.closingBalance) }}</td>
+                </tr>
+                @if (expandedInstallment() === installment.installmentNumber) {
+                  <tr class="charge-detail"><td colspan="9" [id]="'charge-detail-' + installment.installmentNumber">
+                    <div class="charge-breakdown">
+                      <div class="charge-breakdown__heading"><strong>Desglose de la cuota {{ installment.installmentNumber }}</strong><span>Estos cargos ya están incluidos en el pago total.</span></div>
+                      <dl class="charge-breakdown__list">
+                        @for (charge of installment.charges; track charge.creditChargeId) { <div><dt>{{ chargeLabel(charge.name) }}</dt><dd>{{ money(charge.calculatedAmount) }}</dd></div> }
+                        <div class="charges-total"><dt>Total de cargos</dt><dd>{{ money(installment.additionalCharges) }}</dd></div>
+                      </dl>
+                    </div>
+                  </td></tr>
+                }
+              }
+            </tbody>
+            <tfoot><tr><th scope="row" colspan="3">Totales del crédito</th><td>{{ money(simulation.totalPrincipal) }}</td><td>{{ money(simulation.totalInterest) }}</td><td>{{ money(simulation.totalPayment - simulation.totalCharges) }}</td><td>{{ money(simulation.totalCharges) }}</td><td>{{ money(simulation.totalPayment) }}</td><td>{{ money(simulation.installments[simulation.installments.length - 1]?.closingBalance ?? 0) }}</td></tr></tfoot>
+          </table>
+        </div>
+        <p class="schedule-note">Valores estimados. El pago total de cada cuota incluye la cuota financiera y los cargos aplicables.</p>
+      </section>
     } }
   }
 </main>
