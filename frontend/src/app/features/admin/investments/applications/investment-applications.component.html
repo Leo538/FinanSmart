@@ -1,0 +1,76 @@
+<main class="page-container internal-page" [class.detail-page]="selected()">
+  <app-page-header [title]="selected() ? 'Solicitud de inversión' : 'Solicitudes de inversión'" subtitle="Revisa y gestiona las solicitudes enviadas por los clientes." />
+
+  @if (!selected()) {
+    <section class="card applications-card">
+      <div class="filters filter-bar">
+        <input class="form-control" [(ngModel)]="query" (ngModelChange)="resetPage()" placeholder="Buscar por solicitud, cliente o producto" />
+        <select class="form-select" [(ngModel)]="status" (ngModelChange)="resetPage()">
+          <option value="">Todos los estados</option><option value="Submitted">En revisión</option><option value="Approved">Aprobadas</option><option value="Rejected">Rechazadas</option>
+        </select>
+      </div>
+      <div class="application-cards">
+        @for (item of paged(); track item.id; let index = $index) {
+          <article class="application-card" [class.featured]="index % 3 === 1" [class.closed]="item.status === 'Rejected' || item.status === 'Cancelled'">
+            <div class="card-dots" aria-hidden="true"></div>
+            <section class="application-card__main">
+              <span class="card-label">Solicitud {{ item.applicationNumber }}</span>
+              <h2>{{ item.investmentProductName }}</h2>
+              <strong class="card-amount">{{ money(item.amount) }}</strong>
+              <span class="card-date">Creada {{ item.createdAt | date:'dd MMM yyyy':'UTC' }}</span>
+              <a class="card-action" [routerLink]="['/admin/investments/applications', item.id]">{{ item.status === 'Submitted' ? 'Revisar solicitud' : 'Ver detalle' }} <b>›</b></a>
+            </section>
+            <section class="application-card__details">
+              <div><span>✓</span><p><b>Cliente</b>{{ item.applicantFirstName || 'Sin datos' }} {{ item.applicantLastName || '' }}</p></div>
+              <div><span>✓</span><p><b>Plazo</b>{{ item.termDays }} días</p></div>
+              <div><span>✓</span><p><b>Tasa anual</b>{{ item.annualInterestRate }} %</p></div>
+            </section>
+            <section class="application-card__details secondary">
+              <div><span [class.warning]="item.status !== 'Approved'">{{ item.status === 'Approved' ? '✓' : '•' }}</span><p><b>Estado</b><em>{{ label(item.status) }}</em></p></div>
+              <div><span>✓</span><p><b>Rendimiento estimado</b>{{ money(item.totalInterest) }}</p></div>
+              <div><span>✓</span><p><b>Total estimado</b>{{ money(item.totalReceived) }}</p></div>
+            </section>
+          </article>
+        } @empty { <div class="empty-cards">No hay solicitudes para los filtros seleccionados.</div> }
+      </div>
+      @if (filtered().length > pageSize) {<div class="pagination"><span>Mostrando {{ paged().length }} de {{ filtered().length }}</span><div><button class="btn btn-secondary btn-sm" [disabled]="page === 1" (click)="previousPage()">Anterior</button><span>Página {{ page }} de {{ pages() }}</span><button class="btn btn-secondary btn-sm" [disabled]="page === pages()" (click)="nextPage()">Siguiente</button></div></div>}
+    </section>
+  } @else if (selected(); as item) {
+    <a class="back-link" routerLink="/admin/investments/applications"><span aria-hidden="true">←</span> Volver a solicitudes</a>
+    <header class="application-detail-hero">
+      <div class="detail-hero-copy">
+        <p class="detail-eyebrow">Expediente de inversión · {{ item.applicationNumber }}</p>
+        <h1>{{ item.investmentProductName }}</h1>
+        <p>Revisa la información y los documentos antes de tomar una decisión.</p>
+        <span class="detail-hero-status"><i aria-hidden="true"></i>{{ label(item.status) }}</span>
+      </div>
+      <div class="detail-hero-amount">
+        <span>Capital solicitado</span>
+        <strong>{{ money(item.amount) }}</strong>
+        <small>{{ item.termDays }} días · {{ item.annualInterestRate }} % anual</small>
+      </div>
+    </header>
+    <section class="detail-grid">
+      <article class="card summary-card"><p class="detail-card-eyebrow">Información personal</p><h2>Solicitante</h2><dl><div><dt>Nombre</dt><dd>{{ item.applicantFirstName || 'Sin datos' }} {{ item.applicantLastName || '' }}</dd></div><div><dt>Identificación</dt><dd>{{ item.identificationNumber || 'Sin datos' }}</dd></div><div><dt>Correo</dt><dd>{{ item.email || 'Sin datos' }}</dd></div><div><dt>Teléfono</dt><dd>{{ item.phone || 'Sin datos' }}</dd></div></dl></article>
+      <article class="card summary-card investment-summary"><p class="detail-card-eyebrow">Condiciones estimadas</p><h2>Inversión</h2><dl><div><dt>Producto</dt><dd>{{ item.investmentProductName }}</dd></div><div><dt>Monto</dt><dd>{{ money(item.amount) }}</dd></div><div><dt>Plazo</dt><dd>{{ item.termDays }} días</dd></div><div><dt>Tasa</dt><dd>{{ item.annualInterestRate }} %</dd></div><div class="detail-total"><dt>Total recibido</dt><dd>{{ money(item.totalReceived) }}</dd></div><div><dt>Estado</dt><dd><span class="status">{{ label(item.status) }}</span></dd></div></dl></article>
+
+      <article class="card wide documents-card"><div class="section-heading"><div><p class="detail-card-eyebrow">Expediente digital</p><h2>Documentos</h2><p>Previsualiza los archivos antes de descargarlos.</p></div></div>
+        @if (!documents().length) {<p class="muted">Esta solicitud no tiene documentos cargados.</p>} @else {<div class="document-grid">@for (document of documents(); track document.id) {<article class="document-item"><button class="document-preview" (click)="openDocument(item.id, document)" [attr.aria-label]="'Ver ' + document.originalFileName">@if (isImage(document) && thumbnail(document.id); as imageUrl) {<img [src]="imageUrl" [alt]="documentLabel(document.documentType)" />} @else {<span class="file-mark">{{ isImage(document) ? 'IMG' : 'PDF' }}</span>}</button><div class="document-copy"><strong>{{ documentLabel(document.documentType) }}</strong><small>{{ document.originalFileName }}</small><div class="document-actions"><button class="text-button" (click)="openDocument(item.id, document)">Vista previa</button><button class="text-button" (click)="downloadDocument(item.id, document)">Descargar</button></div></div></article>}</div>}
+      </article>
+
+      <article class="card"><p class="detail-card-eyebrow">Verificación</p><h2>Validación de identidad</h2>@if (identity(); as verification) {<div class="identity-content">@if (selfieUrl(); as selfie) {<img class="selfie-preview" [src]="selfie" alt="Selfie de verificación" />}<dl><div><dt>Estado</dt><dd>{{ identityLabel(verification.status) }}</dd></div><div><dt>Consentimiento</dt><dd>{{ verification.consentAccepted ? 'Aceptado' : 'Pendiente' }}</dd></div>@if (verification.verifiedAt) {<div><dt>Verificada</dt><dd>{{ verification.verifiedAt | date:'dd/MM/yyyy HH:mm':'UTC' }}</dd></div>}</dl></div>} @else {<p class="muted">No hay validación registrada.</p>}</article>
+      <article class="card"><p class="detail-card-eyebrow">Confirmaciones</p><h2>Declaraciones</h2>@if (item.declarationsAcceptedAt) {<dl><div><dt>Origen de fondos</dt><dd>{{ sourceLabel(item.sourceOfFunds) }}</dd></div>@if (item.sourceOfFunds === 'Other') {<div><dt>Detalle</dt><dd>{{ item.otherSourceOfFunds }}</dd></div>}<div><dt>Información correcta</dt><dd>{{ item.informationAccuracyAccepted ? 'Aceptado' : 'Pendiente' }}</dd></div><div><dt>Términos</dt><dd>{{ item.termsAccepted ? 'Aceptado' : 'Pendiente' }}</dd></div><div><dt>Tratamiento de datos</dt><dd>{{ item.dataProcessingAccepted ? 'Autorizado' : 'Pendiente' }}</dd></div><div><dt>Fecha de aceptación</dt><dd>{{ item.declarationsAcceptedAt | date:'dd/MM/yyyy HH:mm':'UTC' }}</dd></div></dl>} @else {<p class="muted">No hay declaraciones registradas.</p>}</article>
+      @if (item.status === 'Submitted') {<article class="card wide decision-card"><p class="detail-card-eyebrow">Siguiente paso</p><h2>Decisión administrativa</h2><p class="decision-intro">Verifica el expediente antes de aprobar o rechazar la solicitud.</p><label class="decision-label" for="reviewNotes">Observaciones <span>Obligatorias para rechazar</span></label><textarea id="reviewNotes" class="form-control" [(ngModel)]="notes" placeholder="Escribe aquí tus observaciones sobre la solicitud"></textarea><div class="decision-actions"><button class="btn btn-secondary" [disabled]="!notes.trim()" (click)="decide('Reject')">Rechazar</button><button class="btn btn-primary" (click)="decide('Approve')">Aprobar solicitud</button></div></article>}
+    </section>
+  }
+</main>
+
+@if (preview(); as currentPreview) {
+  <div class="preview-overlay" (click)="closePreview()">
+    <section class="preview-dialog" role="dialog" aria-modal="true" aria-labelledby="preview-title" (click)="$event.stopPropagation()">
+      <header class="preview-header"><div><span>Vista previa del expediente</span><h2 id="preview-title">{{ currentPreview.title }}</h2></div><button class="close-button" type="button" (click)="closePreview()" aria-label="Cerrar vista previa">×</button></header>
+      @if (currentPreview.isImage) {<div class="preview-stage"><img [src]="currentPreview.url" [alt]="currentPreview.title" /></div>}
+      @else {<div class="pdf-preview"><span>PDF</span><h3>Documento listo para revisar</h3><p>Abre el archivo en una pestaña nueva para verlo en tamaño completo.</p><a class="btn btn-primary" [href]="currentPreview.url" target="_blank" rel="noopener">Abrir documento</a></div>}
+    </section>
+  </div>
+}

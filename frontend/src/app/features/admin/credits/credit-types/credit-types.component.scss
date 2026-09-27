@@ -1,0 +1,64 @@
+.credit-types-card { min-height: 180px; }
+.loading-area, .load-error { min-height: 260px; display: grid; place-content: center; justify-items: center; gap: 16px; padding: 24px; text-align: center; }
+.feedback { margin: 0 0 16px; color: var(--color-success); font-weight: 600; }
+.feedback.error { color: var(--color-danger); }
+td small { display: block; max-width: 260px; margin-top: 4px; color: var(--color-text-secondary); }
+.row-actions { display: flex; gap: 8px; align-items: center; }
+.danger-action { color: var(--color-danger); }
+
+.modal-backdrop { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: 20px; background: rgb(15 28 45 / 55%); overflow-y: auto; }
+.modal-card, .confirmation-card { width: min(100%, 960px); max-height: calc(100dvh - 40px); overflow-y: auto; background: var(--color-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-md); }
+.confirmation-card { width: min(100%, 480px); padding: 24px; }
+.confirmation-card p, .modal-header p { margin-top: 6px; color: var(--color-text-secondary); }
+.modal-header, .modal-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px; }
+.modal-header { border-bottom: 1px solid var(--color-border); }
+.modal-footer { border-top: 1px solid var(--color-border); justify-content: flex-end; }
+.modal-body { display: grid; gap: 28px; padding: 24px; }
+.form-section { display: grid; gap: 14px; }
+.form-section h3 { font-size: 1rem; }
+.configuration-section { padding-top: 24px; border-top: 1px solid var(--color-border); }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.section-heading h3 { margin: 0; }
+.eyebrow { margin: 0 0 4px; color: var(--color-text-muted); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.rate-value { margin: 0; color: var(--color-primary); font-size: 1.45rem; font-weight: 800; }
+.rate-value span { color: var(--color-text-secondary); font-size: .85rem; font-weight: 500; }
+.configuration-empty { margin: 0; color: var(--color-text-secondary); font-size: .9rem; }
+.configuration-list { display: grid; border-top: 1px solid var(--color-border); }
+.configuration-list > div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--color-border); }
+.configuration-list span { color: var(--color-text-secondary); font-size: .875rem; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.full { grid-column: 1 / -1; }
+.description-input { min-height: 92px; padding-top: 10px; resize: vertical; }
+.toggle-field { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }
+.toggle-field input { width: 18px; height: 18px; accent-color: var(--color-primary); }
+.confirmation-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+
+@media (max-width: 600px) {
+  .modal-backdrop { padding: 12px; align-items: end; }
+  .modal-card, .confirmation-card { max-height: calc(100dvh - 24px); }
+  .modal-header, .modal-body, .modal-footer { padding-left: 16px; padding-right: 16px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .modal-footer, .confirmation-actions { flex-direction: column-reverse; }
+  .modal-footer .btn, .confirmation-actions .btn { width: 100%; }
+}
+
+/* Financial catalogue treatment */
+.credit-types-card { overflow: hidden; border: 0; border-top: 1px solid var(--border-default); border-radius: 0; background: transparent; box-shadow: none; }
+.credit-types-card .table-container { border: 0; border-radius: 0; }
+.credit-types-card .data-table th, .credit-types-card .data-table td { height: 52px; padding-right: 14px; padding-left: 14px; }
+.credit-types-card .data-table th:first-child, .credit-types-card .data-table td:first-child { padding-left: 0; text-align: left; }
+.credit-types-card .data-table th:last-child, .credit-types-card .data-table td:last-child { padding-right: 0; }
+.credit-types-card td strong { color: var(--text-primary); font-weight: 720; }
+.credit-types-card .current-rate { color: var(--brand-primary); font-family: var(--font-family-heading); font-size: .98rem; font-weight: 760; }
+.credit-types-card .current-rate span { color: var(--text-muted); font-family: var(--font-family-base); font-size: .74rem; font-weight: 650; }
+.credit-types-card td small { max-width: 290px; color: var(--text-secondary); font-size: .74rem; line-height: 1.35; }
+.row-actions { justify-content: flex-end; white-space: nowrap; }
+.row-actions .btn-secondary { border-color: var(--border-strong); background: transparent; color: var(--brand-primary); box-shadow: none; }
+.row-actions .btn-ghost { padding-right: 7px; padding-left: 7px; }
+.modal-card { border-top: 3px solid var(--brand-primary); border-radius: var(--radius-md); }
+.modal-header h2, .confirmation-card h2 { font-family: var(--font-family-heading); letter-spacing: -.03em; }
+.form-section h3 { color: var(--text-primary); font-size: .76rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.configuration-section { padding: 20px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-subtle); }
+.configuration-section + .configuration-section { margin-top: -12px; }
+.configuration-section .section-heading h3 { font-size: .98rem; letter-spacing: -.02em; text-transform: none; }
+@media (max-width: 767px) { .credit-types-card .data-table th, .credit-types-card .data-table td { padding-right: 12px; padding-left: 12px; } }

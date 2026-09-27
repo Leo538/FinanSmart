@@ -1,0 +1,9 @@
+.form-group { display: grid; gap: 8px; }
+.form-label { color: var(--text-secondary); font-size: .72rem; font-weight: 750; }
+.form-control, .form-select { width: 100%; min-height: 46px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 0 13px; background: var(--surface-panel); color: var(--text-primary); transition: border-color .18s, box-shadow .18s, background-color .18s; }
+.form-control:hover, .form-select:hover { border-color: var(--border-strong); }
+.form-control:focus, .form-select:focus { border-color: var(--brand-primary); outline: 0; box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 12%, transparent); }
+.form-control:disabled, .form-select:disabled { background: #f2f4f7; cursor: not-allowed; }
+.form-control.error, .form-select.error { border-color: var(--color-danger); }
+.form-error { color: var(--color-danger); font-size: .8125rem; }
+.form-help { color: var(--color-text-muted); font-size: .8125rem; }

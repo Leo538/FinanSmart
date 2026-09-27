@@ -1,0 +1,74 @@
+<main class="page-container tool-page credit-tool public-simulator">
+  @if (!isPublic()) { <app-page-header title="Simulador de crédito" subtitle="Calcula tu tabla de pagos utilizando los sistemas de amortización disponibles." /> }
+  @if (isPublic()) { <header class="tool-hero public-tool-hero"><span>Simulador financiero</span><h1>Simula tu crédito con claridad.</h1><p>Define monto, plazo y sistema para conocer cómo se comportaría tu financiamiento.</p><div class="tool-hero-art" aria-hidden="true"><span>01 / CRÉDITOS</span><strong>Tu próxima decisión, más clara.</strong><div class="tool-hero-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><small>Monto · plazo · cuota</small></div></header> }
+  @if (error()) { <p class="feedback error" role="alert">{{ error() }}</p> }
+  @if (loadingTypes()) { <div class="loading-area"><app-loading-spinner label="Cargando tipos de cr&#233;dito" /></div> }
+  @else {
+    <section class="tool-workspace">
+      <form class="tool-parameters" [formGroup]="form" (ngSubmit)="simulate()">
+        <div class="card-header"><div><p class="section-kicker">Parámetros</p><h2>Configuraci&#243;n</h2></div></div>
+        <div class="card-body form-content">
+          <div class="form-group"><label class="form-label" for="simCreditType">Tipo de cr&#233;dito</label><select id="simCreditType" class="form-select" formControlName="creditTypeId"><option value="">Selecciona un tipo</option>@for (type of creditTypes(); track type.id) { <option [value]="type.id">{{ type.name }}</option> }</select>@if (form.controls.creditTypeId.touched && form.controls.creditTypeId.invalid) { <span class="form-error">Selecciona un tipo de cr&#233;dito.</span> }</div>
+          @if (selectedType(); as type) { <aside class="type-info"><strong>{{ type.name }}</strong><span>{{ money(type.minimumAmount) }} – {{ money(type.maximumAmount) }} · {{ type.minimumTermMonths }}–{{ type.maximumTermMonths }} meses@if (currentRate()) { · {{ percent(currentRate()!) }} anual }</span></aside> }
+          @if (selectedType() && rateChecked()) { <div class="rate-status">@if (currentRate() !== null) { <strong>Tasa anual vigente: {{ percent(currentRate()!) }}</strong><span>Aplicada autom&#225;ticamente a esta simulaci&#243;n.</span> } @else { <strong class="rate-unavailable">Este tipo no tiene una tasa vigente configurada.</strong> }</div> }
+          <div class="form-group"><label class="form-label" for="simAmount">Monto solicitado</label><input id="simAmount" class="form-control" type="number" min="0" step="0.01" formControlName="amount" />@if (form.controls.amount.touched && amountError()) { <span class="form-error">{{ amountError() }}</span> }</div>
+          <div class="form-group"><label class="form-label" for="simTerm">Plazo en meses</label><input id="simTerm" class="form-control" type="number" min="1" step="1" formControlName="termMonths" />@if (form.controls.termMonths.touched && termError()) { <span class="form-error">{{ termError() }}</span> }</div>
+          <fieldset class="system-selector"><legend>Sistema de amortizaci&#243;n</legend><label [class.selected]="form.controls.amortizationSystem.value === 'French'"><input type="radio" name="amortizationSystem" value="French" [checked]="form.controls.amortizationSystem.value === 'French'" (change)="selectSystem('French')" /><strong>Sistema Franc&#233;s</strong><span>Cuota estable</span></label><label [class.selected]="form.controls.amortizationSystem.value === 'German'"><input type="radio" name="amortizationSystem" value="German" [checked]="form.controls.amortizationSystem.value === 'German'" (change)="selectSystem('German')" /><strong>Sistema Alem&#225;n</strong><span>Capital constante</span></label></fieldset>
+        </div>
+        <div class="card-footer"><button class="btn btn-primary btn-md" type="submit" [disabled]="simulating() || !isValid()">{{ simulating() ? 'Simulando...' : 'Simular cr&#233;dito' }}</button></div>
+      </form>
+
+      <section class="tool-result" [class.is-empty]="!result()">
+        @if (!result()) { <div class="editorial-empty"><span class="empty-illustration" aria-hidden="true">↗</span><p class="section-kicker">Tu simulación</p><h2>Conoce el costo completo de tu crédito</h2><p>Elige un tipo de crédito, monto y plazo para ver una estimación clara antes de decidir.</p><div class="credit-empty-points"><span>Cuota mensual</span><span>Intereses</span><span>Pago total</span></div></div> }
+        @else if (resultStale()) { <div class="stale-state"><h2>La simulaci&#243;n necesita actualizarse</h2><p>Cambiaste los par&#225;metros. Presiona “Simular cr&#233;dito” para ver resultados correctos.</p></div> }
+        @else if (result(); as simulation) {
+          <div class="card-header estimate-header"><div><p>Resultado de simulación</p><h2>{{ simulation.creditTypeName }}</h2><span>{{ systemLabel(simulation.amortizationSystem) }} · {{ simulation.termMonths }} cuotas · {{ percent(simulation.annualInterestRate) }} anual</span></div></div>
+          <div class="card-body summary-content">
+            <div class="payment-highlight">@if (simulation.amortizationSystem === 'French') {<span>Cuota mensual estimada</span><strong>{{ money(simulation.installments[0]?.totalPayment ?? 0) }}</strong><small>La cuota financiera se mantiene prácticamente constante.</small>} @else {<span>Primera cuota estimada</span><strong>{{ money(simulation.installments[0]?.totalPayment ?? 0) }}</strong><small>Última cuota estimada: {{ money(simulation.installments[simulation.installments.length - 1]?.totalPayment ?? 0) }}</small>}</div>
+            <p class="system-description">{{ simulation.amortizationSystem === 'French' ? 'Cuota financiera prácticamente constante.' : 'Cuotas decrecientes con capital constante.' }}</p>
+            <section class="estimate-section compact-summary"><dl><div><dt>Monto solicitado</dt><dd>{{ money(simulation.requestedAmount) }}</dd></div><div><dt>Plazo</dt><dd>{{ simulation.termMonths }} meses</dd></div><div><dt>Tasa anual</dt><dd>{{ percent(simulation.annualInterestRate) }}</dd></div><div><dt>Intereses totales</dt><dd>{{ money(simulation.totalInterest) }}</dd></div><div><dt>Seguros y cargos</dt><dd>{{ money(simulation.totalCharges) }}</dd></div><div class="summary-total"><dt>Total estimado a pagar</dt><dd>{{ money(simulation.totalPayment) }}</dd></div></dl></section>
+            <button class="breakdown-toggle" type="button" (click)="showBreakdown.set(!showBreakdown())" [attr.aria-expanded]="showBreakdown()">{{ showBreakdown() ? 'Ocultar desglose' : 'Ver desglose' }}</button>
+            @if (showBreakdown()) {<section class="estimate-section breakdown-content"><h3>Seguros y cargos</h3>@if (chargeTotals(simulation).length) {<dl>@for (charge of chargeTotals(simulation); track charge[0]) {<div><dt>{{ chargeLabel(charge[0]) }}</dt><dd>{{ money(charge[1]) }}</dd></div>}</dl>} @else {<p>No hay seguros ni cargos aplicados.</p>}<h3>Fechas</h3><dl><div><dt>Fecha de inicio</dt><dd>{{ simulation.startDate | date:'dd/MM/yyyy':'UTC' }}</dd></div><div><dt>Primera cuota</dt><dd>{{ simulation.installments[0]?.dueDate | date:'dd/MM/yyyy':'UTC' }}</dd></div><div><dt>Última cuota</dt><dd>{{ simulation.installments[simulation.installments.length - 1]?.dueDate | date:'dd/MM/yyyy':'UTC' }}</dd></div></dl></section>}
+            <div class="result-actions"><button class="btn btn-outline btn-sm" type="button" (click)="viewTable()">Ver amortización</button><button class="btn btn-ghost btn-sm" type="button" (click)="downloadPdf()" [disabled]="downloadingPdf()">{{ downloadingPdf() ? 'Generando PDF...' : 'Descargar PDF' }}</button></div>
+          </div>
+        }
+      </section>
+    </section>
+
+    @if (result(); as simulation) { @if (!resultStale() && showTable()) {
+      <section id="amortization-table" class="tool-schedule">
+        <div class="schedule-header">
+          <div><p class="section-kicker">Cronograma</p><h2>Tabla de amortización</h2><span>{{ simulation.installments.length }} cuotas · {{ systemLabel(simulation.amortizationSystem) }} · {{ simulation.creditTypeName }}</span></div>
+          <button class="btn btn-outline btn-sm" type="button" (click)="downloadPdf()" [disabled]="downloadingPdf()">{{ downloadingPdf() ? 'Generando PDF...' : 'Descargar PDF' }}</button>
+        </div>
+        <div class="table-container">
+          <table class="data-table amortization-table">
+            <thead><tr><th scope="col">N.&#186;</th><th scope="col">Fecha</th><th scope="col">Saldo inicial</th><th scope="col">Capital</th><th scope="col">Interés</th><th scope="col">Cuota financiera</th><th scope="col">Cargos</th><th scope="col">Pago total</th><th scope="col">Saldo final</th></tr></thead>
+            <tbody>
+              @for (installment of simulation.installments; track installment.installmentNumber) {
+                <tr [class.is-expanded]="expandedInstallment() === installment.installmentNumber">
+                  <td>{{ installment.installmentNumber }}</td><td>{{ installment.dueDate | date:'dd/MM/yyyy':'UTC' }}</td><td>{{ money(installment.openingBalance) }}</td><td>{{ money(installment.principalPayment) }}</td><td>{{ money(installment.interestPayment) }}</td><td>{{ money(installment.basePayment) }}</td>
+                  <td>@if (installment.charges.length) { <button class="charge-button" type="button" (click)="toggleCharges(installment)" [attr.aria-expanded]="expandedInstallment() === installment.installmentNumber" [attr.aria-controls]="'charge-detail-' + installment.installmentNumber"><span>{{ money(installment.additionalCharges) }}</span><small>{{ expandedInstallment() === installment.installmentNumber ? 'Ocultar' : 'Ver detalle' }}</small></button> } @else { {{ money(installment.additionalCharges) }} }</td>
+                  <td class="payment-cell"><strong>{{ money(installment.totalPayment) }}</strong></td><td>{{ money(installment.closingBalance) }}</td>
+                </tr>
+                @if (expandedInstallment() === installment.installmentNumber) {
+                  <tr class="charge-detail"><td colspan="9" [id]="'charge-detail-' + installment.installmentNumber">
+                    <div class="charge-breakdown">
+                      <div class="charge-breakdown__heading"><strong>Desglose de la cuota {{ installment.installmentNumber }}</strong><span>Estos cargos ya están incluidos en el pago total.</span></div>
+                      <dl class="charge-breakdown__list">
+                        @for (charge of installment.charges; track charge.creditChargeId) { <div><dt>{{ chargeLabel(charge.name) }}</dt><dd>{{ money(charge.calculatedAmount) }}</dd></div> }
+                        <div class="charges-total"><dt>Total de cargos</dt><dd>{{ money(installment.additionalCharges) }}</dd></div>
+                      </dl>
+                    </div>
+                  </td></tr>
+                }
+              }
+            </tbody>
+            <tfoot><tr><th scope="row" colspan="3">Totales del crédito</th><td>{{ money(simulation.totalPrincipal) }}</td><td>{{ money(simulation.totalInterest) }}</td><td>{{ money(simulation.totalPayment - simulation.totalCharges) }}</td><td>{{ money(simulation.totalCharges) }}</td><td>{{ money(simulation.totalPayment) }}</td><td>{{ money(simulation.installments[simulation.installments.length - 1]?.closingBalance ?? 0) }}</td></tr></tfoot>
+          </table>
+        </div>
+        <p class="schedule-note">Valores estimados. El pago total de cada cuota incluye la cuota financiera y los cargos aplicables.</p>
+      </section>
+    } }
+  }
+</main>

@@ -1,0 +1,4 @@
+export type InterestCalculationMethod = 'Simple' | 'Compound';
+export type InterestPaymentFrequency = 'AtMaturity' | 'Monthly' | 'Quarterly' | 'SemiAnnual' | 'Upfront';
+export interface InvestmentProduct { id:string; name:string; description:string|null; minimumAmount:number; maximumAmount:number|null; minimumTermDays:number; maximumTermDays:number|null; interestCalculationMethod:InterestCalculationMethod; interestPaymentFrequency:InterestPaymentFrequency; isActive:boolean; createdAt:string; updatedAt:string; }
+export interface InvestmentProductFormData { name:string; description:string|null; minimumAmount:number; maximumAmount:number|null; minimumTermDays:number; maximumTermDays:number|null; interestCalculationMethod:InterestCalculationMethod; interestPaymentFrequency:InterestPaymentFrequency; isActive:boolean; }
