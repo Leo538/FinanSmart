@@ -1,10 +1,144 @@
-<main class="page-container dashboard-page">
-  <app-page-header title="Buenos días, Administrador" [subtitle]="'Resumen general de ' + (institution.currentInstitution()?.name ?? 'FinanSmart')" />
-  @if (isLoading()) { <div class="loading"><app-loading-spinner label="Cargando dashboard" /></div> }
-  @else if (error()) { <app-empty-state title="No se pudo cargar el dashboard" [description]="error()"><button class="btn btn-primary" (click)="loadDashboard()">Reintentar</button></app-empty-state> }
-  @else if (dashboard(); as d) {
-    <section class="kpis"><article class="card kpi-card"><span class="kpi-icon">$</span><div><small>Monto aprobado</small><strong>{{ money(d.investmentSummary.approvedInvestmentAmount) }}</strong></div></article><article class="card kpi-card"><span class="kpi-icon">◷</span><div><small>Pendientes de revisión</small><strong>{{ d.applicationSummary.pendingReviewCount }}</strong></div></article><article class="card kpi-card"><span class="kpi-icon">▤</span><div><small>Solicitudes totales</small><strong>{{ d.investmentSummary.applicationsCount }}</strong></div></article><article class="card kpi-card"><span class="kpi-icon">◇</span><div><small>Productos activos</small><strong>{{ d.investmentSummary.activeInvestmentProducts }}</strong></div></article></section>
-    <section class="grid"><article class="card panel"><div class="panel-title"><div><p>Seguimiento</p><h2>Estado de solicitudes</h2></div></div>@for (x of d.investmentApplicationsByStatus; track x.status) { <div class="bar"><span>{{ status(x.status) }}</span><i><b [style.width.%]="width(x.count)"></b></i><strong>{{ x.count }}</strong></div> } @empty { <p class="muted">Aún no hay solicitudes.</p> }</article><article class="card panel"><div class="panel-title"><div><p>Distribución</p><h2>Solicitudes por producto</h2></div></div>@for (x of d.investmentApplicationsByProduct; track x.productName) { <div class="product"><span class="product-dot"></span><div><strong>{{ x.productName }}</strong><small>{{ x.count }} solicitudes</small></div><b>{{ money(x.totalAmount) }}</b></div> } @empty { <p class="muted">Aún no hay solicitudes.</p> }</article></section>
-    <section class="card recent"><div class="panel-title"><div><p>Actividad reciente</p><h2>Solicitudes recientes</h2></div></div><div class="table-container"><table class="data-table"><thead><tr><th>Cliente</th><th>Producto</th><th>Monto</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>@for (x of d.recentApplications; track x.id) { <tr><td>{{ x.applicantFullName || 'Sin datos' }}</td><td>{{ x.investmentProductName }}</td><td>{{ money(x.amount) }}</td><td><span class="state">{{ status(x.status) }}</span></td><td>{{ (x.submittedAt || x.createdAt) | date:'dd/MM/yyyy':'UTC' }}</td></tr> }</tbody></table></div></section>
+<main class="dashboard-page">
+  <header class="dashboard-header page-header">
+    <div>
+      <p class="section-caption">Operación de inversiones</p>
+      <h1>Panel de control</h1>
+      <p>Seguimiento de solicitudes y productos de {{ institution.currentInstitution()?.name ?? 'la institución' }}.</p>
+    </div>
+    <div class="header-context" aria-label="Contexto del panel">
+      <span>Administración</span>
+      <strong>Vista general</strong>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <section class="dashboard-skeleton" aria-label="Cargando panel" aria-busy="true">
+      <div class="skeleton-primary"></div>
+      <div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>
+      <div class="skeleton-block"></div><div class="skeleton-block"></div>
+    </section>
+  } @else if (error()) {
+    <section class="dashboard-error" role="alert">
+      <h2>No fue posible cargar el panel</h2>
+      <p>{{ error() }}</p>
+      <button type="button" class="retry-button" (click)="loadDashboard()">Reintentar</button>
+    </section>
+  } @else if (dashboard(); as d) {
+    <section class="dashboard-kpis" aria-label="Indicadores principales">
+      <app-stat-card title="Capital aprobado" [value]="money(d.investmentSummary.approvedInvestmentAmount)" secondaryText="Capital comprometido en solicitudes aprobadas" />
+      <app-stat-card title="En revisión" [value]="d.applicationSummary.pendingReviewCount" secondaryText="Solicitudes pendientes de atención" />
+      <app-stat-card title="Solicitudes registradas" [value]="d.investmentSummary.applicationsCount" secondaryText="Histórico de operaciones" />
+      <app-stat-card title="Productos disponibles" [value]="d.investmentSummary.activeInvestmentProducts" secondaryText="Alternativas activas de inversión" />
+    </section>
+    <section class="financial-overview kpi-band" aria-label="Resumen financiero">
+      <article class="overview-primary">
+        <span class="overview-label">Capital aprobado</span>
+        <strong>{{ money(d.investmentSummary.approvedInvestmentAmount) }}</strong>
+        <p>Capital comprometido en solicitudes aprobadas.</p>
+      </article>
+
+      <div class="overview-metrics">
+        <article class="metric-row">
+          <span>En revisión</span>
+          <strong>{{ d.applicationSummary.pendingReviewCount }}</strong>
+          <small>Solicitudes pendientes de atención</small>
+        </article>
+        <article class="metric-row">
+          <span>Solicitudes registradas</span>
+          <strong>{{ d.investmentSummary.applicationsCount }}</strong>
+          <small>Histórico de operaciones</small>
+        </article>
+        <article class="metric-row">
+          <span>Productos disponibles</span>
+          <strong>{{ d.investmentSummary.activeInvestmentProducts }}</strong>
+          <small>Alternativas activas de inversión</small>
+        </article>
+      </div>
+    </section>
+
+    <section class="operations-grid" aria-label="Análisis operativo">
+      <section class="status-analysis" aria-labelledby="status-title">
+        <header class="section-heading">
+          <div>
+            <h2 id="status-title">Estado de solicitudes</h2>
+            <p>Distribución actual del flujo de inversión.</p>
+          </div>
+          <strong class="section-total">{{ d.investmentSummary.applicationsCount }} <span>total</span></strong>
+        </header>
+
+        <div class="status-ledger">
+          @for (item of d.investmentApplicationsByStatus; track item.status) {
+            <div class="status-row" [class.status-row--success]="item.status === 'Approved'" [class.status-row--warning]="item.status === 'Submitted' || item.status === 'ReadyForReview'" [class.status-row--danger]="item.status === 'Rejected' || item.status === 'Cancelled'">
+              <span class="status-marker" aria-hidden="true"></span>
+              <span class="status-name">{{ status(item.status) }}</span>
+              <span class="status-share">{{ share(item.count) }}%</span>
+              <strong>{{ item.count }}</strong>
+              <span class="status-line" aria-hidden="true"><i [style.width.%]="width(item.count)"></i></span>
+            </div>
+          } @empty {
+            <p class="empty-copy">Aún no hay solicitudes para analizar.</p>
+          }
+        </div>
+      </section>
+
+      <section class="product-analysis" aria-labelledby="product-title">
+        <header class="section-heading">
+          <div>
+            <h2 id="product-title">Demanda por producto</h2>
+            <p>Productos con mayor volumen solicitado.</p>
+          </div>
+        </header>
+
+        <ol class="product-ledger">
+          @for (item of d.investmentApplicationsByProduct; track item.productName) {
+            <li class="product-row">
+              <span class="product-position">{{ $index + 1 }}</span>
+              <div>
+                <strong>{{ item.productName }}</strong>
+                <span>{{ item.count }} solicitudes</span>
+              </div>
+              <strong class="product-amount">{{ money(item.totalAmount) }}</strong>
+            </li>
+          } @empty {
+            <li class="empty-copy">Aún no hay productos con solicitudes.</li>
+          }
+        </ol>
+      </section>
+    </section>
+
+    <section class="recent-activity section-block" aria-labelledby="recent-title">
+      <header class="recent-heading">
+        <div>
+          <p class="section-caption">Actividad reciente</p>
+          <h2 id="recent-title">Solicitudes de inversión</h2>
+        </div>
+        <span>{{ d.recentApplications.length }} registros mostrados</span>
+      </header>
+
+      <div class="table-scroll table-shell">
+        <table class="financial-table">
+          <thead>
+            <tr>
+              <th scope="col">Solicitud</th><th scope="col">Cliente</th><th scope="col">Producto</th>
+              <th scope="col" class="numeric">Monto</th><th scope="col">Estado</th><th scope="col">Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of d.recentApplications; track item.id) {
+              <tr>
+                <td class="request-id">{{ item.applicationNumber }}</td>
+                <td>{{ item.applicantFullName }}</td>
+                <td>{{ item.investmentProductName }}</td>
+                <td class="numeric amount-cell">{{ money(item.amount) }}</td>
+                <td><span class="state" [class.state--approved]="item.status === 'Approved'" [class.state--pending]="item.status === 'Submitted' || item.status === 'ReadyForReview'" [class.state--rejected]="item.status === 'Rejected' || item.status === 'Cancelled'">{{ status(item.status) }}</span></td>
+                <td>{{ (item.submittedAt ?? item.createdAt) | date:'dd MMM, yyyy' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="table-empty">No hay solicitudes recientes.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
   }
 </main>

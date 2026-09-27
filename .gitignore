@@ -3,6 +3,7 @@ bin/
 obj/
 *.user
 *.suo
+*.sln
 
 # Node and Angular
 node_modules/
@@ -26,3 +27,8 @@ pnpm-debug.log*
 *.log
 Thumbs.db
 .DS_Store
+
+# Agent configuration and local backend uploads
+.agents/
+skills-lock.json
+backend/FinanSmart.Api/Storage/

@@ -9,7 +9,7 @@ import { InstitutionStateService } from '../../core/services/institution-state.s
   selector: 'app-admin-layout',
   imports: [RouterOutlet, AdminSidebarComponent, AdminTopbarComponent],
   template: `<div class="admin-shell"><app-admin-sidebar [collapsed]="collapsed()" [mobileOpen]="mobileOpen()" [institution]="institutionState.currentInstitution()" (navigated)="closeMobileMenu()" /><div class="backdrop" [class.visible]="mobileOpen()" (click)="closeMobileMenu()"></div><div class="admin-content"><app-admin-topbar (menuClicked)="toggleMenu()" /><router-outlet /></div></div>`,
-  styles: [`.admin-shell{min-height:100dvh;display:flex}.admin-content{min-width:0;flex:1}.backdrop{display:none}@media(max-width:767px){.backdrop{display:block;position:fixed;inset:0;background:rgb(11 41 66 / 45%);opacity:0;pointer-events:none;transition:.2s;z-index:20}.backdrop.visible{opacity:1;pointer-events:auto}}`]
+  styles: [`.admin-shell{min-height:100dvh;display:flex;background:var(--surface-page)}.admin-content{min-width:0;flex:1;background:var(--surface-page)}.backdrop{display:none}@media(max-width:767px){.backdrop{display:block;position:fixed;inset:0;background:rgb(11 25 40 / 48%);opacity:0;pointer-events:none;transition:opacity .16s;z-index:20}.backdrop.visible{opacity:1;pointer-events:auto}}`]
 })
 export class AdminLayoutComponent {
   private readonly document = inject(DOCUMENT);

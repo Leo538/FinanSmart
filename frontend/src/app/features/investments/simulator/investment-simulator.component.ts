@@ -7,10 +7,8 @@ import { Router } from '@angular/router';
 import { AuthStateService } from '../../../core/auth/services/auth-state.service';
 import { InvestmentProduct, InterestCalculationMethod, InterestPaymentFrequency } from '../../admin/investments/investment-products/models/investment-product.model';
 import { InvestmentProductService } from '../../admin/investments/investment-products/services/investment-product.service';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
-import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { InvestmentSimulationResponse } from './models/investment-simulation.model';
 import { InvestmentSimulationService } from './services/investment-simulation.service';
 import { InvestmentApplicationService } from '../application/services/investment-application.service';
@@ -19,7 +17,7 @@ import { InvestmentRateService } from '../../admin/investments/investment-rates/
 
 @Component({
   selector: 'app-investment-simulator',
-  imports: [ReactiveFormsModule, DatePipe, EmptyStateComponent, LoadingSpinnerComponent, PageHeaderComponent, StatCardComponent],
+  imports: [ReactiveFormsModule, DatePipe, LoadingSpinnerComponent, PageHeaderComponent],
   templateUrl: './investment-simulator.component.html',
   styleUrl: './investment-simulator.component.scss'
 })

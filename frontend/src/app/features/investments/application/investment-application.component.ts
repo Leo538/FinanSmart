@@ -13,6 +13,7 @@ import { InvestmentApplicationDocument, InvestmentDocumentRequirements, Investme
 import { InvestmentApplicationDocumentService } from './services/investment-application-document.service';
 import { InvestmentIdentityVerification } from './models/investment-identity-verification.model';
 import { InvestmentIdentityVerificationService } from './services/investment-identity-verification.service';
+import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 
 interface DetectedFace { boundingBox: DOMRectReadOnly; }
 interface FaceDetectorLike { detect(source: ImageBitmapSource): Promise<DetectedFace[]>; }
@@ -30,7 +31,7 @@ const isValidEcuadorNationalId = (value: string): boolean => {
   selector: 'app-investment-application',
   imports: [ReactiveFormsModule, DatePipe, EmptyStateComponent, LoadingSpinnerComponent, PageHeaderComponent],
   templateUrl: './investment-application.component.html',
-  styleUrl: './investment-application.component.scss'
+  styleUrls: ['./investment-application.component.scss', './investment-application-premium.component.scss']
 })
 export class InvestmentApplicationComponent implements OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
@@ -46,7 +47,9 @@ export class InvestmentApplicationComponent implements OnDestroy {
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly cancelling = signal(false);
+  readonly cancelConfirmationOpen = signal(false);
   readonly error = signal('');
+  readonly documentError = signal('');
   readonly documents = signal<InvestmentApplicationDocument[]>([]);
   readonly requirements = signal<InvestmentDocumentRequirements | null>(null);
   readonly uploadingType = signal<InvestmentDocumentType | null>(null);
@@ -64,6 +67,9 @@ export class InvestmentApplicationComponent implements OnDestroy {
   readonly faceGuideMessage = signal('Coloca tu rostro dentro del marco.');
   readonly faceReady = signal(false);
   readonly faceStabilityProgress = signal(0);
+  readonly facialStep = signal(0);
+  readonly facialSupported = signal(true);
+  readonly facialSteps = ['Centra tu rostro', 'Gira ligeramente a la izquierda', 'Gira ligeramente a la derecha', 'Parpadea', 'Mantén la posición'];
   readonly localPhotoUrl = signal<string | null>(null);
   readonly selfieValidated = signal(false);
   readonly selfieUrl = signal<string | null>(null);
@@ -79,12 +85,18 @@ export class InvestmentApplicationComponent implements OnDestroy {
   private detectionBusy = false;
   private stableSince: number | null = null;
   private lastFaceCenter: { x: number; y: number } | null = null;
+  private faceLandmarker: FaceLandmarker | null = null;
+  private lastVideoTime = -1;
+  private blinkWasOpen = false;
+  private firstTurnDirection: -1 | 1 | null = null;
+  private blinkOpenEye = 0;
+  private facialStableSince: number | null = null;
   private documentStream: MediaStream | null = null;
   private documentTimer: ReturnType<typeof setTimeout> | null = null;
   private documentStableSince: number | null = null;
   readonly form = this.formBuilder.group({
     firstName: ['', Validators.required], lastName: ['', Validators.required], identificationType: ['NationalId' as 'NationalId' | 'Passport', Validators.required],
-    identificationNumber: ['', Validators.required], email: ['', [Validators.required, Validators.email]], phone: ['', Validators.required],
+    identificationNumber: ['', Validators.required], email: ['', [Validators.required, Validators.email]], phone: ['', [Validators.required, Validators.pattern(/^\d{10}$/), Validators.maxLength(10)]],
     birthDate: [''], address: ['', Validators.required], city: ['', Validators.required]
   });
   readonly declarationsForm = this.formBuilder.group({
@@ -104,6 +116,17 @@ export class InvestmentApplicationComponent implements OnDestroy {
   ];
 
   constructor() {
+    this.configureIdentificationValidation();
+    this.form.controls.identificationType.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.configureIdentificationValidation());
+    this.form.controls.identificationNumber.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
+      if (this.form.controls.identificationType.value !== 'NationalId') return;
+      const digits = (value ?? '').replace(/\D/g, '').slice(0, 10);
+      if (value !== digits) this.form.controls.identificationNumber.setValue(digits, { emitEvent: false });
+    });
+    this.form.controls.phone.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(phone => {
+      const digits = (phone ?? '').replace(/\D/g, '').slice(0, 10);
+      if (phone !== digits) this.form.controls.phone.setValue(digits, { emitEvent: false });
+    });
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) { this.error.set('La solicitud no existe.'); this.loading.set(false); return; }
     this.applicationService.getById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -127,10 +150,10 @@ export class InvestmentApplicationComponent implements OnDestroy {
 
   cancel(): void {
     const application = this.application();
-    if (!application || this.isReadOnly() || this.cancelling() || !confirm('¿Deseas cancelar esta solicitud de inversión?')) return;
+    if (!application || this.isReadOnly() || this.cancelling()) return;
     this.cancelling.set(true); this.error.set('');
     this.applicationService.cancel(application.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { this.application.update(current => current ? { ...current, status: 'Cancelled' } : current); this.cancelling.set(false); },
+      next: () => { this.application.update(current => current ? { ...current, status: 'Cancelled' } : current); this.cancelConfirmationOpen.set(false); this.cancelling.set(false); },
       error: error => { this.error.set(this.errorMessage(error)); this.cancelling.set(false); }
     });
   }
@@ -149,7 +172,7 @@ export class InvestmentApplicationComponent implements OnDestroy {
   private resetDocumentGuide(): void { this.documentStableSince=null;this.documentReady.set(false);this.documentProgress.set(0); }
   private captureDocument(video:HTMLVideoElement):void { const type=this.documentCaptureType();if(!type)return; const canvas=globalThis.document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;canvas.getContext('2d')?.drawImage(video,0,0);canvas.toBlob(blob=>{if(!blob)return;this.releaseUrl(this.documentPreviewUrl());this.documentPreviewUrl.set(URL.createObjectURL(blob));this.stopDocumentCamera();},'image/jpeg',.92); }
   repeatDocumentPhoto():void{const type=this.documentCaptureType();this.releaseUrl(this.documentPreviewUrl());this.documentPreviewUrl.set(null);if(type)this.startDocumentCamera(type);}
-  useDocumentPhoto():void{const type=this.documentCaptureType(),url=this.documentPreviewUrl(),app=this.application();if(!type||!url||!app)return;fetch(url).then(x=>x.blob()).then(blob=>{const file=new File([blob],`${type}.jpg`,{type:'image/jpeg'});this.documentService.upload(app.id,type,file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:()=>{this.releaseUrl(url);this.documentPreviewUrl.set(null);this.documentCaptureType.set(null);this.loadDocuments(app.id);},error:e=>this.error.set(this.documentErrorMessage(e))});});}
+  useDocumentPhoto():void{const type=this.documentCaptureType(),url=this.documentPreviewUrl(),app=this.application();if(!type||!url||!app)return;this.documentError.set('');fetch(url).then(x=>x.blob()).then(blob=>{const file=new File([blob],`${type}.jpg`,{type:'image/jpeg'});this.documentService.upload(app.id,type,file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:()=>{this.releaseUrl(url);this.documentPreviewUrl.set(null);this.documentCaptureType.set(null);this.loadDocuments(app.id);},error:e=>this.documentError.set(this.documentErrorMessage(e))});});}
   loadDocuments(applicationId: string): void {
     this.documentService.getAll(applicationId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: documents => this.documents.set(documents), error: error => this.error.set(this.errorMessage(error)) });
     this.documentService.getRequirements(applicationId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: requirements => this.requirements.set(requirements), error: error => this.error.set(this.errorMessage(error)) });
@@ -161,13 +184,14 @@ export class InvestmentApplicationComponent implements OnDestroy {
     const application = this.application(); const file = (event.target as HTMLInputElement).files?.[0];
     if (!application || !file || this.isReadOnly() || this.uploadingType()) return;
     const allowed = type === 'AdditionalDocument' ? ['image/jpeg', 'image/png', 'application/pdf'] : ['image/jpeg', 'image/png'];
-    if (!allowed.includes(file.type)) { this.error.set('Solo se permiten archivos JPG, PNG o PDF.'); return; }
-    if (file.size > 5 * 1024 * 1024) { this.error.set('El archivo no puede superar 5 MB.'); return; }
-    if (file.type !== 'application/pdf' && !await this.validateDocumentImageFile(file, type)) return;
-    this.uploadingType.set(type); this.uploadingFileName.set(file.name); this.error.set('');
+    this.documentError.set('');
+    if (!allowed.includes(file.type)) { this.documentError.set('Solo se permiten archivos JPG, PNG o PDF.'); return; }
+    if (file.size > 5 * 1024 * 1024) { this.documentError.set('El archivo no puede superar 5 MB.'); return; }
+    if (file.type !== 'application/pdf' && !await this.validateDocumentImageFile(file, type)) { if (this.error()) { this.documentError.set(this.error()); this.error.set(''); } return; }
+    this.uploadingType.set(type); this.uploadingFileName.set(file.name);
     this.documentService.upload(application.id, type, file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => { this.uploadingType.set(null); this.uploadingFileName.set(''); this.loadDocuments(application.id); },
-      error: error => { this.uploadingType.set(null); this.uploadingFileName.set(''); this.error.set(this.documentErrorMessage(error)); }
+      error: error => { this.uploadingType.set(null); this.uploadingFileName.set(''); this.documentError.set(this.documentErrorMessage(error)); }
     });
   }
   deleteDocument(document: InvestmentApplicationDocument): void {
@@ -203,15 +227,14 @@ export class InvestmentApplicationComponent implements OnDestroy {
         const video = globalThis.document.querySelector<HTMLVideoElement>('#identityCamera');
         if (!video || !this.cameraStream) return;
         video.srcObject = this.cameraStream; await video.play();
-        const FaceDetector = (globalThis as typeof globalThis & { FaceDetector?: FaceDetectorConstructor }).FaceDetector;
-        if (!FaceDetector) { this.faceDetectionAvailable.set(false); this.faceGuideMessage.set('La detección automática no está disponible; captura una selfie en vivo con la cámara.'); return; }
-        this.faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 2 }); this.faceDetectionAvailable.set(true); this.detectFace(video);
+        if (!await this.initializeFacialCheck()) { this.facialSupported.set(false); this.faceDetectionAvailable.set(false); this.faceGuideMessage.set('No fue posible completar la verificación facial automática en este navegador.'); return; }
+        this.faceDetectionAvailable.set(true); this.detectInteractiveFace(video);
       });
     } catch { this.error.set('No se pudo acceder a la cámara. Puedes seleccionar una fotografía desde tu dispositivo.'); }
   }
-  stopCamera(): void { if (this.detectionTimer) clearTimeout(this.detectionTimer); this.detectionTimer = null; this.faceDetector = null; this.detectionBusy = false; this.stableSince = null; this.lastFaceCenter = null; this.cameraStream?.getTracks().forEach(track => track.stop()); this.cameraStream = null; this.cameraActive.set(false); }
+  stopCamera(): void { if (this.detectionTimer) clearTimeout(this.detectionTimer); this.detectionTimer = null; this.faceDetector = null; this.faceLandmarker = null; this.detectionBusy = false; this.stableSince = null; this.lastFaceCenter = null; this.cameraStream?.getTracks().forEach(track => track.stop()); this.cameraStream = null; this.cameraActive.set(false); }
   repeatPhoto(): void { this.discardLocalPhoto(); this.startCamera(); }
-  captureSelfie(): void { const video = globalThis.document.querySelector<HTMLVideoElement>('#identityCamera'); if (!video || !video.videoWidth) { this.error.set('No se pudo leer la cámara. Intenta activarla nuevamente.'); return; } if (this.faceDetector && !this.faceReady()) { this.error.set('Espera a que se confirme un rostro correctamente posicionado.'); return; } const canvas = globalThis.document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d')?.drawImage(video, 0, 0); canvas.toBlob(blob => { if (!blob) return; this.selfieValidated.set(true); this.setLocalPhoto(new File([blob], 'selfie.jpg', { type: 'image/jpeg' })); }, 'image/jpeg', .9); this.stopCamera(); }
+  captureSelfie(): void { const video = globalThis.document.querySelector<HTMLVideoElement>('#identityCamera'); if (!video || !video.videoWidth) { this.error.set('No se pudo leer la cámara. Intenta activarla nuevamente.'); return; } if (this.facialStep() < 5) { this.error.set('Completa la verificación facial interactiva antes de capturar la fotografía.'); return; } const canvas = globalThis.document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d')?.drawImage(video, 0, 0); canvas.toBlob(blob => { if (!blob) return; this.selfieValidated.set(true); this.setLocalPhoto(new File([blob], 'selfie.jpg', { type: 'image/jpeg' })); }, 'image/jpeg', .9); this.stopCamera(); }
   async selectSelfie(event: Event): Promise<void> { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; if (!await this.validateSelfieFile(file)) return; this.stopCamera(); this.selfieValidated.set(true); this.setLocalPhoto(file); }
   discardLocalPhoto(): void { this.releaseUrl(this.localPhotoUrl()); this.localPhotoUrl.set(null); this.pendingSelfie = null; this.selfieValidated.set(false); }
   saveSelfie(): void { const app = this.application(); const url = this.localPhotoUrl(); if (!app || !url || this.savingSelfie() || !this.selfieValidated()) { this.error.set('La fotografía debe contener un solo rostro validado.'); return; } const file = this.pendingSelfie; if (!file) return; this.savingSelfie.set(true); this.identityService.uploadSelfie(app.id,file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:v=>{this.identityVerification.set(v);this.selfieUrl.set(url);this.localPhotoUrl.set(null);this.pendingSelfie=null;this.selfieValidated.set(false);this.savingSelfie.set(false);},error:e=>{this.savingSelfie.set(false);this.error.set(this.identityError(e));}}); }
@@ -235,6 +258,43 @@ export class InvestmentApplicationComponent implements OnDestroy {
   submitApplication(): void { const app=this.application();if(!app||!this.reviewAccepted()||this.submittingApplication())return;this.submittingApplication.set(true);this.applicationService.submit(app.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:updated=>{this.application.set(updated);this.submittingApplication.set(false);},error:error=>{this.submittingApplication.set(false);this.error.set(this.submitError(error));}}); }
   private pendingSelfie: File | null = null;
   private setLocalPhoto(file: File): void { this.releaseUrl(this.localPhotoUrl()); this.pendingSelfie=file; this.localPhotoUrl.set(URL.createObjectURL(file)); }
+  private async initializeFacialCheck(): Promise<boolean> {
+    try {
+      const vision = await FilesetResolver.forVisionTasks('/assets/mediapipe');
+      this.faceLandmarker = await FaceLandmarker.createFromOptions(vision, { baseOptions: { modelAssetPath: '/assets/models/face_landmarker.task' }, runningMode: 'VIDEO', numFaces: 2 });
+      this.facialStep.set(0); this.facialStableSince = null; this.blinkWasOpen = false; this.firstTurnDirection = null; this.blinkOpenEye = 0; this.lastVideoTime = -1; return true;
+    } catch { return false; }
+  }
+  private detectInteractiveFace(video: HTMLVideoElement): void {
+    if (!this.cameraActive() || !this.faceLandmarker) return;
+    this.detectionTimer = setTimeout(() => {
+      if (!this.cameraActive() || !this.faceLandmarker) return;
+      try {
+        if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.currentTime !== this.lastVideoTime) {
+          this.lastVideoTime = video.currentTime;
+          const result = this.faceLandmarker.detectForVideo(video, performance.now());
+          this.evaluateInteractiveFace(result.faceLandmarks, video);
+        }
+      } catch { this.facialSupported.set(false); this.faceGuideMessage.set('No fue posible completar la verificación facial automática en este navegador.'); }
+      if (this.cameraActive() && this.faceLandmarker) this.detectInteractiveFace(video);
+    }, 90);
+  }
+  private evaluateInteractiveFace(faces: Array<Array<{ x: number; y: number }>>, video: HTMLVideoElement): void {
+    if (faces.length !== 1) { this.faceGuideMessage.set(faces.length ? 'Debe aparecer únicamente una persona.' : 'No se detecta un rostro.'); return; }
+    const face = faces[0], nose = face[1], left = face[33], right = face[263];
+    if (!nose || !left || !right) { this.faceGuideMessage.set('No se detecta el rostro con suficiente claridad.'); return; }
+    const step = this.facialStep();
+    const width = Math.abs(right.x - left.x), centered = Math.abs(nose.x - .5) < .23 && Math.abs(nose.y - .48) < .22;
+    if (width < .12 || width > .54 || ((step === 0 || step >= 4) && !centered)) { this.faceGuideMessage.set('Centra tu rostro dentro del marco.'); return; }
+    const orientation = (nose.x - (left.x + right.x) / 2) / width;
+    const eye = (Math.abs(face[159].y - face[145].y) + Math.abs(face[386].y - face[374].y)) / (2 * width);
+    if (step === 0) { this.facialStep.set(1); this.faceGuideMessage.set('Gira suavemente hacia uno de los lados.'); return; }
+    if (step === 1 && Math.abs(orientation) > .025) { this.firstTurnDirection = orientation < 0 ? -1 : 1; this.facialStep.set(2); this.faceGuideMessage.set('Ahora gira suavemente hacia el otro lado.'); return; }
+    if (step === 2 && this.firstTurnDirection !== null && orientation * this.firstTurnDirection < -.018) { this.blinkOpenEye = 0; this.blinkWasOpen = false; this.facialStep.set(3); this.faceGuideMessage.set('Parpadea una vez.'); return; }
+    if (step === 3) { this.blinkOpenEye = Math.max(this.blinkOpenEye, eye); if (this.blinkOpenEye > .012) this.blinkWasOpen = true; if (this.blinkWasOpen && eye < this.blinkOpenEye * .62) { this.facialStep.set(4); this.faceGuideMessage.set('Vuelve al centro y mantén la posición.'); } return; }
+    if (step === 4 && Math.abs(orientation) < .1) { this.facialStableSince ??= performance.now(); if (performance.now() - this.facialStableSince > 250) { this.facialStep.set(5); this.faceReady.set(true); this.faceGuideMessage.set('Verificación completada. Capturando fotografía...'); this.captureSelfie(); } return; }
+    this.facialStableSince = null;
+  }
   private resetFaceGuide(): void { this.faceGuideMessage.set('Coloca tu rostro dentro del marco.'); this.faceReady.set(false); this.faceStabilityProgress.set(0); this.stableSince = null; this.lastFaceCenter = null; }
   private detectFace(video: HTMLVideoElement): void {
     if (!this.cameraActive() || !this.faceDetector) return;
@@ -292,19 +352,19 @@ export class InvestmentApplicationComponent implements OnDestroy {
     const url = URL.createObjectURL(file);
     try {
       const image = await new Promise<HTMLImageElement>((resolve, reject) => { const element = new Image(); element.onload = () => resolve(element); element.onerror = () => reject(); element.src = url; });
-      if (image.naturalWidth < 640 || image.naturalHeight < 400) { this.error.set('La imagen debe tener al menos 640 × 400 píxeles para revisión.'); return false; }
+      if (image.naturalWidth < 640 || image.naturalHeight < 400) { this.documentError.set('La imagen debe tener al menos 640 × 400 píxeles para revisión.'); return false; }
       const ratio = image.naturalWidth / image.naturalHeight;
-      if (ratio < .65 || ratio > 2.8) { this.error.set('La proporción de la imagen no es adecuada para revisión.'); return false; }
+      if (ratio < .65 || ratio > 2.8) { this.documentError.set('La proporción de la imagen no es adecuada para revisión.'); return false; }
       const canvas = globalThis.document.createElement('canvas'); canvas.width = 32; canvas.height = 32;
       const context = canvas.getContext('2d', { willReadFrequently: true }); if (!context) return false;
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
       const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
       let luminance = 0; for (let index = 0; index < pixels.length; index += 4) luminance += .2126 * pixels[index] + .7152 * pixels[index + 1] + .0722 * pixels[index + 2];
       const average = luminance / (pixels.length / 4);
-      if (average < 18 || average > 242) { this.error.set('La imagen está demasiado oscura o clara para revisión.'); return false; }
-      if (type !== 'AdditionalDocument' && (ratio < 1.1 || ratio > 2.2)) { this.error.set('La imagen no parece corresponder a un documento de identidad completo.'); return false; }
+      if (average < 18 || average > 242) { this.documentError.set('La imagen está demasiado oscura o clara para revisión.'); return false; }
+      if (type !== 'AdditionalDocument' && (ratio < 1.1 || ratio > 2.2)) { this.documentError.set('La imagen no parece corresponder a un documento de identidad completo.'); return false; }
       return true;
-    } catch { this.error.set('No fue posible analizar la imagen del documento.'); return false; }
+    } catch { this.documentError.set('No fue posible analizar la imagen del documento.'); return false; }
     finally { URL.revokeObjectURL(url); }
   }
   private loadIdentity(id: string): void { this.identityService.get(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:v=>{this.identityVerification.set(v);this.consentAccepted.set(v.consentAccepted);if(v.status==='Captured'||v.status==='Verified')this.identityService.getSelfie(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:b=>this.selfieUrl.set(URL.createObjectURL(b))});},error:e=>{if(e.status!==404)this.error.set(this.identityError(e));}}); }
@@ -318,6 +378,11 @@ export class InvestmentApplicationComponent implements OnDestroy {
   isComplete(step: InvestmentApplicationStep): boolean { const current = this.application()?.currentStep ?? 'PersonalInformation'; return this.stepIndex(step) < this.stepIndex(current); }
   isCurrent(step: InvestmentApplicationStep): boolean { return this.application()?.currentStep === step; }
   private stepIndex(step: InvestmentApplicationStep): number { return this.steps.findIndex(item => item.key === step); }
+  private configureIdentificationValidation(): void {
+    const control = this.form.controls.identificationNumber;
+    control.setValidators(this.form.controls.identificationType.value === 'NationalId' ? [Validators.required, Validators.pattern(/^\d{10}$/)] : [Validators.required]);
+    control.updateValueAndValidity({ emitEvent: false });
+  }
   private fillForm(application: InvestmentApplication): void {
     this.form.patchValue({ firstName: application.applicantFirstName ?? '', lastName: application.applicantLastName ?? '', identificationType: application.identificationType ?? 'NationalId', identificationNumber: application.identificationNumber ?? '', email: application.email ?? '', phone: application.phone ?? '', birthDate: application.birthDate ?? '', address: application.address ?? '', city: application.city ?? '' });
     this.declarationsForm.patchValue({ sourceOfFunds: application.sourceOfFunds, otherSourceOfFunds: application.otherSourceOfFunds ?? '', informationAccuracyAccepted: application.informationAccuracyAccepted, termsAccepted: application.termsAccepted, dataProcessingAccepted: application.dataProcessingAccepted });

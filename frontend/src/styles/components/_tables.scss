@@ -1,5 +1,56 @@
-.table-container { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.table-container { overflow-x: auto; background: var(--surface-panel); border: 1px solid var(--border-default); border-radius: var(--radius-sm); }
 .data-table { width: 100%; border-collapse: collapse; min-width: 640px; }
-.data-table th, .data-table td { padding: 15px 17px; text-align: left; border-bottom: 1px solid var(--border); }
-.data-table th { color: var(--text-muted); background: var(--surface-muted); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; }
-.data-table tbody tr:hover { background: #f8fbfd; }
+.data-table th, .data-table td { padding: 15px 18px; text-align: left; border-bottom: 1px solid var(--border-default); }
+.data-table th { color: var(--text-secondary); background: var(--surface-subtle); font-size: .68rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.data-table td { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.data-table tbody tr { transition: background-color .16s ease; }
+.data-table tbody tr:hover { background: var(--primary-soft); }
+.data-table th:nth-child(n+2), .data-table td:nth-child(n+2) { text-align: right; }
+
+/* FinanSmart premium data table: a single card surface inspired by the financial
+   analysis board, while preserving every table's existing columns and actions. */
+.table-container, .table-shell {
+  overflow-x: auto !important;
+  border: 1px solid #e2ecec !important;
+  border-radius: 22px !important;
+  background: #fff !important;
+  box-shadow: 0 12px 30px rgb(0 43 58 / 7%) !important;
+}
+.data-table, .financial-table {
+  min-width: 680px;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  background: #fff;
+}
+.data-table th, .financial-table th {
+  height: 46px !important;
+  padding: 0 18px !important;
+  border: 0 !important;
+  background: #124f60 !important;
+  color: #fff !important;
+  font-size: .69rem !important;
+  font-weight: 760 !important;
+  letter-spacing: .025em !important;
+  text-transform: none !important;
+  white-space: nowrap;
+}
+.data-table th:first-child, .financial-table th:first-child { border-radius: 11px 0 0 0; }
+.data-table th:last-child, .financial-table th:last-child { border-radius: 0 11px 0 0; }
+.data-table td, .financial-table td {
+  height: 56px !important;
+  padding: 0 18px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #edf2f2 !important;
+  color: #465a60 !important;
+  font-size: .79rem !important;
+  vertical-align: middle;
+}
+.data-table tbody tr:nth-child(odd), .financial-table tbody tr:nth-child(odd) { background: #f3f7f7 !important; }
+.data-table tbody tr:nth-child(even), .financial-table tbody tr:nth-child(even) { background: #fff !important; }
+.data-table tbody tr:hover, .financial-table tbody tr:hover { background: #e6f4f4 !important; }
+.data-table tbody tr:last-child td, .financial-table tbody tr:last-child td { border-bottom: 0 !important; }
+.data-table td strong, .financial-table td strong { color: #263b42; font-weight: 780; }
+@media (max-width: 640px) {
+  .table-container, .table-shell { border-radius: 15px !important; }
+  .data-table th, .data-table td, .financial-table th, .financial-table td { padding-right: 13px !important; padding-left: 13px !important; }
+}

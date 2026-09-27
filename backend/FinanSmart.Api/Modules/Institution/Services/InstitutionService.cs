@@ -32,7 +32,7 @@ public class InstitutionService(FinanSmartDbContext dbContext) : IInstitutionSer
 
     public async Task<InstitutionDto> CreateAsync(CreateInstitutionDto dto)
     {
-        ValidateRequiredFields(dto.Name, dto.Ruc);
+        ValidateRequiredFields(dto.Name, dto.Ruc); ValidateBackgroundColor(dto.BackgroundColor);
         var normalizedRuc = dto.Ruc.Trim();
 
         if (await dbContext.Institutions.AnyAsync(institution => institution.Ruc == normalizedRuc))
@@ -52,6 +52,7 @@ public class InstitutionService(FinanSmartDbContext dbContext) : IInstitutionSer
             LogoUrl = dto.LogoUrl,
             PrimaryColor = dto.PrimaryColor,
             SecondaryColor = dto.SecondaryColor,
+            BackgroundColor = dto.BackgroundColor,
             IsActive = dto.IsActive,
             CreatedAt = now,
             UpdatedAt = now
@@ -65,7 +66,7 @@ public class InstitutionService(FinanSmartDbContext dbContext) : IInstitutionSer
 
     public async Task<bool> UpdateAsync(Guid id, UpdateInstitutionDto dto)
     {
-        ValidateRequiredFields(dto.Name, dto.Ruc);
+        ValidateRequiredFields(dto.Name, dto.Ruc); ValidateBackgroundColor(dto.BackgroundColor);
         var institution = await dbContext.Institutions.FindAsync(id);
 
         if (institution is null)
@@ -90,6 +91,7 @@ public class InstitutionService(FinanSmartDbContext dbContext) : IInstitutionSer
         institution.LogoUrl = dto.LogoUrl;
         institution.PrimaryColor = dto.PrimaryColor;
         institution.SecondaryColor = dto.SecondaryColor;
+        institution.BackgroundColor = dto.BackgroundColor;
         institution.IsActive = dto.IsActive;
         institution.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -137,8 +139,15 @@ public class InstitutionService(FinanSmartDbContext dbContext) : IInstitutionSer
         LogoUrl = institution.LogoUrl,
         PrimaryColor = institution.PrimaryColor,
         SecondaryColor = institution.SecondaryColor,
+        BackgroundColor = institution.BackgroundColor,
         IsActive = institution.IsActive,
         CreatedAt = institution.CreatedAt,
         UpdatedAt = institution.UpdatedAt
     };
+
+    private static void ValidateBackgroundColor(string? color)
+    {
+        if (string.IsNullOrWhiteSpace(color)) return;
+        if (!System.Text.RegularExpressions.Regex.IsMatch(color, "^#[0-9A-Fa-f]{6}$")) throw new ArgumentException("Background color must be a hexadecimal value.");
+    }
 }

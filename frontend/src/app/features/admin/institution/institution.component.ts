@@ -36,6 +36,7 @@ export class InstitutionComponent {
     logoUrl: [''],
     primaryColor: ['#123B5D', Validators.pattern(/^(|#[0-9A-Fa-f]{6})$/)],
     secondaryColor: ['#18A999', Validators.pattern(/^(|#[0-9A-Fa-f]{6})$/)],
+    backgroundColor: ['#F5F3ED', Validators.pattern(/^(|#[0-9A-Fa-f]{6})$/)],
     isActive: [true]
   });
   readonly preview = signal(this.form.getRawValue());
@@ -57,7 +58,7 @@ export class InstitutionComponent {
     });
   }
 
-  setColor(control: 'primaryColor' | 'secondaryColor', event: Event): void {
+  setColor(control: 'primaryColor' | 'secondaryColor' | 'backgroundColor', event: Event): void {
     this.form.controls[control].setValue((event.target as HTMLInputElement).value);
   }
 
@@ -143,6 +144,7 @@ export class InstitutionComponent {
       logoUrl: institution.logoUrl ?? '',
       primaryColor: institution.primaryColor ?? '#123B5D',
       secondaryColor: institution.secondaryColor ?? '#18A999',
+      backgroundColor: institution.backgroundColor ?? '#F5F3ED',
       isActive: institution.isActive
     });
   }

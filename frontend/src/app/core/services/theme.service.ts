@@ -8,38 +8,100 @@ export class ThemeService {
 
   applyInstitutionTheme(institution: Institution): void {
     const root = this.document.documentElement;
-    this.applyColor(root, '--primary', '--primary-dark', '--primary-soft', institution.primaryColor);
-    this.applyColor(root, '--accent', '--accent-dark', '--accent-soft', institution.secondaryColor);
+    const primary = this.isValidHex(institution.primaryColor) ? institution.primaryColor! : '#123B5D';
+    const secondary = this.isValidHex(institution.secondaryColor) ? institution.secondaryColor! : '#18A999';
+    const background = this.isValidHex(institution.backgroundColor) ? institution.backgroundColor! : '#F5F3ED';
+
+    this.applyColor(root, '--primary', '--primary-dark', '--primary-soft', primary);
+    this.applyColor(root, '--accent', '--accent-dark', '--accent-soft', secondary);
+    this.applyNavigationTokens(root, primary);
+    root.style.setProperty('--brand-primary', 'var(--primary)');
+    root.style.setProperty('--brand-primary-hover', 'var(--primary-dark)');
+    root.style.setProperty('--brand-primary-active', 'var(--primary-dark)');
+    root.style.setProperty('--brand-secondary', 'var(--accent)');
+    root.style.setProperty('--brand-accent', 'var(--accent)');
+    root.style.setProperty('--surface-page', background);
+    root.style.setProperty('--surface-panel', this.mixColors(background, '#ffffff', .58));
+    root.style.setProperty('--surface-subtle', this.mixColors(background, '#ffffff', .28));
+    root.style.setProperty('--surface-dark', this.mixColors(primary, '#000000', .72));
+    root.style.setProperty('--accent-contrast', this.bestContrast(secondary, '#ffffff', '#14283b'));
     this.document.title = institution.name.trim() || 'FinanSmart';
   }
 
   resetInstitutionTheme(): void {
     const root = this.document.documentElement;
-    ['--primary', '--primary-dark', '--primary-soft', '--accent', '--accent-dark', '--accent-soft'].forEach(name => root.style.removeProperty(name));
+    [
+      '--primary', '--primary-dark', '--primary-soft', '--primary-contrast',
+      '--accent', '--accent-dark', '--accent-soft', '--nav-bg', '--nav-bg-elevated',
+      '--nav-border', '--nav-text', '--nav-text-muted', '--nav-active-bg',
+      '--nav-active-text', '--nav-hover-bg', '--nav-indicator', '--topbar-bg', '--topbar-border',
+      '--surface-dark', '--accent-contrast'
+    ].forEach(name => root.style.removeProperty(name));
     this.document.title = 'FinanSmart';
   }
 
-  private applyColor(root: HTMLElement, colorVariable: string, darkVariable: string, softVariable: string, color: string | null): void {
-    if (!color || !/^#[0-9a-f]{6}$/i.test(color)) {
-      [colorVariable, darkVariable, softVariable].forEach(name => root.style.removeProperty(name));
-      return;
-    }
+  private applyNavigationTokens(root: HTMLElement, primary: string): void {
+    // Keep navigation structural and legible even when the institutional color is very light.
+    const navBackground = primary;
+    const navElevated = this.mixColors(navBackground, '#000000', .16);
+    const navActive = this.mixColors(navBackground, '#000000', .28);
+    const navHover = this.mixColors(navBackground, '#ffffff', .08);
+    const navText = this.bestContrast(navBackground, '#ffffff', '#14283b');
+    const navMuted = this.mixColors(navText, navBackground, .31);
 
+    root.style.setProperty('--nav-bg', navBackground);
+    root.style.setProperty('--nav-bg-elevated', navElevated);
+    root.style.setProperty('--nav-border', this.mixColors(navText, navBackground, .78));
+    root.style.setProperty('--nav-text', navText);
+    root.style.setProperty('--nav-text-muted', navMuted);
+    root.style.setProperty('--nav-active-bg', navActive);
+    root.style.setProperty('--nav-active-text', this.bestContrast(navActive, '#ffffff', '#14283b'));
+    root.style.setProperty('--nav-hover-bg', navHover);
+    root.style.setProperty('--nav-indicator', primary);
+    root.style.setProperty('--topbar-bg', this.mixColors(primary, '#ffffff', .975));
+    root.style.setProperty('--topbar-border', this.mixColors(primary, '#ffffff', .86));
+  }
+
+  private applyColor(root: HTMLElement, colorVariable: string, darkVariable: string, softVariable: string, color: string): void {
     root.style.setProperty(colorVariable, color);
-    root.style.setProperty(darkVariable, this.mix(color, '#000000', .24));
-    root.style.setProperty(softVariable, this.mix(color, '#ffffff', .88));
-    if (colorVariable === '--primary') root.style.setProperty('--primary-contrast', this.isLight(color) ? '#14283b' : '#ffffff');
+    root.style.setProperty(darkVariable, this.mixColors(color, '#000000', .24));
+    root.style.setProperty(softVariable, this.mixColors(color, '#ffffff', .88));
+    if (colorVariable === '--primary') root.style.setProperty('--primary-contrast', this.bestContrast(color, '#ffffff', '#14283b'));
   }
 
-  private mix(first: string, second: string, secondWeight: number): string {
-    const from = first.slice(1).match(/.{2}/g)!.map(value => parseInt(value, 16));
-    const to = second.slice(1).match(/.{2}/g)!.map(value => parseInt(value, 16));
-    const channels = from.map((value, index) => Math.round(value * (1 - secondWeight) + to[index] * secondWeight));
-    return `#${channels.map(value => value.toString(16).padStart(2, '0')).join('')}`;
+  private isValidHex(color: string | null | undefined): color is string {
+    return !!color && /^#[0-9a-f]{6}$/i.test(color);
   }
 
-  private isLight(color: string): boolean {
-    const [red, green, blue] = color.slice(1).match(/.{2}/g)!.map(value => parseInt(value, 16));
-    return (red * 299 + green * 587 + blue * 114) / 1000 > 166;
+  private hexToRgb(color: string): [number, number, number] {
+    const value = color.replace('#', '');
+    return [parseInt(value.slice(0, 2), 16), parseInt(value.slice(2, 4), 16), parseInt(value.slice(4, 6), 16)];
+  }
+
+  private rgbToHex([red, green, blue]: [number, number, number]): string {
+    return `#${[red, green, blue].map(channel => Math.round(channel).toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  private mixColors(first: string, second: string, secondWeight: number): string {
+    const from = this.hexToRgb(first);
+    const to = this.hexToRgb(second);
+    return this.rgbToHex([0, 1, 2].map(index => from[index] * (1 - secondWeight) + to[index] * secondWeight) as [number, number, number]);
+  }
+
+  private luminance(color: string): number {
+    const channels = this.hexToRgb(color).map(channel => {
+      const value = channel / 255;
+      return value <= .03928 ? value / 12.92 : Math.pow((value + .055) / 1.055, 2.4);
+    });
+    return .2126 * channels[0] + .7152 * channels[1] + .0722 * channels[2];
+  }
+
+  private contrast(first: string, second: string): number {
+    const [lighter, darker] = [this.luminance(first), this.luminance(second)].sort((a, b) => b - a);
+    return (lighter + .05) / (darker + .05);
+  }
+
+  private bestContrast(background: string, light: string, dark: string): string {
+    return this.contrast(background, light) >= this.contrast(background, dark) ? light : dark;
   }
 }

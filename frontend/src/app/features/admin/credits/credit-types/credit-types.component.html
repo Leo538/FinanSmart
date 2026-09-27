@@ -1,4 +1,4 @@
-<main class="page-container">
+<main class="page-container internal-page">
   <app-page-header
     title="Productos de crédito"
     subtitle="Configura los productos crediticios disponibles para los clientes."
@@ -33,6 +33,7 @@
               <th scope="col">Nombre</th>
               <th scope="col">Rango de monto</th>
               <th scope="col">Plazo</th>
+              <th scope="col">Tasa vigente</th>
               <th scope="col">Estado</th>
               <th scope="col">Actualizado</th>
               <th scope="col">Acciones</th>
@@ -47,6 +48,7 @@
                 </td>
                 <td>{{ formatAmount(creditType.minimumAmount) }} - {{ formatAmount(creditType.maximumAmount) }}</td>
                 <td>{{ creditType.minimumTermMonths }} - {{ creditType.maximumTermMonths }} meses</td>
+                <td class="current-rate">@if (rateFor(creditType.id); as rate) { {{ rate.annualInterestRate | number:'1.2-2' }} % } @else { <span>Sin tasa</span> }</td>
                 <td><app-status-badge [status]="creditType.isActive ? 'active' : 'inactive'" /></td>
                 <td>{{ creditType.updatedAt | date:'dd/MM/yyyy' }}</td>
                 <td>

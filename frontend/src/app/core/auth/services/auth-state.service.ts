@@ -64,7 +64,6 @@ export class AuthStateService {
   redirectUrl(): string {
     if (this.hasRole('Admin')) return '/admin/dashboard';
     if (this.hasRole('Client')) return '/client/dashboard';
-    if (this.hasRole('Advisor')) return '/advisor/dashboard';
     return '/login';
   }
 }

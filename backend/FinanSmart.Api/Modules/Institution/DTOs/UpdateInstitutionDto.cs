@@ -10,6 +10,6 @@ public class UpdateInstitutionDto
     public string? LogoUrl { get; init; }
     public string? PrimaryColor { get; init; }
     public string? SecondaryColor { get; init; }
+    public string? BackgroundColor { get; init; }
     public bool IsActive { get; init; }
 }
-

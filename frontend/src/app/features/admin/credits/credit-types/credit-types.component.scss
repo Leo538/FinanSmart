@@ -41,3 +41,24 @@ td small { display: block; max-width: 260px; margin-top: 4px; color: var(--color
   .modal-footer, .confirmation-actions { flex-direction: column-reverse; }
   .modal-footer .btn, .confirmation-actions .btn { width: 100%; }
 }
+
+/* Financial catalogue treatment */
+.credit-types-card { overflow: hidden; border: 0; border-top: 1px solid var(--border-default); border-radius: 0; background: transparent; box-shadow: none; }
+.credit-types-card .table-container { border: 0; border-radius: 0; }
+.credit-types-card .data-table th, .credit-types-card .data-table td { height: 52px; padding-right: 14px; padding-left: 14px; }
+.credit-types-card .data-table th:first-child, .credit-types-card .data-table td:first-child { padding-left: 0; text-align: left; }
+.credit-types-card .data-table th:last-child, .credit-types-card .data-table td:last-child { padding-right: 0; }
+.credit-types-card td strong { color: var(--text-primary); font-weight: 720; }
+.credit-types-card .current-rate { color: var(--brand-primary); font-family: var(--font-family-heading); font-size: .98rem; font-weight: 760; }
+.credit-types-card .current-rate span { color: var(--text-muted); font-family: var(--font-family-base); font-size: .74rem; font-weight: 650; }
+.credit-types-card td small { max-width: 290px; color: var(--text-secondary); font-size: .74rem; line-height: 1.35; }
+.row-actions { justify-content: flex-end; white-space: nowrap; }
+.row-actions .btn-secondary { border-color: var(--border-strong); background: transparent; color: var(--brand-primary); box-shadow: none; }
+.row-actions .btn-ghost { padding-right: 7px; padding-left: 7px; }
+.modal-card { border-top: 3px solid var(--brand-primary); border-radius: var(--radius-md); }
+.modal-header h2, .confirmation-card h2 { font-family: var(--font-family-heading); letter-spacing: -.03em; }
+.form-section h3 { color: var(--text-primary); font-size: .76rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.configuration-section { padding: 20px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-subtle); }
+.configuration-section + .configuration-section { margin-top: -12px; }
+.configuration-section .section-heading h3 { font-size: .98rem; letter-spacing: -.02em; text-transform: none; }
+@media (max-width: 767px) { .credit-types-card .data-table th, .credit-types-card .data-table td { padding-right: 12px; padding-left: 12px; } }

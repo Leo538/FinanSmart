@@ -96,6 +96,16 @@
             }
           </div>
 
+          <div class="color-field">
+            <label class="form-label" for="backgroundColor">Color de fondo</label>
+            <div>
+              <input id="backgroundColorPicker" type="color" [value]="form.controls.backgroundColor.value || '#F5F3ED'" (input)="setColor('backgroundColor', $event)" aria-label="Seleccionar color de fondo" />
+              <input id="backgroundColor" class="form-control" formControlName="backgroundColor" />
+            </div>
+            @if (form.controls.backgroundColor.touched && form.controls.backgroundColor.invalid) { <span class="form-error">Usa un color hexadecimal válido.</span> }
+            <span class="form-help">Usa un tono claro para conservar la legibilidad.</span>
+          </div>
+
           <label class="toggle-field full">
             <input type="checkbox" formControlName="isActive" />
             <span></span>
@@ -129,12 +139,11 @@
           </div>
           <h2>{{ preview().name || 'FinanSmart' }}</h2>
           <p>RUC {{ preview().ruc || 'Sin configurar' }}</p>
-          <div class="swatches">
-            <span><i class="primary"></i>Primario</span>
-            <span><i class="accent"></i>Secundario</span>
+          <div class="swatches"><span><i class="primary"></i>Primario</span><span><i class="accent"></i>Secundario</span></div>
+          <div class="system-preview" aria-label="Vista previa de la plataforma">
+            <aside><span></span><span></span><span></span></aside>
+            <div class="system-preview__main"><header><b>Resumen</b><i></i></header><div class="preview-kpi"><small>Saldo proyectado</small><strong>$ 24.500</strong><em>+ 4,8%</em></div><div class="preview-input">Buscar movimientos</div><div class="preview-table"><span>Producto</span><span>Estado</span><span>Inversión</span><span class="preview-badge">Activa</span></div><div class="preview-actions"><button class="preview-primary" type="button">Principal</button><button class="preview-accent" type="button">Secundario</button></div></div>
           </div>
-          <button class="preview-primary" type="button">Acción principal</button>
-          <button class="preview-accent" type="button">Acción secundaria</button>
         </div>
       </aside>
     </section>

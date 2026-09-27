@@ -8,6 +8,7 @@ export interface Institution {
   logoUrl: string | null;
   primaryColor: string | null;
   secondaryColor: string | null;
+  backgroundColor: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -22,5 +23,6 @@ export interface InstitutionFormData {
   logoUrl: string | null;
   primaryColor: string | null;
   secondaryColor: string | null;
+  backgroundColor: string | null;
   isActive: boolean;
 }

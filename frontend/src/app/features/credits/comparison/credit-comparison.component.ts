@@ -3,9 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { CreditType } from '../../admin/credits/credit-types/models/credit-type.model';
 import { CreditTypeService } from '../../admin/credits/credit-types/services/credit-type.service';
 import { CreditRateService } from '../../admin/credits/credit-rates/services/credit-rate.service';
@@ -14,7 +12,7 @@ import { CreditComparisonService } from './services/credit-comparison.service';
 
 @Component({
   selector: 'app-credit-comparison',
-  imports: [ReactiveFormsModule, PageHeaderComponent, LoadingSpinnerComponent, EmptyStateComponent],
+  imports: [ReactiveFormsModule, LoadingSpinnerComponent],
   templateUrl: './credit-comparison.component.html',
   styleUrl: './credit-comparison.component.scss'
 })

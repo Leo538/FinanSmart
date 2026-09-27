@@ -6,14 +6,13 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { CreditType } from '../../admin/credits/credit-types/models/credit-type.model';
 import { CreditTypeService } from '../../admin/credits/credit-types/services/credit-type.service';
 import { CreditRateService } from '../../admin/credits/credit-rates/services/credit-rate.service';
 import { AmortizationInstallment, AmortizationSystem, CreditSimulationRequest, CreditSimulationResponse } from './models/credit-simulation.model';
 import { CreditSimulationService } from './services/credit-simulation.service';
 
-@Component({selector:'app-credit-simulator',imports:[ReactiveFormsModule,DatePipe,PageHeaderComponent,LoadingSpinnerComponent,EmptyStateComponent],templateUrl:'./credit-simulator.component.html',styleUrl:'./credit-simulator.component.scss'})
+@Component({selector:'app-credit-simulator',imports:[ReactiveFormsModule,DatePipe,PageHeaderComponent,LoadingSpinnerComponent],templateUrl:'./credit-simulator.component.html',styleUrl:'./credit-simulator.component.scss'})
 export class CreditSimulatorComponent {
   private readonly destroy=inject(DestroyRef); private readonly fb=inject(NonNullableFormBuilder); private readonly typeApi=inject(CreditTypeService); private readonly rateApi=inject(CreditRateService); private readonly api=inject(CreditSimulationService); private readonly router=inject(Router); private readonly currency=new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}); private readonly percentFormat=new Intl.NumberFormat('es-EC',{minimumFractionDigits:2,maximumFractionDigits:2});
   readonly creditTypes=signal<CreditType[]>([]); readonly selectedType=signal<CreditType|null>(null); readonly currentRate=signal<number|null>(null); readonly rateChecked=signal(false); readonly loadingTypes=signal(true); readonly simulating=signal(false); readonly downloadingPdf=signal(false); readonly result=signal<CreditSimulationResponse|null>(null); readonly resultStale=signal(false); readonly showTable=signal(false); readonly showBreakdown=signal(false); readonly error=signal(''); readonly expandedInstallment=signal<number|null>(null);

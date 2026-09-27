@@ -16,20 +16,21 @@ import { CreditChargesComponent } from './features/admin/credits/credit-charges/
 import { InvestmentProductsComponent } from './features/admin/investments/investment-products/investment-products.component';
 import { InvestmentRatesComponent } from './features/admin/investments/investment-rates/investment-rates.component';
 import { InvestmentApplicationsComponent } from './features/admin/investments/applications/investment-applications.component';
-import { AdvisorDashboardComponent } from './features/advisor/advisor-dashboard.component';
 import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component';
 import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.component';
 import { ClientLayoutComponent } from './layouts/client-layout/client-layout.component';
 import { PublicLayoutComponent } from './layouts/public-layout/public-layout.component';
+import { PublicHomeComponent } from './features/public-home/public-home.component';
 
 export const routes: Routes = [
   { path: 'login', component: AuthLayoutComponent, canActivate: [guestGuard], children: [{ path: '', component: LoginComponent }] },
   { path: 'register', component: AuthLayoutComponent, canActivate: [guestGuard], children: [{ path: '', component: RegisterComponent }] },
   { path: 'simulators', component: PublicLayoutComponent, children: [
+    { path: 'home', component: PublicHomeComponent },
     { path: 'credit', component: CreditSimulatorComponent },
     { path: 'comparison', component: CreditComparisonComponent },
     { path: 'investment', component: InvestmentSimulatorComponent },
-    { path: '', pathMatch: 'full', redirectTo: 'credit' }
+    { path: '', pathMatch: 'full', redirectTo: 'home' }
   ] },
   { path: 'admin', component: AdminLayoutComponent, canActivate: [authGuard, roleGuard(['Admin'])], children: [
     { path: 'dashboard', component: AdminDashboardComponent }, { path: 'institution', component: InstitutionComponent },
@@ -39,6 +40,5 @@ export const routes: Routes = [
   { path: 'client', component: ClientLayoutComponent, canActivate: [authGuard, roleGuard(['Client'])], children: [
     { path: 'dashboard', component: ClientDashboardComponent }, { path: 'credits/simulator', component: CreditSimulatorComponent }, { path: 'credits/comparison', component: CreditComparisonComponent }, { path: 'investments/simulator', component: InvestmentSimulatorComponent }, { path: 'investments/applications/:id', component: InvestmentApplicationComponent }, { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
   ] },
-  { path: 'advisor', canActivate: [authGuard, roleGuard(['Advisor'])], children: [{ path: 'dashboard', component: AdvisorDashboardComponent }, { path: '', pathMatch: 'full', redirectTo: 'dashboard' }] },
-  { path: '', pathMatch: 'full', redirectTo: 'simulators/credit' }, { path: '**', redirectTo: 'simulators/credit' }
+  { path: '', pathMatch: 'full', redirectTo: 'simulators/home' }, { path: '**', redirectTo: 'simulators/home' }
 ];

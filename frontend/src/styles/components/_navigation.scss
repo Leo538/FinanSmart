@@ -1,0 +1,67 @@
+/* Navigation consumes derived white-label tokens, never a fixed institution colour. */
+app-admin-sidebar .sidebar { width:236px !important; padding:16px 10px !important; background:var(--nav-bg) !important; color:var(--nav-text) !important; font-family:var(--font-family-base) !important; }
+app-admin-sidebar .brand { min-height:58px !important; padding:4px 8px 16px !important; border-color:var(--nav-border) !important; }
+app-admin-sidebar .brand-mark { width:38px !important; height:38px !important; border-radius:7px !important; background:var(--nav-bg-elevated) !important; color:var(--nav-active-text) !important; }
+app-admin-sidebar .brand-mark img { object-fit:contain !important; background:transparent !important; }
+app-admin-sidebar .brand-copy strong { color:var(--nav-text) !important; font-size:.9rem !important; }
+app-admin-sidebar .brand-copy small { color:var(--nav-text-muted) !important; font-size:.72rem !important; }
+app-admin-sidebar .sidebar nav { gap:1px !important; padding-top:10px !important; }
+app-admin-sidebar .nav-section { margin:18px 10px 6px !important; color:var(--nav-text-muted) !important; font-size:.68rem !important; letter-spacing:.11em !important; }
+app-admin-sidebar .sidebar a { min-height:41px !important; padding:0 10px !important; border-radius:6px !important; color:var(--nav-text-muted) !important; font-size:.875rem !important; }
+app-admin-sidebar .sidebar a:hover { background:var(--nav-hover-bg) !important; color:var(--nav-text) !important; }
+app-admin-sidebar .sidebar a.active { background:var(--nav-active-bg) !important; color:var(--nav-active-text) !important; font-weight:700 !important; }
+app-admin-sidebar .sidebar a.active:before { left:-10px !important; width:3px !important; height:22px !important; background:var(--nav-indicator) !important; }
+app-admin-sidebar .collapsed { width:68px !important; }
+app-admin-sidebar .sidebar::-webkit-scrollbar { width:5px; }
+app-admin-sidebar .sidebar::-webkit-scrollbar-thumb { background:var(--nav-border); border-radius:5px; }
+
+app-admin-topbar .topbar { min-height:64px !important; padding:0 24px !important; border-color:var(--topbar-border) !important; background:var(--topbar-bg) !important; box-shadow:none !important; }
+app-admin-topbar .menu-button { width:36px !important; height:36px !important; border:1px solid var(--brand-primary) !important; border-radius:6px !important; background:var(--brand-primary) !important; color:var(--primary-contrast) !important; opacity:1 !important; filter:none !important; mix-blend-mode:normal !important; box-shadow:none !important; }
+app-admin-topbar .menu-button:hover { background:var(--brand-primary-hover) !important; color:var(--primary-contrast) !important; }
+app-admin-topbar .menu-button svg, app-admin-topbar .menu-button path { opacity:1 !important; stroke:currentColor !important; }
+app-admin-topbar .menu-button:active { background:var(--brand-primary-active) !important; transform:translateY(1px); }
+app-admin-topbar .menu-button:focus-visible { outline:3px solid var(--brand-primary-hover); outline-offset:2px; }
+app-admin-topbar .title small { font-size:.72rem !important; }
+app-admin-topbar .title strong { font-size:.95rem !important; }
+app-admin-topbar .user-button { border-radius:6px !important; }
+app-admin-topbar .avatar, app-client-layout .avatar { background:var(--brand-primary) !important; color:var(--primary-contrast) !important; }
+app-admin-topbar .dropdown, app-client-layout .dropdown { border-color:var(--topbar-border) !important; border-radius:8px !important; box-shadow:var(--shadow-md) !important; }
+
+app-client-layout .client-shell { background:var(--surface-page) !important; }
+app-client-layout .client-shell header { min-height:64px !important; gap:22px !important; border-color:var(--topbar-border) !important; background:var(--topbar-bg) !important; }
+app-client-layout .client-brand { color:var(--brand-primary) !important; }
+app-client-layout .client-brand span { width:36px !important; height:36px !important; border-radius:7px !important; background:var(--nav-bg-elevated) !important; color:var(--nav-text) !important; }
+app-client-layout .client-brand img { object-fit:contain !important; background:transparent !important; }
+app-client-layout .client-shell nav a { padding:21px 0 !important; font-size:.875rem !important; }
+app-client-layout .client-shell nav a.active { color:var(--brand-primary) !important; }
+app-client-layout .client-shell nav a.active:after { height:2px !important; background:var(--nav-indicator) !important; }
+app-client-layout .user-button { border-radius:6px !important; }
+
+@media (max-width:1024px) {
+  app-admin-topbar .topbar { padding:0 16px !important; }
+  app-client-layout .client-shell header { padding:0 16px !important; gap:16px !important; }
+}
+
+@media (max-width:767px) {
+  app-admin-sidebar .sidebar { width:236px !important; }
+  app-admin-sidebar .mobile-close { display:block !important; color:var(--nav-text) !important; }
+  app-admin-topbar .topbar { min-height:60px !important; }
+  app-client-layout .client-shell header { overflow-x:auto !important; }
+  app-client-layout .user-copy, app-client-layout .chevron { display:none !important; }
+  app-client-layout .client-brand strong { display:none !important; }
+}
+
+/* Dark financial navigation, matching the public FinanSmart canvas. */
+app-admin-sidebar .sidebar { background: linear-gradient(180deg, #002b3a 0%, #003f52 100%) !important; }
+app-admin-sidebar .brand { padding-bottom: 20px !important; }
+app-admin-sidebar .brand-mark { border-radius: 12px !important; background: #0f6474 !important; }
+app-admin-sidebar .sidebar a { border-radius: 11px !important; }
+app-admin-sidebar .sidebar a.active { background: rgb(132 220 218 / 16%) !important; color: #fff !important; }
+app-admin-sidebar .sidebar a.active:before { background: #83dbdc !important; }
+app-admin-topbar .topbar { min-height: 72px !important; border-color: #e0ebec !important; background: rgb(255 255 255 / 92%) !important; }
+app-admin-topbar .menu-button { border-radius: 11px !important; background: #075c6e !important; }
+app-client-layout .client-shell header { min-height: 72px !important; border-color: #e0ebec !important; background: rgb(255 255 255 / 94%) !important; }
+app-client-layout .client-brand { color: #063b4d !important; font-family: var(--font-family-heading); font-size: 1rem; letter-spacing: -.03em; }
+app-client-layout .client-brand span { border-radius: 11px !important; background: #075c6e !important; }
+app-client-layout .client-shell nav a { color: #64777d !important; font-weight: 650; }
+app-client-layout .client-shell nav a.active { color: #075c6e !important; }

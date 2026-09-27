@@ -1,0 +1,108 @@
+<main class="client-dashboard">
+  <header class="client-intro page-header">
+    <p class="section-caption">Mi espacio financiero</p>
+    <h1>Hola, {{ authState.currentUser()?.firstName || 'cliente' }}</h1>
+    <p>Consulta tus productos, simulaciones y solicitudes desde un solo lugar.</p>
+  </header>
+
+  <section class="action-desk quick-actions-strip" aria-label="Acciones principales">
+    <a class="primary-action" routerLink="/client/credits/simulator">
+      <span class="action-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h5" /></svg>
+      </span>
+      <span class="action-copy">
+        <strong>Simular crédito</strong>
+        <small>Calcula cuotas y condiciones.</small>
+      </span>
+      <span class="action-arrow" aria-hidden="true">→</span>
+    </a>
+
+    <a class="secondary-action" routerLink="/client/credits/comparison">
+        <span class="action-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 5h5v14H5zM14 9h5v10h-5zM7 9h1M16 13h1" /></svg>
+        </span>
+        <span class="action-copy"><strong>Comparar sistemas</strong><small>Revisa Francés y Alemán.</small></span>
+        <span class="action-arrow" aria-hidden="true">→</span>
+    </a>
+    <a class="secondary-action" routerLink="/client/investments/simulator">
+        <span class="action-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 19h16M6 16l4-5 3 3 5-7M15 7h3v3" /></svg>
+        </span>
+        <span class="action-copy"><strong>Simular inversión</strong><small>Proyecta el rendimiento de tu capital.</small></span>
+        <span class="action-arrow" aria-hidden="true">→</span>
+    </a>
+  </section>
+
+  @if (loading()) {
+    <section class="activity-skeleton" aria-label="Cargando actividad" aria-busy="true">
+      <div class="skeleton-summary"></div>
+      <div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div>
+    </section>
+  } @else if (error()) {
+    <section class="activity-error" role="alert">
+      <h2>No fue posible cargar tu actividad</h2>
+      <p>Revisa tu conexión e inténtalo nuevamente.</p>
+      <button type="button" (click)="loadApplications()">Reintentar</button>
+    </section>
+  } @else {
+    @if (applications().length > 0) {
+      <section class="personal-summary summary-strip" aria-label="Resumen personal">
+        <div>
+          <span>Solicitudes recientes</span>
+          <strong>{{ applications().length }}</strong>
+        </div>
+        <div>
+          <span>En seguimiento</span>
+          <strong>{{ pendingCount() }}</strong>
+        </div>
+        <div>
+          <span>Aprobadas</span>
+          <strong>{{ approvedCount() }}</strong>
+        </div>
+      </section>
+    }
+
+    <section class="personal-activity client-requests-section section-block" aria-labelledby="activity-title">
+      <header class="activity-heading">
+        <div>
+          <p class="section-caption">Seguimiento personal</p>
+          <h2 id="activity-title">Mis solicitudes</h2>
+        </div>
+        @if (applications().length > 0) {
+          <span>{{ applications().length }} registros recientes</span>
+        }
+      </header>
+
+      @if (applications().length === 0) {
+        <div class="empty-activity">
+          <h3>Aún no tienes solicitudes.</h3>
+          <p>Cuando inicies una inversión, podrás consultar su avance aquí.</p>
+          <a routerLink="/client/investments/simulator">Simular inversión <span aria-hidden="true">→</span></a>
+        </div>
+      } @else {
+        <div class="table-scroll table-shell">
+          <table class="application-table">
+            <thead>
+              <tr>
+                <th scope="col">Producto</th><th scope="col">Tipo</th><th scope="col" class="numeric">Monto</th>
+                <th scope="col">Estado</th><th scope="col">Fecha</th><th scope="col" class="action-column">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (application of applications(); track application.id) {
+                <tr>
+                  <td class="product-name"><strong>{{ application.investmentProductName }}</strong><small>{{ application.applicationNumber }}</small></td>
+                  <td>Inversión</td>
+                  <td class="numeric amount-cell">{{ application.amount | currency:'USD':'symbol':'1.2-2' }}</td>
+                  <td><span class="state {{ statusClass(application.status) }}">{{ statusLabel(application.status) }}</span></td>
+                  <td>{{ application.createdAt | date:'dd MMM, yyyy':'UTC' }}</td>
+                  <td class="action-column"><a [routerLink]="['/client/investments/applications', application.id]">Ver detalle <span aria-hidden="true">→</span></a></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</main>

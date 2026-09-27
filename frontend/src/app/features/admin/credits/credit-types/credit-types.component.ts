@@ -50,6 +50,7 @@ export class CreditTypesComponent {
   readonly feedback = signal('');
   readonly feedbackType = signal<'success' | 'error'>('success');
   readonly currentRate = signal<CreditRate | null>(null);
+  readonly currentRates = signal<Record<string, CreditRate>>({});
   readonly associatedCharges = signal<CreditCharge[]>([]);
   readonly form = this.formBuilder.group({
     name: ['', Validators.required],
@@ -82,6 +83,10 @@ export class CreditTypesComponent {
         this.loadError.set(true);
         this.loading.set(false);
       }
+    });
+    this.creditRateService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: rates => this.currentRates.set(this.indexCurrentRates(rates)),
+      error: () => this.currentRates.set({})
     });
   }
 
@@ -198,6 +203,18 @@ export class CreditTypesComponent {
 
   formatAmount(amount: number): string {
     return this.currencyFormatter.format(amount);
+  }
+
+  rateFor(creditTypeId: string): CreditRate | null { return this.currentRates()[creditTypeId] ?? null; }
+
+  private indexCurrentRates(rates: CreditRate[]): Record<string, CreditRate> {
+    const today = new Date().toISOString().slice(0, 10);
+    return rates.reduce<Record<string, CreditRate>>((current, rate) => {
+      const starts = rate.effectiveFrom.slice(0, 10) <= today;
+      const ends = !rate.effectiveTo || rate.effectiveTo.slice(0, 10) >= today;
+      if (rate.isActive && starts && ends && (!current[rate.creditTypeId] || current[rate.creditTypeId].effectiveFrom < rate.effectiveFrom)) current[rate.creditTypeId] = rate;
+      return current;
+    }, {});
   }
 
   configureRate(): void { void this.router.navigateByUrl('/admin/credits/rates'); }

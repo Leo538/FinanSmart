@@ -1,4 +1,4 @@
-<main class="page-container">
+<main class="page-container internal-page">
   <app-page-header title="Cargos adicionales" subtitle="Configura seguros, aportes y otros valores asociados a los créditos."><button class="btn btn-primary btn-md" type="button" (click)="openCreate()">+ Nuevo cargo</button></app-page-header>
   @if (feedback()) { <p class="feedback" [class.error]="feedbackType() === 'error'" role="status">{{ feedback() }}</p> }
   <section class="stats-grid"><app-stat-card title="Cargos activos" [value]="activeCount()" /><app-stat-card title="Cargos mensuales" [value]="monthlyCount()" /><app-stat-card title="Tipos de crédito con cargos" [value]="typesWithCharges()" /></section>

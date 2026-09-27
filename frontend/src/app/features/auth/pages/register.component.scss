@@ -1,16 +1,17 @@
-.register-card { display: grid; gap: 18px; width: min(100%, 460px); padding: 32px; }
-.register-card h1, .register-card p { margin: 0; }
-.register-card > div p, .switch-link { color: var(--color-text-secondary); }
+.register-card { position:relative; z-index:1; display:grid; gap:20px; width:min(100%,560px); padding:44px; border:1px solid var(--border-default); border-top:3px solid var(--brand-primary); border-radius:var(--radius-md); background:var(--surface-panel); box-shadow:var(--shadow-md); }
+.register-card h1, .register-card p { margin:0; }
+.register-brand { display:grid; justify-items:start; gap:7px; margin-bottom:6px; text-align:left; }.register-brand > span { display:grid; width:46px; height:46px; place-items:center; border-radius:12px; background:var(--brand-primary); color:var(--primary-contrast); font-size:1.35rem; font-weight:800; }.register-brand > span img { width:100%; height:100%; object-fit:contain; border-radius:inherit; background:var(--surface-panel); }.register-brand strong { color:var(--brand-primary); letter-spacing:.08em; }.register-brand p, .switch-link { color:var(--text-secondary); font-size:.875rem; }
+.register-heading { display:grid; gap:6px; margin:10px 0 6px; padding-top:18px; border-top:1px solid var(--border-default); }.register-heading span { color:var(--text-secondary); font-size:.72rem; font-weight:850; letter-spacing:.14em; text-transform:uppercase; }.register-heading h1 { color:var(--text-primary); font-family:var(--font-family-heading); font-size:1.9rem; letter-spacing:-.045em; }.register-heading p { color:var(--text-secondary); font-size:.9rem; line-height:1.5; }
 form, .form-group { display: grid; gap: 14px; }
 .form-group { gap: 7px; }
 .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .field-error, .form-error { color: #b42318; font-size: .8rem; }
 .form-error { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: #fef3f2; }
 .switch-link { text-align: center; }
-.switch-link a { color: var(--color-primary); font-weight: 700; }
+.switch-link a { color: var(--brand-primary); font-weight: 700; }
 button:disabled { cursor: wait; opacity: .7; }
 
 @media (max-width: 480px) {
-  .register-card { padding: 24px; }
+  .register-card { padding:28px 22px; border-top-width:3px; }
   .two-columns { grid-template-columns: 1fr; }
 }

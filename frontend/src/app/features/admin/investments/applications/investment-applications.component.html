@@ -1,18 +1,37 @@
-<main class="page-container">
+<main class="page-container internal-page">
   <app-page-header [title]="selected() ? 'Solicitud de inversión' : 'Solicitudes de inversión'" subtitle="Revisa y gestiona las solicitudes enviadas por los clientes." />
 
   @if (!selected()) {
     <section class="card applications-card">
-      <div class="filters">
+      <div class="filters filter-bar">
         <input class="form-control" [(ngModel)]="query" (ngModelChange)="resetPage()" placeholder="Buscar por solicitud, cliente o producto" />
         <select class="form-select" [(ngModel)]="status" (ngModelChange)="resetPage()">
           <option value="">Todos los estados</option><option value="Submitted">En revisión</option><option value="Approved">Aprobadas</option><option value="Rejected">Rechazadas</option>
         </select>
       </div>
-      <div class="table-container">
-        <table class="data-table"><thead><tr><th>Solicitud</th><th>Cliente</th><th>Producto</th><th>Monto</th><th>Estado</th><th></th></tr></thead>
-          <tbody>@for (item of paged(); track item.id) {<tr><td>{{ item.applicationNumber }}</td><td>{{ item.applicantFirstName }} {{ item.applicantLastName }}</td><td>{{ item.investmentProductName }}</td><td>{{ money(item.amount) }}</td><td><span class="status">{{ label(item.status) }}</span></td><td><a class="btn btn-secondary btn-sm" [routerLink]="['/admin/investments/applications', item.id]">Revisar</a></td></tr>} @empty {<tr><td colspan="6" class="empty-cell">No hay solicitudes para los filtros seleccionados.</td></tr>}</tbody>
-        </table>
+      <div class="application-cards">
+        @for (item of paged(); track item.id; let index = $index) {
+          <article class="application-card" [class.featured]="index % 3 === 1" [class.closed]="item.status === 'Rejected' || item.status === 'Cancelled'">
+            <div class="card-dots" aria-hidden="true"></div>
+            <section class="application-card__main">
+              <span class="card-label">Solicitud {{ item.applicationNumber }}</span>
+              <h2>{{ item.investmentProductName }}</h2>
+              <strong class="card-amount">{{ money(item.amount) }}</strong>
+              <span class="card-date">Creada {{ item.createdAt | date:'dd MMM yyyy':'UTC' }}</span>
+              <a class="card-action" [routerLink]="['/admin/investments/applications', item.id]">{{ item.status === 'Submitted' ? 'Revisar solicitud' : 'Ver detalle' }} <b>›</b></a>
+            </section>
+            <section class="application-card__details">
+              <div><span>✓</span><p><b>Cliente</b>{{ item.applicantFirstName || 'Sin datos' }} {{ item.applicantLastName || '' }}</p></div>
+              <div><span>✓</span><p><b>Plazo</b>{{ item.termDays }} días</p></div>
+              <div><span>✓</span><p><b>Tasa anual</b>{{ item.annualInterestRate }} %</p></div>
+            </section>
+            <section class="application-card__details secondary">
+              <div><span [class.warning]="item.status !== 'Approved'">{{ item.status === 'Approved' ? '✓' : '•' }}</span><p><b>Estado</b><em>{{ label(item.status) }}</em></p></div>
+              <div><span>✓</span><p><b>Rendimiento estimado</b>{{ money(item.totalInterest) }}</p></div>
+              <div><span>✓</span><p><b>Total estimado</b>{{ money(item.totalReceived) }}</p></div>
+            </section>
+          </article>
+        } @empty { <div class="empty-cards">No hay solicitudes para los filtros seleccionados.</div> }
       </div>
       @if (filtered().length > pageSize) {<div class="pagination"><span>Mostrando {{ paged().length }} de {{ filtered().length }}</span><div><button class="btn btn-secondary btn-sm" [disabled]="page === 1" (click)="previousPage()">Anterior</button><span>Página {{ page }} de {{ pages() }}</span><button class="btn btn-secondary btn-sm" [disabled]="page === pages()" (click)="nextPage()">Siguiente</button></div></div>}
     </section>

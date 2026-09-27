@@ -1,8 +1,10 @@
 <section class="register-card card">
-  <div>
-    <h1>Crear cuenta</h1>
-    <p>Regístrate para acceder a {{ institution.currentInstitution()?.name || 'FinanSmart' }} como cliente.</p>
+  <div class="register-brand">
+    <span>@if (institution.currentInstitution()?.logoUrl && !logoFailed()) { <img [src]="institution.currentInstitution()?.logoUrl" alt="Logo institucional" (error)="logoFailed.set(true)" /> } @else { {{ initials() }} }</span>
+    <strong>{{ institution.currentInstitution()?.name || 'FinanSmart' }}</strong>
+    <p>Accede a tu plataforma financiera.</p>
   </div>
+  <div class="register-heading"><span>Registro seguro</span><h1>Crear cuenta</h1><p>Regístrate para acceder como cliente.</p></div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
     <div class="two-columns">
@@ -50,7 +52,7 @@
       <p class="form-error" role="alert">{{ error() }}</p>
     }
 
-    <button class="btn btn-primary" type="submit" [disabled]="loading()">
+    <button class="btn btn-primary btn-lg" type="submit" [disabled]="loading()">
       {{ loading() ? 'Creando cuenta…' : 'Crear cuenta' }}
     </button>
   </form>
