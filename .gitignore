@@ -32,3 +32,5 @@ Thumbs.db
 .agents/
 skills-lock.json
 backend/FinanSmart.Api/Storage/
+backend/FinanSmart.Api/appsettings.Development.json
+backend/FinanSmart.Api/appsettings.Local.json

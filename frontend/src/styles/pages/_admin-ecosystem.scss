@@ -1,0 +1,389 @@
+/* Administrative workspace: the landing page's type, navy, teal and soft surfaces.
+   Institution settings keep their own layout; only the shared type applies there. */
+app-admin-layout .admin-shell {
+  --admin-navy: var(--landing-navy);
+  --admin-teal: var(--landing-teal);
+  --admin-ink: #173c49;
+  --admin-muted: #60747a;
+  --admin-line: #dce7e8;
+  font-family: var(--font-family-base);
+}
+
+app-admin-layout .admin-content { background: var(--surface-page); }
+app-admin-layout .admin-shell :is(button, input, select, textarea) { font-family: inherit; }
+app-admin-layout app-institution { font-family: var(--font-family-base); }
+
+/* Navigation preserves the configured institution name and logo. */
+app-admin-layout app-admin-sidebar .sidebar {
+  background: linear-gradient(165deg, var(--landing-navy) 0%, var(--landing-teal) 100%) !important;
+  font-family: var(--font-family-base) !important;
+}
+app-admin-layout app-admin-sidebar .brand { border-color: rgb(210 239 240 / 17%) !important; }
+app-admin-layout app-admin-sidebar .brand-copy strong { font-size: .98rem !important; font-weight: 750; letter-spacing: -.025em; }
+app-admin-layout app-admin-sidebar .nav-section { color: #9bbbc2 !important; }
+app-admin-layout app-admin-sidebar .sidebar a { min-height: 44px !important; border-radius: 12px !important; color: #d3e5e8 !important; font-weight: 550; }
+app-admin-layout app-admin-sidebar .sidebar a:hover { background: rgb(202 239 240 / 12%) !important; color: #fff !important; }
+app-admin-layout app-admin-sidebar .sidebar a.active { background: rgb(202 239 240 / 17%) !important; color: #fff !important; font-weight: 700 !important; }
+app-admin-layout app-admin-sidebar .sidebar a.active::before { left: -10px !important; border-radius: 0 4px 4px 0; background: var(--landing-accent) !important; }
+app-admin-layout app-admin-topbar .topbar { min-height: 74px !important; border-color: var(--admin-line) !important; background: rgb(255 255 255 / 94%) !important; }
+app-admin-layout app-admin-topbar .title strong { color: var(--admin-ink); font-size: 1rem !important; font-weight: 750; }
+app-admin-layout app-admin-topbar .title small { color: var(--admin-muted); }
+app-admin-layout app-admin-topbar .menu-button { border: 0 !important; border-radius: 13px !important; background: var(--admin-teal) !important; }
+app-admin-layout app-admin-topbar .user-button { border-radius: 13px !important; }
+app-admin-layout app-admin-topbar .avatar { background: var(--admin-teal) !important; }
+app-admin-layout app-admin-topbar .dropdown { border-radius: 16px !important; }
+
+/* Shared headers, cards, controls and tables across every catalogue. */
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .page-container,
+app-admin-layout app-admin-dashboard .dashboard-page {
+  width: min(100%, 1420px);
+  margin-inline: auto;
+  padding: 38px 38px 64px;
+  color: var(--admin-ink);
+  font-family: var(--font-family-base);
+}
+
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) app-page-header .page-header {
+  align-items: end;
+  gap: 20px;
+  margin-bottom: 25px;
+  padding: 0;
+  border: 0;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) app-page-header .page-header > div:first-child::before {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--landing-accent-dark);
+  content: 'Administración';
+  font-size: .73rem;
+  font-weight: 750;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) app-page-header .page-header h1 {
+  color: var(--admin-ink);
+  font-size: clamp(2rem, 3vw, 2.7rem);
+  font-weight: 750;
+  letter-spacing: -.05em;
+  line-height: 1.1;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) app-page-header .page-header p { margin-top: 10px; color: var(--admin-muted); font-size: .98rem; line-height: 1.55; }
+
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .page-container > section.card,
+app-admin-layout app-investment-applications .detail-grid > .card {
+  overflow: hidden;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: 25px !important;
+  background: #fff !important;
+  box-shadow: 0 14px 35px rgb(0 43 58 / 6%) !important;
+}
+app-admin-layout app-investment-applications .applications-card { overflow: visible; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+app-admin-layout app-investment-applications .detail-grid > .card { padding: 25px; }
+app-admin-layout app-investment-applications .detail-grid h2 { color: var(--admin-ink); font-size: 1.28rem; }
+app-admin-layout app-investment-applications .document-item { border-color: var(--admin-line); border-radius: 16px; background: #f7fafa; }
+
+app-admin-layout :is(app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.stats, .stats-grid) {
+  grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)) !important;
+  gap: 15px !important;
+  margin: 0 0 24px;
+  border: 0 !important;
+  background: transparent !important;
+}
+app-admin-layout :is(app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.stats, .stats-grid) app-stat-card { border: 0 !important; }
+app-admin-layout :is(app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) app-stat-card .kpi-card {
+  height: 100%;
+  min-height: 135px;
+  padding: 22px;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: 20px !important;
+  background: #fff !important;
+  box-shadow: 0 10px 28px rgb(0 43 58 / 5%) !important;
+}
+app-admin-layout :is(app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) app-stat-card .kpi-label { color: var(--admin-muted); font-size: .78rem; font-weight: 650; letter-spacing: 0; text-transform: none; }
+app-admin-layout :is(app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) app-stat-card .kpi-value { color: var(--admin-ink); font-size: 2rem; }
+
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications, app-admin-dashboard) .btn-primary {
+  border-color: var(--admin-teal) !important;
+  border-radius: 999px !important;
+  background: var(--admin-teal) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications, app-admin-dashboard) .btn-primary:hover:not(:disabled) { border-color: var(--landing-hover) !important; background: var(--landing-hover) !important; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) :is(.btn-secondary, .btn-outline) { border-color: #bfd4d7; border-radius: 999px; background: #fff; color: var(--admin-teal); box-shadow: none; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) :is(.form-control, .form-select) { min-height: 48px; border-color: #d1e0e2; border-radius: 12px; background: #fff; color: var(--admin-ink); }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) :is(.form-control, .form-select):focus { border-color: var(--brand-primary); outline: none; box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 13%, transparent); }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .form-label,
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .filters label { color: #294650; font-size: .84rem; font-weight: 650; letter-spacing: 0; text-transform: none; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .filters { gap: 13px; padding: 19px 22px !important; border-bottom: 1px solid var(--admin-line); background: #f8fbfb !important; }
+app-admin-layout app-investment-applications .applications-card .filters { border: 1px solid var(--admin-line); border-radius: 19px; }
+
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .table-container {
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #fff;
+  box-shadow: none !important;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .data-table { min-width: 940px !important; table-layout: fixed !important; font-family: var(--font-family-base); }
+app-admin-layout app-investment-rates .investment-rates-table { min-width: 1080px !important; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .data-table th {
+  height: 50px;
+  padding: 13px 12px !important;
+  background: var(--admin-teal) !important;
+  color: #fff !important;
+  font-size: .76rem !important;
+  font-weight: 700;
+  letter-spacing: 0 !important;
+  line-height: 1.25;
+  text-transform: none !important;
+  white-space: nowrap;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .data-table td {
+  height: 60px !important;
+  padding: 13px 12px !important;
+  border-bottom: 1px solid #e9eff0 !important;
+  color: #3d5861;
+  font-size: .81rem !important;
+  line-height: 1.4;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .data-table td:first-child { white-space: normal; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .data-table td strong { color: var(--admin-ink); }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .data-table tbody tr:nth-child(odd) { background: #f6fafa !important; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .data-table tbody tr:nth-child(even) { background: #fff !important; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .data-table tbody tr:hover { background: #eaf5f5 !important; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .data-table :is(.row-actions, .actions) { gap: 8px !important; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .data-table :is(.row-actions, .actions) .btn { color: var(--admin-teal) !important; }
+
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal, .confirmation-card, .confirm) { border: 1px solid var(--admin-line) !important; border-radius: 24px !important; background: #fff; box-shadow: 0 24px 70px rgb(0 25 38 / 25%); }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-header, .modal header) { border-color: var(--admin-line); }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-header h2, .modal h2, .confirmation-card h2, .confirm h2) { color: var(--admin-ink) !important; font-family: var(--font-family-heading); font-size: 1.4rem; }
+
+/* Public tool cards are shared with the internal simulators; only their heading changes. */
+:is(app-admin-layout, app-client-layout) main.public-simulator > app-page-header .page-header {
+  display: flex;
+  margin: 0 auto 24px;
+  padding: 0 0 22px;
+  border-bottom: 1px solid #dce7e8;
+}
+:is(app-admin-layout, app-client-layout) main.public-simulator > app-page-header .page-header h1 { color: #173c49; font-size: clamp(2rem, 3vw, 2.65rem); }
+:is(app-admin-layout, app-client-layout) main.public-simulator > app-page-header .page-header p { color: #60747a; }
+:is(app-admin-layout, app-client-layout) main.public-comparison .internal-tool-heading { max-width: 1200px; margin: 0 auto 24px; padding-bottom: 22px; border-bottom: 1px solid #dce7e8; }
+:is(app-admin-layout, app-client-layout) main.public-comparison .internal-tool-heading h1 { margin: 6px 0 9px; color: #173c49; font-size: clamp(2rem, 3vw, 2.65rem); letter-spacing: -.05em; line-height: 1.1; }
+:is(app-admin-layout, app-client-layout) main.public-comparison .internal-tool-heading > p:last-child { margin: 0; color: #60747a; line-height: 1.55; }
+
+/* Dashboard: four calm, legible cards followed by operational analysis. */
+app-admin-layout app-admin-dashboard .dashboard-header { align-items: end; margin: 0 0 24px; padding: 0 0 22px; border-bottom: 1px solid var(--admin-line); }
+app-admin-layout app-admin-dashboard .section-caption { color: var(--landing-accent-dark); font-size: .75rem; font-weight: 750; letter-spacing: .1em; }
+app-admin-layout app-admin-dashboard .dashboard-header h1 { color: var(--admin-ink); font-size: clamp(2.2rem, 3.2vw, 2.9rem); font-weight: 750; letter-spacing: -.055em; }
+app-admin-layout app-admin-dashboard .dashboard-header p:not(.section-caption) { color: var(--admin-muted); font-size: .98rem; line-height: 1.55; }
+app-admin-layout app-admin-dashboard .financial-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none;
+}
+app-admin-layout app-admin-dashboard .financial-overview > * {
+  position: relative;
+  display: grid;
+  align-content: center;
+  min-width: 0;
+  min-height: 172px;
+  gap: 10px;
+  padding: 25px;
+  overflow: hidden;
+  border: 1px solid var(--admin-line) !important;
+  border-radius: 21px !important;
+  background: #fff !important;
+  box-shadow: 0 10px 28px rgb(0 43 58 / 5%) !important;
+}
+app-admin-layout app-admin-dashboard .financial-overview > *::before { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #7bb2b8; content: ''; }
+app-admin-layout app-admin-dashboard .overview-primary { background: #eaf5f5 !important; }
+app-admin-layout app-admin-dashboard .overview-primary::before { background: var(--landing-teal); }
+app-admin-layout app-admin-dashboard .overview-label,
+app-admin-layout app-admin-dashboard .metric-row > span { color: #506d75; font-size: .82rem; font-weight: 650; }
+app-admin-layout app-admin-dashboard .overview-primary strong { color: #123b4b; font-size: clamp(1.9rem, 2.6vw, 2.8rem); overflow-wrap: anywhere; }
+app-admin-layout app-admin-dashboard .overview-primary p { color: #526d75; font-size: .82rem; line-height: 1.45; }
+app-admin-layout app-admin-dashboard .metric-row { border-right: 1px solid var(--admin-line) !important; }
+app-admin-layout app-admin-dashboard .metric-row > span,
+app-admin-layout app-admin-dashboard .metric-row small { color: #526d75; font-size: .79rem; line-height: 1.45; }
+app-admin-layout app-admin-dashboard .metric-row strong { color: #123b4b; font-size: 2rem; }
+app-admin-layout app-admin-dashboard .operations-grid { gap: 18px; margin-top: 22px; }
+app-admin-layout app-admin-dashboard :is(.status-analysis, .product-analysis) { min-width: 0; padding: 27px; border: 1px solid var(--admin-line); border-radius: 24px; background: #fff; box-shadow: 0 12px 30px rgb(0 43 58 / 5%); }
+app-admin-layout app-admin-dashboard .product-analysis { border-left: 1px solid var(--admin-line); }
+app-admin-layout app-admin-dashboard .section-heading h2,
+app-admin-layout app-admin-dashboard .recent-heading h2 { color: var(--admin-ink); font-size: 1.25rem; font-weight: 750; }
+app-admin-layout app-admin-dashboard .section-heading p { color: var(--admin-muted); }
+app-admin-layout app-admin-dashboard .status-row { padding-block: 16px; }
+app-admin-layout app-admin-dashboard .status-row { --status-color: var(--landing-accent-dark); }
+app-admin-layout app-admin-dashboard .status-row--success { --status-color: #198168; }
+app-admin-layout app-admin-dashboard .status-row--warning { --status-color: #b37a25; }
+app-admin-layout app-admin-dashboard .status-row--danger { --status-color: #b34e52; }
+app-admin-layout app-admin-dashboard .status-line { height: 5px; border-radius: 999px; }
+app-admin-layout app-admin-dashboard .status-line i { border-radius: inherit; }
+app-admin-layout app-admin-dashboard .section-total,
+app-admin-layout app-admin-dashboard .product-position { color: var(--landing-accent-dark); }
+app-admin-layout app-admin-dashboard .status-name,
+app-admin-layout app-admin-dashboard .product-row div strong,
+app-admin-layout app-admin-dashboard .product-amount { color: #173c49; }
+app-admin-layout app-admin-dashboard .recent-activity { overflow: hidden; margin-top: 22px; border: 1px solid var(--admin-line); border-radius: 24px; background: #fff; box-shadow: 0 12px 30px rgb(0 43 58 / 5%); }
+app-admin-layout app-admin-dashboard .recent-heading { padding: 24px 27px 19px; }
+app-admin-layout app-admin-dashboard .table-shell { overflow-x: auto; border: 0; }
+app-admin-layout app-admin-dashboard .financial-table { min-width: 830px; font-family: var(--font-family-base); }
+app-admin-layout app-admin-dashboard .financial-table th { height: 49px; padding: 12px 19px !important; background: var(--admin-teal) !important; color: #fff !important; font-size: .76rem !important; font-weight: 700; letter-spacing: 0 !important; text-transform: none !important; }
+app-admin-layout app-admin-dashboard .financial-table td { height: 60px; padding: 12px 19px !important; border-color: #e9eff0 !important; color: #3d5861; font-size: .82rem !important; }
+app-admin-layout app-admin-dashboard .financial-table tbody tr:nth-child(odd) { background: #f6fafa !important; }
+app-admin-layout app-admin-dashboard .financial-table tbody tr:nth-child(even) { background: #fff !important; }
+app-admin-layout app-admin-dashboard .financial-table tbody tr:hover { background: #eaf5f5 !important; }
+app-admin-layout app-admin-dashboard .dashboard-error { border: 1px solid var(--admin-line); border-radius: 23px; box-shadow: 0 12px 30px rgb(0 43 58 / 6%); }
+app-admin-layout app-admin-dashboard .retry-button { border-radius: 999px; background: var(--admin-teal); }
+
+@media (max-width: 900px) {
+  app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .page-container,
+  app-admin-layout app-admin-dashboard .dashboard-page { padding: 29px 22px 46px; }
+  app-admin-layout app-admin-dashboard .operations-grid { grid-template-columns: 1fr; }
+  app-admin-layout app-admin-dashboard .financial-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+  app-admin-layout app-admin-dashboard .financial-overview { gap: 12px; }
+  app-admin-layout app-admin-dashboard .financial-overview > * { min-height: 150px; padding: 20px; }
+  app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) app-page-header .page-header { align-items: stretch; }
+  app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .filters { align-items: stretch; flex-direction: column; }
+  app-admin-layout app-investment-applications .applications-card .filters :is(input, select) { width: 100%; min-width: 0; }
+}
+
+@media (max-width: 500px) {
+  app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates, app-investment-applications) .page-container,
+  app-admin-layout app-admin-dashboard .dashboard-page { padding: 23px 15px 36px; }
+  app-admin-layout app-admin-dashboard :is(.status-analysis, .product-analysis) { padding: 20px; }
+  app-admin-layout app-admin-dashboard .recent-heading { padding-inline: 20px; }
+  app-admin-layout app-admin-dashboard .financial-overview { grid-template-columns: 1fr; }
+  app-admin-layout app-admin-dashboard .financial-overview > * { min-height: 130px; }
+}
+
+/* Shared dialog system for every administrative form and confirmation. */
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-backdrop, .backdrop) {
+  z-index: 1000;
+  align-items: center !important;
+  padding: 20px !important;
+  background: rgb(0 27 41 / 72%) !important;
+  backdrop-filter: blur(6px);
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) {
+  display: flex !important;
+  width: min(100%, 760px);
+  max-height: calc(100dvh - 40px) !important;
+  flex-direction: column;
+  overflow: hidden !important;
+  border: 1px solid #cbdfe1 !important;
+  border-top: 4px solid var(--landing-teal) !important;
+  border-radius: 24px !important;
+  background: #fff !important;
+  box-shadow: 0 28px 90px rgb(0 17 26 / 32%) !important;
+  color: #173c49;
+  font-family: var(--font-family-base);
+}
+app-admin-layout app-credit-types .modal-card { width: min(100%, 900px); }
+app-admin-layout app-investment-products .modal { width: min(100%, 840px); }
+app-admin-layout app-investment-rates .modal { width: min(100%, 700px); }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) > form {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.modal-header, header) {
+  flex: 0 0 auto;
+  padding: 22px 28px !important;
+  border-bottom: 1px solid #dce8e9 !important;
+  background: #f7fbfb;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.modal-header, header) h2 {
+  margin: 0;
+  color: #173c49 !important;
+  font-family: var(--font-family-heading) !important;
+  font-size: clamp(1.35rem, 2vw, 1.75rem) !important;
+  font-weight: 750;
+  letter-spacing: -.04em !important;
+  line-height: 1.15;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.modal-header, header) p { margin: 6px 0 0; color: #60747a; font-size: .85rem; line-height: 1.45; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.modal-header, header) .dialog-eyebrow { margin: 0 0 7px; color: var(--landing-accent-dark); font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.modal-body, .body) {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 24px 28px !important;
+  scrollbar-color: #aac8cd transparent;
+  scrollbar-width: thin;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.modal-footer, footer) {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  padding: 17px 28px !important;
+  border-top: 1px solid #dce8e9 !important;
+  background: #fff;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.form-section h3, .body section h3) {
+  color: var(--landing-accent-dark) !important;
+  font-family: var(--font-family-base);
+  font-size: .78rem !important;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) .form-label {
+  color: #294650;
+  font-family: var(--font-family-base);
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+app-admin-layout app-investment-rates .modal .form-group { display: grid; align-content: start; gap: 7px; }
+app-admin-layout app-investment-rates .modal .body > .form-group { max-width: 100%; }
+app-admin-layout app-investment-rates .modal .toggle-field { display: inline-flex; align-items: center; gap: 9px; color: #294650; font-size: .82rem; font-weight: 700; letter-spacing: 0; text-transform: none; }
+app-admin-layout app-investment-rates .modal .toggle-field input { accent-color: var(--landing-teal); }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.form-control, .form-select) { min-height: 48px; border-color: #cedfe1; border-radius: 12px; background: #fff; color: #173c49; font-family: var(--font-family-base); }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.form-control, .form-select):focus { border-color: var(--landing-accent-dark); outline: none; box-shadow: 0 0 0 4px rgb(11 113 128 / 12%); }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.modal-header, header) :is(.close-button, .btn-ghost) { display: grid; width: 38px; height: 38px; min-height: 38px; padding: 0; place-items: center; border: 1px solid #dce8e9; border-radius: 11px; background: #fff; color: var(--landing-teal); font-size: 1.3rem; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.modal-header, header) :is(.close-button, .btn-ghost):hover { background: #e9f4f4; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) footer .btn { min-width: 112px; min-height: 43px; }
+
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.confirmation-card, .confirm) {
+  width: min(100%, 470px);
+  padding: 30px !important;
+  overflow: visible;
+  border: 1px solid #cbdfe1 !important;
+  border-top: 4px solid var(--landing-teal) !important;
+  border-radius: 22px !important;
+  background: #fff !important;
+  box-shadow: 0 28px 90px rgb(0 17 26 / 32%) !important;
+  color: #173c49;
+  font-family: var(--font-family-base);
+}
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.confirmation-card, .confirm) h2 { margin: 0; color: #173c49 !important; font-size: 1.45rem; font-weight: 750; letter-spacing: -.04em; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.confirmation-card, .confirm) p { margin: 11px 0 22px; color: #60747a; font-size: .88rem; line-height: 1.6; }
+app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.confirmation-card, .confirm) :is(.confirmation-actions, div:last-child) { gap: 10px; }
+app-admin-layout app-investment-rates .confirm-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+@media (max-width: 700px) {
+  app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-backdrop, .backdrop) { align-items: end !important; padding: 10px !important; }
+  app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) { max-height: calc(100dvh - 20px) !important; border-radius: 20px 20px 12px 12px !important; }
+  app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.modal-header, header),
+  app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.modal-body, .body),
+  app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.modal-card, .modal) :is(.modal-footer, footer) { padding-right: 19px !important; padding-left: 19px !important; }
+  app-admin-layout :is(app-credit-types, app-credit-rates, app-credit-charges, app-investment-products, app-investment-rates) :is(.confirmation-card, .confirm) { padding: 24px !important; }
+  app-admin-layout app-investment-rates .confirm-actions { flex-direction: column-reverse; }
+  app-admin-layout app-investment-rates .confirm-actions .btn { width: 100%; }
+}

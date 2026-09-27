@@ -12,6 +12,8 @@ public class Institution
     public string? PrimaryColor { get; set; }
     public string? SecondaryColor { get; set; }
     public string? BackgroundColor { get; set; }
+    public string? HoverColor { get; set; }
+    public string? FontFamily { get; set; }
     public bool IsActive { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }

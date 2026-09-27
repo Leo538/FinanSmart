@@ -28,7 +28,7 @@ app-admin-topbar .avatar, app-client-layout .avatar { background:var(--brand-pri
 app-admin-topbar .dropdown, app-client-layout .dropdown { border-color:var(--topbar-border) !important; border-radius:8px !important; box-shadow:var(--shadow-md) !important; }
 
 app-client-layout .client-shell { background:var(--surface-page) !important; }
-app-client-layout .client-shell header { min-height:64px !important; gap:22px !important; border-color:var(--topbar-border) !important; background:var(--topbar-bg) !important; }
+app-client-layout .client-shell > header { min-height:64px !important; gap:22px !important; border-color:var(--topbar-border) !important; background:var(--topbar-bg) !important; }
 app-client-layout .client-brand { color:var(--brand-primary) !important; }
 app-client-layout .client-brand span { width:36px !important; height:36px !important; border-radius:7px !important; background:var(--nav-bg-elevated) !important; color:var(--nav-text) !important; }
 app-client-layout .client-brand img { object-fit:contain !important; background:transparent !important; }
@@ -39,14 +39,14 @@ app-client-layout .user-button { border-radius:6px !important; }
 
 @media (max-width:1024px) {
   app-admin-topbar .topbar { padding:0 16px !important; }
-  app-client-layout .client-shell header { padding:0 16px !important; gap:16px !important; }
+  app-client-layout .client-shell > header { padding:0 16px !important; gap:16px !important; }
 }
 
 @media (max-width:767px) {
   app-admin-sidebar .sidebar { width:236px !important; }
   app-admin-sidebar .mobile-close { display:block !important; color:var(--nav-text) !important; }
   app-admin-topbar .topbar { min-height:60px !important; }
-  app-client-layout .client-shell header { overflow-x:auto !important; }
+  app-client-layout .client-shell > header { overflow-x:auto !important; }
   app-client-layout .user-copy, app-client-layout .chevron { display:none !important; }
   app-client-layout .client-brand strong { display:none !important; }
 }
@@ -60,7 +60,7 @@ app-admin-sidebar .sidebar a.active { background: rgb(132 220 218 / 16%) !import
 app-admin-sidebar .sidebar a.active:before { background: #83dbdc !important; }
 app-admin-topbar .topbar { min-height: 72px !important; border-color: #e0ebec !important; background: rgb(255 255 255 / 92%) !important; }
 app-admin-topbar .menu-button { border-radius: 11px !important; background: #075c6e !important; }
-app-client-layout .client-shell header { min-height: 72px !important; border-color: #e0ebec !important; background: rgb(255 255 255 / 94%) !important; }
+app-client-layout .client-shell > header { min-height: 72px !important; border-color: #e0ebec !important; background: rgb(255 255 255 / 94%) !important; }
 app-client-layout .client-brand { color: #063b4d !important; font-family: var(--font-family-heading); font-size: 1rem; letter-spacing: -.03em; }
 app-client-layout .client-brand span { border-radius: 11px !important; background: #075c6e !important; }
 app-client-layout .client-shell nav a { color: #64777d !important; font-weight: 650; }

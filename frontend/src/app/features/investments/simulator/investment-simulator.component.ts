@@ -45,7 +45,7 @@ export class InvestmentSimulatorComponent {
   readonly noApplicableRate = signal(false);
   readonly minimumStartDate = new Date().toISOString().slice(0, 10);
   readonly termUnit = signal<'days' | 'months'>('days');
-  isPublic(): boolean { return this.router.url.startsWith('/simulators/'); }
+  isPublic(): boolean { return this.router.url.startsWith('/simulators/') || this.router.url.startsWith('/client/'); }
   private rateTimer: ReturnType<typeof setTimeout> | null = null;
   readonly form = this.formBuilder.group({
     investmentProductId: ['', Validators.required], amount: [0, Validators.required], termDays: [0, Validators.required],

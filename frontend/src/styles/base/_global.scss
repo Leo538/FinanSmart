@@ -1,8 +1,12 @@
 body { background: var(--surface-page); min-height: 100vh; color: var(--text-primary); }
 body.sidebar-mobile-open { overflow: hidden; }
 
+/* Only the direct header of the client shell is navigation; nested page headers keep their own styles. */
+app-client-layout .client-shell > header { position: sticky !important; top: 0; z-index: 50; font-family: var(--font-family-base); }
+@media (max-width: 700px) { app-client-layout .client-shell > header { flex-wrap: wrap; gap: 5px 14px !important; padding: 12px 18px !important; } app-client-layout .client-shell nav { order: 3; flex-basis: 100%; gap: 20px; overflow-x: auto; } app-client-layout .client-shell nav a { padding: 10px 0 13px !important; white-space: nowrap; } app-client-layout .user-menu { margin-left: auto; } app-client-layout .user-copy { display: none !important; } }
+
 /* FinanSmart visual language: shared by public, client and administrative views. */
-body { background: #f7f9fa; }
+body { background: var(--surface-page); font-family: var(--font-family-base); }
 .page-container { padding-top: 38px; }
 .page-container > app-page-header .page-header, .page-header { margin-bottom: 28px; padding-bottom: 22px; border-bottom-color: #dce7e8; }
 .page-header h1, .page-title, app-page-header .page-header h1 { color: #193b47; font-weight: 760; letter-spacing: -.055em; }
@@ -11,15 +15,15 @@ body { background: #f7f9fa; }
 .card-header { padding: 21px 24px; border-bottom-color: #e4edee; }
 .card-body { padding: 24px; }
 .btn { min-height: 42px; border-radius: 999px; padding: 0 18px; font-weight: 760; }
-.btn-primary { background: linear-gradient(135deg, #075d6d, #0c7d86); box-shadow: 0 8px 18px rgb(8 104 117 / 18%); }
-.btn-primary:hover:not(:disabled) { background: #003f52; }
-.btn-secondary { border: 1px solid #c8d9db; background: #fff; color: #075a6d; }
-.btn-secondary:hover:not(:disabled), .btn-outline:hover:not(:disabled) { border-color: #0a6875; background: #eaf6f6; }
-.btn-outline { border-color: #b9d0d3; color: #075a6d; }
+.btn-primary { background: var(--brand-primary); color: var(--primary-contrast); box-shadow: 0 8px 18px color-mix(in srgb, var(--brand-primary) 18%, transparent); }
+.btn-primary:hover:not(:disabled) { background: var(--brand-primary-hover); color: var(--hover-contrast); }
+.btn-secondary { border: 1px solid #c8d9db; background: #fff; color: var(--brand-primary); }
+.btn-secondary:hover:not(:disabled), .btn-outline:hover:not(:disabled) { border-color: var(--brand-primary); background: var(--primary-soft); }
+.btn-outline { border-color: #b9d0d3; color: var(--brand-primary); }
 .form-control, .form-select { min-height: 46px; border-color: #d5e2e4; border-radius: 11px; background: #fff; }
-.form-control:focus, .form-select:focus { border-color: #1594a8; box-shadow: 0 0 0 4px rgb(21 148 168 / 13%); }
+.form-control:focus, .form-select:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 13%, transparent); }
 .table-container { border-color: #dce7e8; border-radius: 16px; box-shadow: 0 8px 24px rgb(0 43 58 / 4%); }
-.data-table th { background: #0b5264; color: #fff; font-size: .68rem; }
+.data-table th { background: var(--landing-teal); color: #fff; font-size: .68rem; }
 .data-table td { color: #53686f; }
 .data-table tbody tr:nth-child(even) { background: #f8fbfb; }
 .data-table tbody tr:hover { background: #eaf7f7; }

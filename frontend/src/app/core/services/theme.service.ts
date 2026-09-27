@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
 import { Institution } from '../../features/admin/institution/models/institution.model';
+import { INSTITUTION_PALETTE } from '../theme/institution-palette';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -8,22 +9,39 @@ export class ThemeService {
 
   applyInstitutionTheme(institution: Institution): void {
     const root = this.document.documentElement;
-    const primary = this.isValidHex(institution.primaryColor) ? institution.primaryColor! : '#123B5D';
-    const secondary = this.isValidHex(institution.secondaryColor) ? institution.secondaryColor! : '#18A999';
-    const background = this.isValidHex(institution.backgroundColor) ? institution.backgroundColor! : '#F5F3ED';
+    const primary = this.isValidHex(institution.primaryColor) ? institution.primaryColor! : INSTITUTION_PALETTE.primary;
+    const secondary = this.isValidHex(institution.secondaryColor) ? institution.secondaryColor! : INSTITUTION_PALETTE.secondary;
+    const background = this.isValidHex(institution.backgroundColor) ? institution.backgroundColor! : INSTITUTION_PALETTE.background;
+    const hover = this.isValidHex(institution.hoverColor)
+      ? institution.hoverColor!
+      : primary.toLowerCase() === INSTITUTION_PALETTE.primary.toLowerCase()
+        ? INSTITUTION_PALETTE.hover
+        : this.mixColors(primary, '#000000', .24);
+    const navy = this.mixColors(primary, '#001C2A', .78);
+    const font = this.fontStack(institution.fontFamily);
 
     this.applyColor(root, '--primary', '--primary-dark', '--primary-soft', primary);
+    root.style.setProperty('--primary-dark', hover);
     this.applyColor(root, '--accent', '--accent-dark', '--accent-soft', secondary);
     this.applyNavigationTokens(root, primary);
     root.style.setProperty('--brand-primary', 'var(--primary)');
     root.style.setProperty('--brand-primary-hover', 'var(--primary-dark)');
     root.style.setProperty('--brand-primary-active', 'var(--primary-dark)');
+    root.style.setProperty('--hover-contrast', this.bestContrast(hover, '#ffffff', '#14283b'));
     root.style.setProperty('--brand-secondary', 'var(--accent)');
     root.style.setProperty('--brand-accent', 'var(--accent)');
     root.style.setProperty('--surface-page', background);
     root.style.setProperty('--surface-panel', this.mixColors(background, '#ffffff', .58));
     root.style.setProperty('--surface-subtle', this.mixColors(background, '#ffffff', .28));
-    root.style.setProperty('--surface-dark', this.mixColors(primary, '#000000', .72));
+    root.style.setProperty('--surface-dark', navy);
+    root.style.setProperty('--landing-navy', navy);
+    root.style.setProperty('--landing-teal', this.mixColors(primary, secondary, .7));
+    root.style.setProperty('--landing-hover', hover);
+    root.style.setProperty('--landing-accent', secondary);
+    root.style.setProperty('--landing-accent-dark', this.mixColors(secondary, '#000000', .35));
+    root.style.setProperty('--accent-soft', this.mixColors(secondary, '#ffffff', .82));
+    root.style.setProperty('--font-family-base', font);
+    root.style.setProperty('--font-family-heading', font);
     root.style.setProperty('--accent-contrast', this.bestContrast(secondary, '#ffffff', '#14283b'));
     this.document.title = institution.name.trim() || 'FinanSmart';
   }
@@ -35,7 +53,12 @@ export class ThemeService {
       '--accent', '--accent-dark', '--accent-soft', '--nav-bg', '--nav-bg-elevated',
       '--nav-border', '--nav-text', '--nav-text-muted', '--nav-active-bg',
       '--nav-active-text', '--nav-hover-bg', '--nav-indicator', '--topbar-bg', '--topbar-border',
-      '--surface-dark', '--accent-contrast'
+      '--surface-dark', '--accent-contrast',
+      '--surface-page', '--surface-panel', '--surface-subtle', '--landing-navy',
+      '--landing-teal', '--landing-hover', '--landing-accent', '--landing-accent-dark',
+      '--font-family-base', '--font-family-heading', '--brand-primary',
+      '--brand-primary-hover', '--brand-primary-active', '--brand-secondary', '--brand-accent',
+      '--hover-contrast'
     ].forEach(name => root.style.removeProperty(name));
     this.document.title = 'FinanSmart';
   }
@@ -71,6 +94,12 @@ export class ThemeService {
 
   private isValidHex(color: string | null | undefined): color is string {
     return !!color && /^#[0-9a-f]{6}$/i.test(color);
+  }
+
+  private fontStack(value: string | null | undefined): string {
+    if (value === 'Arial') return 'Arial, Helvetica, sans-serif';
+    if (value === 'Georgia') return 'Georgia, Cambria, serif';
+    return 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
   }
 
   private hexToRgb(color: string): [number, number, number] {

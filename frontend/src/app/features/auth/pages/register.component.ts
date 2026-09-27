@@ -2,7 +2,6 @@ import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/services/auth.service';
-import { InstitutionStateService } from '../../../core/services/institution-state.service';
 
 @Component({
   selector: 'app-register',
@@ -13,11 +12,8 @@ import { InstitutionStateService } from '../../../core/services/institution-stat
 export class RegisterComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
-  readonly institution = inject(InstitutionStateService);
-
   readonly loading = signal(false);
   readonly error = signal('');
-  readonly logoFailed = signal(false);
   readonly form = new FormGroup({
     firstName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -47,10 +43,6 @@ export class RegisterComponent {
         this.error.set(this.getErrorMessage(response.status));
       }
     });
-  }
-
-  initials(): string {
-    return (this.institution.currentInstitution()?.name || 'FinanSmart').split(' ').filter(Boolean).slice(0, 2).map(word => word[0]).join('').toUpperCase();
   }
 
   private getErrorMessage(status: number): string {

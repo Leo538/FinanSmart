@@ -9,6 +9,8 @@ export interface Institution {
   primaryColor: string | null;
   secondaryColor: string | null;
   backgroundColor: string | null;
+  hoverColor: string | null;
+  fontFamily: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -24,5 +26,7 @@ export interface InstitutionFormData {
   primaryColor: string | null;
   secondaryColor: string | null;
   backgroundColor: string | null;
+  hoverColor: string | null;
+  fontFamily: string | null;
   isActive: boolean;
 }

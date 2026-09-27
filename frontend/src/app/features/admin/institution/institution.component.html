@@ -1,8 +1,5 @@
-<main class="page-container">
-  <app-page-header
-    title="Configuración de la institución"
-    subtitle="Administra la información e identidad visual de la entidad financiera."
-  />
+<main class="page-container institution-page">
+  <header class="institution-hero"><div><span>Identidad institucional</span><h1>Diseña la experiencia de tu institución.</h1><p>Actualiza la marca que verán tus clientes en la portada, los simuladores y el espacio administrativo.</p></div><span class="hero-decoration" aria-hidden="true"></span></header>
 
   @if (loading()) {
     <section class="loading-area">
@@ -12,11 +9,12 @@
     <section class="institution-layout">
       <form class="card institution-form" [formGroup]="form" (ngSubmit)="save()">
         <div class="card-header">
-          <h2>Información institucional</h2>
+          <div><p class="card-kicker">Configuración central</p><h2>Tu institución</h2></div>
           <app-status-badge [status]="form.controls.isActive.value ? 'active' : 'inactive'" />
         </div>
 
         <div class="card-body form-grid">
+          <div class="form-section-title full"><span>01 / DATOS GENERALES</span><h3>Información institucional</h3><p>El nombre y el logo se muestran en todas las pantallas.</p></div>
           <div class="form-group full">
             <label class="form-label" for="name">Nombre de la institución</label>
             <input id="name" class="form-control" formControlName="name" />
@@ -51,6 +49,8 @@
             <input id="address" class="form-control" formControlName="address" />
           </div>
 
+          <div class="form-section-title full"><span>02 / IDENTIDAD VISUAL</span><h3>Logo y paleta</h3><p>Elige colores con buen contraste; los verás reflejados en la vista previa.</p></div>
+
           <div class="form-group full">
             <label class="form-label" for="logoUrl">URL del logo</label>
             <input id="logoUrl" class="form-control" type="url" formControlName="logoUrl" placeholder="https://..." />
@@ -62,13 +62,33 @@
             <span class="form-help">JPG, PNG o WEBP. Máximo 2 MB. También puedes mantener una URL externa.</span>
           </div>
 
+          <section class="palette-preset full" aria-label="Diseño predeterminado">
+            <div class="palette-preset-copy">
+              <span class="palette-preset-eyebrow">PALETA PREDETERMINADA</span>
+              <h4>Colores de la portada</h4>
+              <p>Azul petróleo, verde turquesa y superficies claras, como en el diseño inicial.</p>
+            </div>
+            <div class="palette-preset-controls">
+              <div class="palette-preset-swatches" aria-hidden="true">
+                <span [style.background]="palette.primary"></span>
+                <span [style.background]="palette.secondary"></span>
+                <span [style.background]="palette.background"></span>
+                <span [style.background]="palette.hover"></span>
+              </div>
+              <button class="btn btn-secondary palette-preset-button" type="button" (click)="restoreDefaultPalette()" [disabled]="defaultPaletteSelected()">
+                {{ defaultPaletteSelected() ? 'Diseño activo' : 'Aplicar diseño' }}
+              </button>
+            </div>
+            @if (!defaultPaletteSelected()) { <p class="palette-preset-note">Después, guarda los cambios para aplicarlos en toda la plataforma.</p> }
+          </section>
+
           <div class="color-field">
             <label class="form-label" for="primaryColor">Color primario</label>
             <div>
               <input
                 id="primaryColorPicker"
                 type="color"
-                [value]="form.controls.primaryColor.value || '#123B5D'"
+                [value]="form.controls.primaryColor.value || palette.primary"
                 (input)="setColor('primaryColor', $event)"
                 aria-label="Seleccionar color primario"
               />
@@ -85,7 +105,7 @@
               <input
                 id="secondaryColorPicker"
                 type="color"
-                [value]="form.controls.secondaryColor.value || '#18A999'"
+                [value]="form.controls.secondaryColor.value || palette.secondary"
                 (input)="setColor('secondaryColor', $event)"
                 aria-label="Seleccionar color secundario"
               />
@@ -99,11 +119,27 @@
           <div class="color-field">
             <label class="form-label" for="backgroundColor">Color de fondo</label>
             <div>
-              <input id="backgroundColorPicker" type="color" [value]="form.controls.backgroundColor.value || '#F5F3ED'" (input)="setColor('backgroundColor', $event)" aria-label="Seleccionar color de fondo" />
+              <input id="backgroundColorPicker" type="color" [value]="form.controls.backgroundColor.value || palette.background" (input)="setColor('backgroundColor', $event)" aria-label="Seleccionar color de fondo" />
               <input id="backgroundColor" class="form-control" formControlName="backgroundColor" />
             </div>
             @if (form.controls.backgroundColor.touched && form.controls.backgroundColor.invalid) { <span class="form-error">Usa un color hexadecimal válido.</span> }
             <span class="form-help">Usa un tono claro para conservar la legibilidad.</span>
+          </div>
+
+          <div class="color-field">
+            <label class="form-label" for="hoverColor">Color al pasar el cursor</label>
+            <div>
+              <input id="hoverColorPicker" type="color" [value]="form.controls.hoverColor.value || palette.hover" (input)="setColor('hoverColor', $event)" aria-label="Seleccionar color de hover" />
+              <input id="hoverColor" class="form-control" formControlName="hoverColor" />
+            </div>
+            @if (form.controls.hoverColor.touched && form.controls.hoverColor.invalid) { <span class="form-error">Usa un color hexadecimal válido.</span> }
+            <span class="form-help">Para botones, enlaces y navegación al interactuar.</span>
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label" for="fontFamily">Tipografía de toda la aplicación</label>
+            <select id="fontFamily" class="form-select" formControlName="fontFamily"><option value="Inter">Inter · moderna</option><option value="Arial">Arial · clásica</option><option value="Georgia">Georgia · editorial</option></select>
+            <span class="form-help">Se aplicará a la portada, simuladores, acceso y administración.</span>
           </div>
 
           <label class="toggle-field full">
@@ -124,11 +160,17 @@
       </form>
 
       <aside class="card preview-card">
-        <div class="card-header"><h2>Vista previa</h2></div>
+        <div class="card-header"><div><p class="card-kicker">Cambios en vivo</p><h2>Vista previa</h2></div></div>
         <div
           class="card-body preview"
-          [style.--preview-primary]="preview().primaryColor || '#123B5D'"
-          [style.--preview-accent]="preview().secondaryColor || '#18A999'"
+          [style.--preview-primary]="preview().primaryColor || palette.primary"
+          [style.--preview-accent]="preview().secondaryColor || palette.secondary"
+          [style.--preview-hover]="preview().hoverColor || palette.hover"
+          [style.--preview-primary-contrast]="contrastText(preview().primaryColor)"
+          [style.--preview-accent-contrast]="contrastText(preview().secondaryColor)"
+          [style.--preview-hover-contrast]="contrastText(preview().hoverColor)"
+          [style.--preview-bg]="preview().backgroundColor || palette.background"
+          [style.font-family]="fontStack(preview().fontFamily)"
         >
           <div class="preview-logo">
             @if (preview().logoUrl && !logoFailed()) {
@@ -139,7 +181,8 @@
           </div>
           <h2>{{ preview().name || 'FinanSmart' }}</h2>
           <p>RUC {{ preview().ruc || 'Sin configurar' }}</p>
-          <div class="swatches"><span><i class="primary"></i>Primario</span><span><i class="accent"></i>Secundario</span></div>
+          <div class="swatches"><span><i class="primary"></i>Primario</span><span><i class="accent"></i>Secundario</span><span><i class="background"></i>Fondo</span><span><i class="hover"></i>Hover</span></div>
+          <div class="public-preview"><span>Así se verá la portada</span><strong>{{ preview().name || 'FinanSmart' }}</strong><p>Decisiones financieras más claras.</p><div><span class="public-preview-button">Comenzar</span><span class="public-preview-hover">Al pasar el cursor</span></div></div>
           <div class="system-preview" aria-label="Vista previa de la plataforma">
             <aside><span></span><span></span><span></span></aside>
             <div class="system-preview__main"><header><b>Resumen</b><i></i></header><div class="preview-kpi"><small>Saldo proyectado</small><strong>$ 24.500</strong><em>+ 4,8%</em></div><div class="preview-input">Buscar movimientos</div><div class="preview-table"><span>Producto</span><span>Estado</span><span>Inversión</span><span class="preview-badge">Activa</span></div><div class="preview-actions"><button class="preview-primary" type="button">Principal</button><button class="preview-accent" type="button">Secundario</button></div></div>

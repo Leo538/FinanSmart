@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { InstitutionStateService } from '../../core/services/institution-state.service';
 
 type AnalysisTab = 'credito' | 'comparacion' | 'inversion';
 
@@ -21,6 +22,8 @@ interface AnalysisRow {
   styleUrl: './public-home.component.scss'
 })
 export class PublicHomeComponent {
+  readonly institution = inject(InstitutionStateService);
+  readonly logoFailed = signal(false);
   activeAnalysis: AnalysisTab = 'comparacion';
 
   readonly analysis: Record<AnalysisTab, { title: string; description: string; rows: AnalysisRow[] }> = {

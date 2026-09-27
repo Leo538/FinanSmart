@@ -11,5 +11,7 @@ public class CreateInstitutionDto
     public string? PrimaryColor { get; init; }
     public string? SecondaryColor { get; init; }
     public string? BackgroundColor { get; init; }
+    public string? HoverColor { get; init; }
+    public string? FontFamily { get; init; }
     public bool IsActive { get; init; }
 }

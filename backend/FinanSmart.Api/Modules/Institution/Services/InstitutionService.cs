@@ -32,7 +32,7 @@ public class InstitutionService(FinanSmartDbContext dbContext) : IInstitutionSer
 
     public async Task<InstitutionDto> CreateAsync(CreateInstitutionDto dto)
     {
-        ValidateRequiredFields(dto.Name, dto.Ruc); ValidateBackgroundColor(dto.BackgroundColor);
+        ValidateRequiredFields(dto.Name, dto.Ruc); ValidateThemeSettings(dto.BackgroundColor, dto.HoverColor, dto.FontFamily);
         var normalizedRuc = dto.Ruc.Trim();
 
         if (await dbContext.Institutions.AnyAsync(institution => institution.Ruc == normalizedRuc))
@@ -53,6 +53,8 @@ public class InstitutionService(FinanSmartDbContext dbContext) : IInstitutionSer
             PrimaryColor = dto.PrimaryColor,
             SecondaryColor = dto.SecondaryColor,
             BackgroundColor = dto.BackgroundColor,
+            HoverColor = dto.HoverColor,
+            FontFamily = dto.FontFamily,
             IsActive = dto.IsActive,
             CreatedAt = now,
             UpdatedAt = now
@@ -66,7 +68,7 @@ public class InstitutionService(FinanSmartDbContext dbContext) : IInstitutionSer
 
     public async Task<bool> UpdateAsync(Guid id, UpdateInstitutionDto dto)
     {
-        ValidateRequiredFields(dto.Name, dto.Ruc); ValidateBackgroundColor(dto.BackgroundColor);
+        ValidateRequiredFields(dto.Name, dto.Ruc); ValidateThemeSettings(dto.BackgroundColor, dto.HoverColor, dto.FontFamily);
         var institution = await dbContext.Institutions.FindAsync(id);
 
         if (institution is null)
@@ -92,6 +94,8 @@ public class InstitutionService(FinanSmartDbContext dbContext) : IInstitutionSer
         institution.PrimaryColor = dto.PrimaryColor;
         institution.SecondaryColor = dto.SecondaryColor;
         institution.BackgroundColor = dto.BackgroundColor;
+        institution.HoverColor = dto.HoverColor;
+        institution.FontFamily = dto.FontFamily;
         institution.IsActive = dto.IsActive;
         institution.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -140,6 +144,8 @@ public class InstitutionService(FinanSmartDbContext dbContext) : IInstitutionSer
         PrimaryColor = institution.PrimaryColor,
         SecondaryColor = institution.SecondaryColor,
         BackgroundColor = institution.BackgroundColor,
+        HoverColor = institution.HoverColor,
+        FontFamily = institution.FontFamily,
         IsActive = institution.IsActive,
         CreatedAt = institution.CreatedAt,
         UpdatedAt = institution.UpdatedAt
@@ -149,5 +155,14 @@ public class InstitutionService(FinanSmartDbContext dbContext) : IInstitutionSer
     {
         if (string.IsNullOrWhiteSpace(color)) return;
         if (!System.Text.RegularExpressions.Regex.IsMatch(color, "^#[0-9A-Fa-f]{6}$")) throw new ArgumentException("Background color must be a hexadecimal value.");
+    }
+
+    private static void ValidateThemeSettings(string? backgroundColor, string? hoverColor, string? fontFamily)
+    {
+        ValidateBackgroundColor(backgroundColor);
+        if (!string.IsNullOrWhiteSpace(hoverColor) && !System.Text.RegularExpressions.Regex.IsMatch(hoverColor, "^#[0-9A-Fa-f]{6}$"))
+            throw new ArgumentException("Hover color must be a hexadecimal value.");
+        if (!string.IsNullOrWhiteSpace(fontFamily) && fontFamily is not ("Inter" or "Arial" or "Georgia"))
+            throw new ArgumentException("Unsupported font family.");
     }
 }

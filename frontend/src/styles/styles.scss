@@ -12,3 +12,6 @@
 @use 'components/feedback';
 @use 'components/navigation';
 @use './pages/public-home';
+@use './pages/_public-tools.scss';
+@use './pages/auth-public';
+@use './pages/_admin-ecosystem.scss';

@@ -6,7 +6,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { InvestmentApplication, InvestmentApplicationStatus, InvestmentApplicationStep, SourceOfFunds, UpdateInvestmentApplicant, UpdateInvestmentDeclarations } from './models/investment-application.model';
 import { InvestmentApplicationService } from './services/investment-application.service';
 import { InvestmentApplicationDocument, InvestmentDocumentRequirements, InvestmentDocumentType } from './models/investment-application-document.model';
@@ -29,7 +28,7 @@ const isValidEcuadorNationalId = (value: string): boolean => {
 
 @Component({
   selector: 'app-investment-application',
-  imports: [ReactiveFormsModule, DatePipe, EmptyStateComponent, LoadingSpinnerComponent, PageHeaderComponent],
+  imports: [ReactiveFormsModule, DatePipe, EmptyStateComponent, LoadingSpinnerComponent],
   templateUrl: './investment-application.component.html',
   styleUrls: ['./investment-application.component.scss', './investment-application-premium.component.scss']
 })
@@ -49,18 +48,13 @@ export class InvestmentApplicationComponent implements OnDestroy {
   readonly cancelling = signal(false);
   readonly cancelConfirmationOpen = signal(false);
   readonly error = signal('');
+  readonly applicantAttempted = signal(false);
   readonly documentError = signal('');
   readonly documents = signal<InvestmentApplicationDocument[]>([]);
   readonly requirements = signal<InvestmentDocumentRequirements | null>(null);
   readonly uploadingType = signal<InvestmentDocumentType | null>(null);
   readonly uploadingFileName = signal('');
   readonly completingDocuments = signal(false);
-  readonly documentCameraActive = signal(false);
-  readonly documentCaptureType = signal<InvestmentDocumentType | null>(null);
-  readonly documentGuideMessage = signal('Coloca toda la cédula dentro del marco.');
-  readonly documentReady = signal(false);
-  readonly documentProgress = signal(0);
-  readonly documentPreviewUrl = signal<string | null>(null);
   readonly identityVerification = signal<InvestmentIdentityVerification | null>(null);
   readonly cameraActive = signal(false);
   readonly faceDetectionAvailable = signal(false);
@@ -69,7 +63,6 @@ export class InvestmentApplicationComponent implements OnDestroy {
   readonly faceStabilityProgress = signal(0);
   readonly facialStep = signal(0);
   readonly facialSupported = signal(true);
-  readonly facialSteps = ['Centra tu rostro', 'Gira ligeramente a la izquierda', 'Gira ligeramente a la derecha', 'Parpadea', 'Mantén la posición'];
   readonly localPhotoUrl = signal<string | null>(null);
   readonly selfieValidated = signal(false);
   readonly selfieUrl = signal<string | null>(null);
@@ -91,13 +84,10 @@ export class InvestmentApplicationComponent implements OnDestroy {
   private firstTurnDirection: -1 | 1 | null = null;
   private blinkOpenEye = 0;
   private facialStableSince: number | null = null;
-  private documentStream: MediaStream | null = null;
-  private documentTimer: ReturnType<typeof setTimeout> | null = null;
-  private documentStableSince: number | null = null;
   readonly form = this.formBuilder.group({
-    firstName: ['', Validators.required], lastName: ['', Validators.required], identificationType: ['NationalId' as 'NationalId' | 'Passport', Validators.required],
+    firstName: ['', [Validators.required, Validators.pattern(/.*\S.*/)]], lastName: ['', [Validators.required, Validators.pattern(/.*\S.*/)]], identificationType: ['NationalId' as 'NationalId' | 'Passport', Validators.required],
     identificationNumber: ['', Validators.required], email: ['', [Validators.required, Validators.email]], phone: ['', [Validators.required, Validators.pattern(/^\d{10}$/), Validators.maxLength(10)]],
-    birthDate: [''], address: ['', Validators.required], city: ['', Validators.required]
+    birthDate: [''], address: ['', [Validators.required, Validators.pattern(/.*\S.*/)]], city: ['', [Validators.required, Validators.pattern(/.*\S.*/)]]
   });
   readonly declarationsForm = this.formBuilder.group({
     sourceOfFunds: [null as SourceOfFunds | null, Validators.required],
@@ -138,12 +128,22 @@ export class InvestmentApplicationComponent implements OnDestroy {
   saveApplicant(): void {
     const application = this.application();
     if (!application || this.isReadOnly() || this.saving()) return;
-    if (this.form.invalid || !this.applicantIdentityValid() || !this.applicantIsAdult()) { this.form.markAllAsTouched(); return; }
+    this.applicantAttempted.set(true);
+    if (this.form.invalid || !this.applicantIdentityValid() || !this.applicantIsAdult()) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.saving.set(true); this.error.set('');
     const value = this.form.getRawValue();
-    const request: UpdateInvestmentApplicant = { ...value, birthDate: value.birthDate || null };
+    const request: UpdateInvestmentApplicant = {
+      ...value,
+      firstName: value.firstName.trim(), lastName: value.lastName.trim(),
+      identificationNumber: value.identificationNumber.trim(), email: value.email.trim(),
+      phone: value.phone.trim(), address: value.address.trim(), city: value.city.trim(),
+      birthDate: value.birthDate || null
+    };
     this.applicationService.updateApplicant(application.id, request).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: updated => { this.application.set(updated); this.saving.set(false); this.loadDocuments(updated.id); },
+      next: updated => { this.application.set(updated); this.applicantAttempted.set(false); this.saving.set(false); this.loadDocuments(updated.id); },
       error: error => { this.saving.set(false); this.error.set(this.errorMessage(error)); }
     });
   }
@@ -163,16 +163,7 @@ export class InvestmentApplicationComponent implements OnDestroy {
   applicantIsAdult(): boolean { const birthDate = this.form.controls.birthDate.value; return !birthDate || new Date(`${birthDate}T00:00:00`).getTime() <= new Date(new Date().setFullYear(new Date().getFullYear() - 18)).getTime(); }
   identificationError(): string { return this.form.controls.identificationType.value === 'NationalId' && !this.applicantIdentityValid() ? 'Número de cédula ecuatoriana no válido.' : ''; }
   birthDateError(): string { return !this.applicantIsAdult() ? 'Debes ser mayor de edad para continuar.' : ''; }
-  ngOnDestroy(): void { this.stopCamera(); this.stopDocumentCamera(); this.releaseUrl(this.localPhotoUrl()); this.releaseUrl(this.selfieUrl()); this.releaseUrl(this.documentPreviewUrl()); }
-  startDocumentCamera(type: InvestmentDocumentType): void { this.documentCaptureType.set(type); this.documentGuideMessage.set('Coloca toda la cédula dentro del marco.'); this.documentReady.set(false); this.documentProgress.set(0); navigator.mediaDevices?.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false }).then(stream => { this.documentStream = stream; this.documentCameraActive.set(true); setTimeout(async () => { const video = globalThis.document.querySelector<HTMLVideoElement>('#documentCamera'); if (video) { video.srcObject = stream; await video.play(); this.detectDocument(video); } }); }).catch(() => this.error.set('No se pudo acceder a la cámara. Puedes subir un archivo.')); }
-  stopDocumentCamera(): void { if (this.documentTimer) clearTimeout(this.documentTimer); this.documentTimer=null; this.documentStableSince=null; this.documentStream?.getTracks().forEach(track=>track.stop()); this.documentStream=null; this.documentCameraActive.set(false); }
-  private detectDocument(video: HTMLVideoElement): void { if (!this.documentCameraActive()) return; this.documentTimer=setTimeout(async()=>{ if (!video.videoWidth) return this.detectDocument(video); const canvas=globalThis.document.createElement('canvas'); canvas.width=120; canvas.height=75; const context=canvas.getContext('2d',{willReadFrequently:true}); if (!context) return; context.drawImage(video,0,0,120,75); const analysis=this.documentAnalysis(context.getImageData(0,0,120,75)); if (!analysis.valid) { this.documentGuideMessage.set(analysis.message); this.resetDocumentGuide(); if(this.documentCaptureType()==='IdentityFront') await this.checkLargeFace(video,analysis.hasRectangle); } else { const now=performance.now();this.documentStableSince??=now;const progress=Math.min(1,(now-this.documentStableSince)/1000);this.documentProgress.set(progress);this.documentReady.set(true);this.documentGuideMessage.set(progress>=1?'Documento correctamente posicionado.':'Mantén el documento recto.');if(progress>=1)this.captureDocument(video); } if(this.documentCameraActive())this.detectDocument(video);},120); }
-  private documentAnalysis(image:ImageData):{valid:boolean;hasRectangle:boolean;message:string}{const w=image.width,h=image.height,data=image.data;const edges:boolean[]=[];let minX=w,minY=h,maxX=0,maxY=0,count=0;for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const p=(y*w+x)*4,l=.2126*data[p]+.7152*data[p+1]+.0722*data[p+2],r=.2126*data[p+4]+.7152*data[p+5]+.0722*data[p+6],d=.2126*data[p+w*4]+.7152*data[p+w*4+1]+.0722*data[p+w*4+2];if(Math.abs(l-r)+Math.abs(l-d)>65){edges[y*w+x]=true;count++;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}}const bw=maxX-minX,bh=maxY-minY,area=bw*bh/(w*h),ratio=bh?bw/bh:0,center=Math.abs((minX+maxX)/2/w-.5)<.15&&Math.abs((minY+maxY)/2/h-.5)<.16;const rectangle=count>90&&area>.22&&area<.78&&ratio>1.25&&ratio<2.05; if(!count)return{valid:false,hasRectangle:false,message:'No se detecta correctamente un documento de identidad.'};if(area<=.22)return{valid:false,hasRectangle:false,message:'Acerca el documento.'};if(area>=.78)return{valid:false,hasRectangle:false,message:'Aleja el documento y muestra las cuatro esquinas.'};if(!center)return{valid:false,hasRectangle:rectangle,message:'Centra la cédula dentro del marco.'};if(!rectangle)return{valid:false,hasRectangle:false,message:'No se detecta correctamente un documento de identidad.'};return{valid:true,hasRectangle:true,message:''};}
-  private async checkLargeFace(video:HTMLVideoElement,hasRectangle:boolean):Promise<void>{const Detector=(globalThis as typeof globalThis&{FaceDetector?:FaceDetectorConstructor}).FaceDetector;if(!Detector||hasRectangle)return;try{const faces=await new Detector({fastMode:true,maxDetectedFaces:1}).detect(video);if(faces[0]&&faces[0].boundingBox.width/video.videoWidth>.42)this.documentGuideMessage.set('La imagen parece una fotografía personal y no un documento completo.');}catch{}}
-  private resetDocumentGuide(): void { this.documentStableSince=null;this.documentReady.set(false);this.documentProgress.set(0); }
-  private captureDocument(video:HTMLVideoElement):void { const type=this.documentCaptureType();if(!type)return; const canvas=globalThis.document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;canvas.getContext('2d')?.drawImage(video,0,0);canvas.toBlob(blob=>{if(!blob)return;this.releaseUrl(this.documentPreviewUrl());this.documentPreviewUrl.set(URL.createObjectURL(blob));this.stopDocumentCamera();},'image/jpeg',.92); }
-  repeatDocumentPhoto():void{const type=this.documentCaptureType();this.releaseUrl(this.documentPreviewUrl());this.documentPreviewUrl.set(null);if(type)this.startDocumentCamera(type);}
-  useDocumentPhoto():void{const type=this.documentCaptureType(),url=this.documentPreviewUrl(),app=this.application();if(!type||!url||!app)return;this.documentError.set('');fetch(url).then(x=>x.blob()).then(blob=>{const file=new File([blob],`${type}.jpg`,{type:'image/jpeg'});this.documentService.upload(app.id,type,file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:()=>{this.releaseUrl(url);this.documentPreviewUrl.set(null);this.documentCaptureType.set(null);this.loadDocuments(app.id);},error:e=>this.documentError.set(this.documentErrorMessage(e))});});}
+  ngOnDestroy(): void { this.stopCamera(); this.releaseUrl(this.localPhotoUrl()); this.releaseUrl(this.selfieUrl()); }
   loadDocuments(applicationId: string): void {
     this.documentService.getAll(applicationId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: documents => this.documents.set(documents), error: error => this.error.set(this.errorMessage(error)) });
     this.documentService.getRequirements(applicationId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: requirements => this.requirements.set(requirements), error: error => this.error.set(this.errorMessage(error)) });
@@ -219,7 +210,7 @@ export class InvestmentApplicationComponent implements OnDestroy {
   fileSize(size: number): string { return `${(size / 1024 / 1024).toLocaleString('es-EC', { maximumFractionDigits: 2 })} MB`; }
   sourceOfFundsLabel(source: SourceOfFunds | null): string { return this.sourceOfFundsOptions.find(option => option.value === source)?.label ?? 'No registrado'; }
   async startCamera(): Promise<void> {
-    if (this.isReadOnly() || !navigator.mediaDevices?.getUserMedia) { this.error.set('No se detectó una cámara disponible. Puedes seleccionar una fotografía.'); return; }
+    if (this.isReadOnly() || !navigator.mediaDevices?.getUserMedia) { this.error.set('No se detectó una cámara disponible. Intenta desde un dispositivo o navegador con cámara.'); return; }
     try {
       this.cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
       this.cameraActive.set(true); this.resetFaceGuide();
@@ -230,7 +221,7 @@ export class InvestmentApplicationComponent implements OnDestroy {
         if (!await this.initializeFacialCheck()) { this.facialSupported.set(false); this.faceDetectionAvailable.set(false); this.faceGuideMessage.set('No fue posible completar la verificación facial automática en este navegador.'); return; }
         this.faceDetectionAvailable.set(true); this.detectInteractiveFace(video);
       });
-    } catch { this.error.set('No se pudo acceder a la cámara. Puedes seleccionar una fotografía desde tu dispositivo.'); }
+    } catch { this.error.set('No se pudo acceder a la cámara. Revisa los permisos del navegador e inténtalo de nuevo.'); }
   }
   stopCamera(): void { if (this.detectionTimer) clearTimeout(this.detectionTimer); this.detectionTimer = null; this.faceDetector = null; this.faceLandmarker = null; this.detectionBusy = false; this.stableSince = null; this.lastFaceCenter = null; this.cameraStream?.getTracks().forEach(track => track.stop()); this.cameraStream = null; this.cameraActive.set(false); }
   repeatPhoto(): void { this.discardLocalPhoto(); this.startCamera(); }
@@ -304,7 +295,7 @@ export class InvestmentApplicationComponent implements OnDestroy {
       try {
         if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) { this.resetFaceGuide(); }
         else { this.evaluateFaces(await this.faceDetector.detect(video), video); }
-      } catch { this.faceGuideMessage.set('No se pudo detectar el rostro. Puedes usar la captura manual.'); this.faceDetectionAvailable.set(false); }
+      } catch { this.faceGuideMessage.set('No se pudo detectar el rostro. Intenta nuevamente con mejor iluminación.'); this.faceDetectionAvailable.set(false); }
       finally { this.detectionBusy = false; if (this.cameraActive() && this.faceDetector) this.detectFace(video); }
     }, 120);
   }

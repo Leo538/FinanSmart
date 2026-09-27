@@ -39,7 +39,7 @@ export class CreditComparisonComponent {
   readonly selectedType = signal<CreditType | null>(null);
   readonly currentRate = signal<number | null>(null);
   readonly rateChecked = signal(false);
-  isPublic(): boolean { return this.router.url.startsWith('/simulators/'); }
+  isPublic(): boolean { return this.router.url.startsWith('/simulators/') || this.router.url.startsWith('/client/'); }
   constructor() {
     this.creditTypeService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: types => { this.creditTypes.set(types.filter(type => type.isActive).map(type => ({ ...type, minimumAmount: Number(type.minimumAmount), maximumAmount: Number(type.maximumAmount), minimumTermMonths: Number(type.minimumTermMonths), maximumTermMonths: Number(type.maximumTermMonths) }))); this.loadingTypes.set(false); },

@@ -1,10 +1,5 @@
 <section class="register-card card">
-  <div class="register-brand">
-    <span>@if (institution.currentInstitution()?.logoUrl && !logoFailed()) { <img [src]="institution.currentInstitution()?.logoUrl" alt="Logo institucional" (error)="logoFailed.set(true)" /> } @else { {{ initials() }} }</span>
-    <strong>{{ institution.currentInstitution()?.name || 'FinanSmart' }}</strong>
-    <p>Accede a tu plataforma financiera.</p>
-  </div>
-  <div class="register-heading"><span>Registro seguro</span><h1>Crear cuenta</h1><p>Regístrate para acceder como cliente.</p></div>
+  <div class="register-heading"><h1>Crea tu cuenta</h1><p>Regístrate para acceder como cliente.</p></div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
     <div class="two-columns">

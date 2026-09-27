@@ -15,7 +15,7 @@ public class CreditSimulationPdfService(
     IHttpClientFactory httpClientFactory,
     IWebHostEnvironment environment) : ICreditSimulationPdfService
 {
-    private const string DefaultPrimaryColor = "#123B5D";
+    private const string DefaultPrimaryColor = "#164A5C";
 
     public async Task<byte[]> GenerateAsync(CreditSimulationRequestDto request)
     {

@@ -1,13 +1,14 @@
 :root {
   /* Default advisory palette. ThemeService replaces brand tokens per institution. */
-  --primary: #0A6875;
-  --primary-dark: #003546;
-  --primary-soft: #E8F5F5;
+  --primary: #164A5C;
+  --primary-dark: #0D3747;
+  --primary-soft: #E8F3F4;
   --primary-contrast: #ffffff;
+  --hover-contrast: #ffffff;
   --background: #F7F9FA;
   --surface: #FFFFFF;
   --surface-muted: #F1F5F9;
-  --surface-dark: #002B3A;
+  --surface-dark: #00273B;
   --border: #DDE5E7;
   --border-strong: #B9C9CC;
   --text: #26363B;
@@ -16,7 +17,13 @@
   --warning: #92400E;
   --danger: #991B1B;
   --info: #2563EB;
-  --accent: #168194;
+  --accent: #00666D;
+  --accent-soft: #e8f5f5;
+  --landing-navy: #00273b;
+  --landing-teal: #075E68;
+  --landing-hover: #0d3747;
+  --landing-accent: #00666D;
+  --landing-accent-dark: #004D53;
   --color-success-bg: #DCFCE7;
   --color-success-text: #166534;
   --color-error-bg: #FEE2E2;

@@ -4,11 +4,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { InstitutionStateService } from '../../../core/services/institution-state.service';
 import { AdminDashboard } from './models/admin-dashboard.model';
 import { AdminDashboardService } from './services/admin-dashboard.service';
-import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [DatePipe, StatCardComponent],
+  imports: [DatePipe],
   templateUrl: './admin-dashboard.component.html',
   styleUrl: './admin-dashboard.component.scss'
 })

@@ -11,8 +11,9 @@ using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException("Connection string 'DefaultConnection' is required. Configure it locally or via ConnectionStrings__DefaultConnection.");
 
 builder.Services.AddDbContext<FinanSmartDbContext>(options => options.UseNpgsql(connectionString));
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
@@ -54,10 +55,13 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+// Only institution logos are public. Application documents and identity files stay private.
+var publicLogoDirectory = Path.Combine(app.Environment.ContentRootPath, "Storage", "institution-logos");
+Directory.CreateDirectory(publicLogoDirectory);
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(app.Environment.ContentRootPath, "Storage")),
-    RequestPath = "/storage"
+    FileProvider = new PhysicalFileProvider(publicLogoDirectory),
+    RequestPath = "/storage/institution-logos"
 });
 app.UseCors("Frontend");
 app.UseAuthentication();
@@ -96,7 +100,8 @@ using (var scope = app.Services.CreateScope())
         {
             await RoleSeed.SeedAsync(dbContext);
             var passwordHasher = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.PasswordHasher<FinanSmart.Api.Entities.User>>();
-            await DevelopmentUserSeed.SeedAsync(dbContext, passwordHasher);
+            if (app.Environment.IsDevelopment())
+                await DevelopmentUserSeed.SeedAsync(dbContext, passwordHasher);
         }
     }
     catch

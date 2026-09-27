@@ -1,21 +1,22 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, Validators, NonNullableFormBuilder } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { Institution, InstitutionFormData } from './models/institution.model';
 import { InstitutionService } from './services/institution.service';
 import { InstitutionStateService } from '../../../core/services/institution-state.service';
+import { INSTITUTION_PALETTE } from '../../../core/theme/institution-palette';
 
 @Component({
   selector: 'app-institution',
-  imports: [ReactiveFormsModule, PageHeaderComponent, LoadingSpinnerComponent, StatusBadgeComponent],
+  imports: [ReactiveFormsModule, LoadingSpinnerComponent, StatusBadgeComponent],
   templateUrl: './institution.component.html',
   styleUrl: './institution.component.scss'
 })
 export class InstitutionComponent {
+  readonly palette = INSTITUTION_PALETTE;
   private readonly destroyRef = inject(DestroyRef);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly institutionService = inject(InstitutionService);
@@ -34,12 +35,21 @@ export class InstitutionComponent {
     phone: [''],
     address: [''],
     logoUrl: [''],
-    primaryColor: ['#123B5D', Validators.pattern(/^(|#[0-9A-Fa-f]{6})$/)],
-    secondaryColor: ['#18A999', Validators.pattern(/^(|#[0-9A-Fa-f]{6})$/)],
-    backgroundColor: ['#F5F3ED', Validators.pattern(/^(|#[0-9A-Fa-f]{6})$/)],
+    primaryColor: [INSTITUTION_PALETTE.primary, Validators.pattern(/^(|#[0-9A-Fa-f]{6})$/)],
+    secondaryColor: [INSTITUTION_PALETTE.secondary, Validators.pattern(/^(|#[0-9A-Fa-f]{6})$/)],
+    backgroundColor: [INSTITUTION_PALETTE.background, Validators.pattern(/^(|#[0-9A-Fa-f]{6})$/)],
+    hoverColor: [INSTITUTION_PALETTE.hover, Validators.pattern(/^(|#[0-9A-Fa-f]{6})$/)],
+    fontFamily: ['Inter', Validators.pattern(/^(Inter|Arial|Georgia)$/)],
     isActive: [true]
   });
   readonly preview = signal(this.form.getRawValue());
+  readonly defaultPaletteSelected = computed(() => {
+    const current = this.preview();
+    return current.primaryColor.toLowerCase() === this.palette.primary.toLowerCase()
+      && current.secondaryColor.toLowerCase() === this.palette.secondary.toLowerCase()
+      && current.backgroundColor.toLowerCase() === this.palette.background.toLowerCase()
+      && current.hoverColor.toLowerCase() === this.palette.hover.toLowerCase();
+  });
 
   constructor() {
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
@@ -58,8 +68,17 @@ export class InstitutionComponent {
     });
   }
 
-  setColor(control: 'primaryColor' | 'secondaryColor' | 'backgroundColor', event: Event): void {
+  setColor(control: 'primaryColor' | 'secondaryColor' | 'backgroundColor' | 'hoverColor', event: Event): void {
     this.form.controls[control].setValue((event.target as HTMLInputElement).value);
+  }
+
+  restoreDefaultPalette(): void {
+    this.form.patchValue({
+      primaryColor: this.palette.primary,
+      secondaryColor: this.palette.secondary,
+      backgroundColor: this.palette.background,
+      hoverColor: this.palette.hover
+    });
   }
 
   uploadLogo(event: Event): void {
@@ -109,6 +128,21 @@ export class InstitutionComponent {
     return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'F';
   }
 
+  fontStack(value: string | null): string {
+    if (value === 'Arial') return 'Arial, Helvetica, sans-serif';
+    if (value === 'Georgia') return 'Georgia, Cambria, serif';
+    return 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  }
+
+  contrastText(color: string | null): string {
+    if (!color || !/^#[0-9a-f]{6}$/i.test(color)) return '#ffffff';
+    const channels = [1, 3, 5].map(index => {
+      const value = parseInt(color.slice(index, index + 2), 16) / 255;
+      return value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4;
+    });
+    return .2126 * channels[0] + .7152 * channels[1] + .0722 * channels[2] > .179 ? '#14283b' : '#ffffff';
+  }
+
   save(): void {
     if (this.form.invalid || this.saving()) {
       this.form.markAllAsTouched();
@@ -142,9 +176,11 @@ export class InstitutionComponent {
       phone: institution.phone,
       address: institution.address,
       logoUrl: institution.logoUrl ?? '',
-      primaryColor: institution.primaryColor ?? '#123B5D',
-      secondaryColor: institution.secondaryColor ?? '#18A999',
-      backgroundColor: institution.backgroundColor ?? '#F5F3ED',
+      primaryColor: institution.primaryColor ?? INSTITUTION_PALETTE.primary,
+      secondaryColor: institution.secondaryColor ?? INSTITUTION_PALETTE.secondary,
+      backgroundColor: institution.backgroundColor ?? INSTITUTION_PALETTE.background,
+      hoverColor: institution.hoverColor ?? INSTITUTION_PALETTE.hover,
+      fontFamily: institution.fontFamily ?? 'Inter',
       isActive: institution.isActive
     });
   }
