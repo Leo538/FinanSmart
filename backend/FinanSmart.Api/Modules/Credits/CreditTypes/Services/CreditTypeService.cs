@@ -113,32 +113,42 @@ public class CreditTypeService(FinanSmartDbContext dbContext) : ICreditTypeServi
 
     private static void ValidateBusinessRules(
         string name,
-        decimal minimumAmount,
-        decimal maximumAmount,
-        int minimumTermMonths,
-        int maximumTermMonths)
+        decimal? minimumAmount,
+        decimal? maximumAmount,
+        int? minimumTermMonths,
+        int? maximumTermMonths)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
             throw new ArgumentException("Name is required.");
         }
 
-        if (minimumAmount <= 0)
+        if (minimumAmount is <= 0)
         {
             throw new ArgumentException("Minimum amount must be greater than zero.");
         }
 
-        if (maximumAmount < minimumAmount)
+        if (maximumAmount is <= 0)
+        {
+            throw new ArgumentException("Maximum amount must be greater than zero.");
+        }
+
+        if (minimumAmount.HasValue && maximumAmount.HasValue && maximumAmount < minimumAmount)
         {
             throw new ArgumentException("Maximum amount must be greater than or equal to minimum amount.");
         }
 
-        if (minimumTermMonths <= 0)
+        if (minimumTermMonths is <= 0)
         {
             throw new ArgumentException("Minimum term months must be greater than zero.");
         }
 
-        if (maximumTermMonths < minimumTermMonths)
+        if (maximumTermMonths is <= 0)
+        {
+            throw new ArgumentException("Maximum term months must be greater than zero.");
+        }
+
+        if (minimumTermMonths.HasValue && maximumTermMonths.HasValue && maximumTermMonths < minimumTermMonths)
         {
             throw new ArgumentException("Maximum term months must be greater than or equal to minimum term months.");
         }
@@ -158,4 +168,3 @@ public class CreditTypeService(FinanSmartDbContext dbContext) : ICreditTypeServi
         UpdatedAt = creditType.UpdatedAt
     };
 }
-

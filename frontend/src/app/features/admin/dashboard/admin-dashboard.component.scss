@@ -140,6 +140,8 @@
 .state--rejected { --state-ink: #a33e4b; --state-surface: #faebed; }
 .state--draft { --state-ink: #52666e; --state-surface: #eaf0f1; }
 .state--info { --state-ink: #236276; --state-surface: #e9f4f5; }
+.status-heading, .status-cell { text-align: center !important; }
+.status-cell .state { justify-content: center; margin-inline: auto; text-align: center; }
 .table-empty { height: 100px !important; color: var(--text-muted) !important; text-align: center; }
 .empty-copy { margin: 28px 0; color: var(--text-muted); font-size: .84rem; text-align: center; }
 

@@ -15,6 +15,7 @@ public class CreditRateService(FinanSmartDbContext dbContext) : ICreditRateServi
             .AsNoTracking()
             .Include(rate => rate.CreditType)
             .OrderBy(rate => rate.CreditType.Name)
+            .ThenBy(rate => rate.EffectiveFrom == null)
             .ThenByDescending(rate => rate.EffectiveFrom)
             .ToListAsync();
 
@@ -37,7 +38,8 @@ public class CreditRateService(FinanSmartDbContext dbContext) : ICreditRateServi
             .AsNoTracking()
             .Include(rate => rate.CreditType)
             .Where(rate => rate.CreditTypeId == creditTypeId)
-            .OrderByDescending(rate => rate.EffectiveFrom)
+            .OrderBy(rate => rate.EffectiveFrom == null)
+            .ThenByDescending(rate => rate.EffectiveFrom)
             .ToListAsync();
 
         return rates.Select(ToDto).ToList();
@@ -51,9 +53,10 @@ public class CreditRateService(FinanSmartDbContext dbContext) : ICreditRateServi
             .Include(rate => rate.CreditType)
             .Where(rate => rate.CreditTypeId == creditTypeId
                 && rate.IsActive
-                && rate.EffectiveFrom <= now
+                && (rate.EffectiveFrom == null || rate.EffectiveFrom <= now)
                 && (rate.EffectiveTo == null || rate.EffectiveTo >= now))
-            .OrderByDescending(rate => rate.EffectiveFrom)
+            .OrderBy(rate => rate.EffectiveFrom == null)
+            .ThenByDescending(rate => rate.EffectiveFrom)
             .FirstOrDefaultAsync();
 
         return rate is null ? null : ToDto(rate);
@@ -77,6 +80,8 @@ public class CreditRateService(FinanSmartDbContext dbContext) : ICreditRateServi
             AnnualInterestRate = dto.AnnualInterestRate,
             EffectiveFrom = dto.EffectiveFrom,
             EffectiveTo = dto.EffectiveTo,
+            SourceDate = dto.SourceDate,
+            SourceUrl = dto.SourceUrl?.Trim(),
             IsActive = dto.IsActive,
             CreatedAt = now,
             UpdatedAt = now
@@ -111,6 +116,8 @@ public class CreditRateService(FinanSmartDbContext dbContext) : ICreditRateServi
         rate.AnnualInterestRate = dto.AnnualInterestRate;
         rate.EffectiveFrom = dto.EffectiveFrom;
         rate.EffectiveTo = dto.EffectiveTo;
+        rate.SourceDate = dto.SourceDate;
+        rate.SourceUrl = dto.SourceUrl?.Trim();
         rate.IsActive = dto.IsActive;
         rate.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -149,33 +156,36 @@ public class CreditRateService(FinanSmartDbContext dbContext) : ICreditRateServi
 
     private async Task<bool> HasOverlappingActiveRateAsync(
         Guid creditTypeId,
-        DateTimeOffset effectiveFrom,
+        DateTimeOffset? effectiveFrom,
         DateTimeOffset? effectiveTo,
         Guid? excludedRateId = null)
     {
+        if (!effectiveFrom.HasValue)
+        {
+            return await dbContext.CreditRates.AnyAsync(rate =>
+                rate.CreditTypeId == creditTypeId
+                && rate.IsActive
+                && rate.Id != excludedRateId);
+        }
+
         var proposedEffectiveTo = effectiveTo ?? DateTimeOffset.MaxValue;
 
         return await dbContext.CreditRates.AnyAsync(rate =>
             rate.CreditTypeId == creditTypeId
             && rate.IsActive
             && rate.Id != excludedRateId
-            && rate.EffectiveFrom <= proposedEffectiveTo
-            && (rate.EffectiveTo == null || rate.EffectiveTo >= effectiveFrom));
+            && (rate.EffectiveFrom == null || rate.EffectiveFrom <= proposedEffectiveTo)
+            && (rate.EffectiveTo == null || rate.EffectiveTo >= effectiveFrom.Value));
     }
 
-    private static void ValidateBusinessRules(decimal annualInterestRate, DateTimeOffset effectiveFrom, DateTimeOffset? effectiveTo)
+    private static void ValidateBusinessRules(decimal annualInterestRate, DateTimeOffset? effectiveFrom, DateTimeOffset? effectiveTo)
     {
         if (annualInterestRate <= 0)
         {
             throw new ArgumentException("Annual interest rate must be greater than zero.");
         }
 
-        if (effectiveFrom == default)
-        {
-            throw new ArgumentException("Effective from is required.");
-        }
-
-        if (effectiveTo.HasValue && effectiveTo.Value < effectiveFrom)
+        if (effectiveTo.HasValue && effectiveFrom.HasValue && effectiveTo.Value < effectiveFrom.Value)
         {
             throw new ArgumentException("Effective to must be later than or equal to effective from.");
         }
@@ -189,9 +199,10 @@ public class CreditRateService(FinanSmartDbContext dbContext) : ICreditRateServi
         AnnualInterestRate = rate.AnnualInterestRate,
         EffectiveFrom = rate.EffectiveFrom,
         EffectiveTo = rate.EffectiveTo,
+        SourceDate = rate.SourceDate,
+        SourceUrl = rate.SourceUrl,
         IsActive = rate.IsActive,
         CreatedAt = rate.CreatedAt,
         UpdatedAt = rate.UpdatedAt
     };
 }
-

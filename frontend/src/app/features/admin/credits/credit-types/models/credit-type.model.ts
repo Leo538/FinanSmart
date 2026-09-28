@@ -2,10 +2,10 @@ export interface CreditType {
   id: string;
   name: string;
   description: string | null;
-  minimumAmount: number;
-  maximumAmount: number;
-  minimumTermMonths: number;
-  maximumTermMonths: number;
+  minimumAmount: number | null;
+  maximumAmount: number | null;
+  minimumTermMonths: number | null;
+  maximumTermMonths: number | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -14,9 +14,9 @@ export interface CreditType {
 export interface CreditTypeFormData {
   name: string;
   description: string | null;
-  minimumAmount: number;
-  maximumAmount: number;
-  minimumTermMonths: number;
-  maximumTermMonths: number;
+  minimumAmount: number | null;
+  maximumAmount: number | null;
+  minimumTermMonths: number | null;
+  maximumTermMonths: number | null;
   isActive: boolean;
 }

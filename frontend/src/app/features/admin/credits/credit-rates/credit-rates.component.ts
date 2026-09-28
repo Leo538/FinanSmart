@@ -12,6 +12,8 @@ import { CreditType } from '../credit-types/models/credit-type.model';
 import { CreditTypeService } from '../credit-types/services/credit-type.service';
 import { CreditRate, CreditRateFormData } from './models/credit-rate.model';
 import { CreditRateService } from './services/credit-rate.service';
+import { AdminTablePagination } from '../../../../shared/utils/admin-table-pagination';
+import { AdminTablePaginationComponent } from '../../../../shared/components/admin-table-pagination/admin-table-pagination.component';
 
 type TemporalStatus = 'current' | 'future' | 'expired' | 'inactive';
 const positiveValidator: ValidatorFn = control => typeof control.value === 'number' && control.value > 0 ? null : { positive: true };
@@ -23,7 +25,7 @@ const dateRangeValidator: ValidatorFn = group => {
 
 @Component({
   selector: 'app-credit-rates',
-  imports: [ReactiveFormsModule, DatePipe, PageHeaderComponent, LoadingSpinnerComponent, EmptyStateComponent, StatusBadgeComponent, StatCardComponent],
+  imports: [ReactiveFormsModule, DatePipe, PageHeaderComponent, LoadingSpinnerComponent, EmptyStateComponent, StatusBadgeComponent, StatCardComponent, AdminTablePaginationComponent],
   templateUrl: './credit-rates.component.html',
   styleUrl: './credit-rates.component.scss'
 })
@@ -45,11 +47,14 @@ export class CreditRatesComponent {
   readonly selectedTemporalStatus = signal<'all' | TemporalStatus>('all');
   readonly feedback = signal('');
   readonly feedbackType = signal<'success' | 'error'>('success');
+  readonly tablePagination = new AdminTablePagination();
   readonly form = this.formBuilder.group({
     creditTypeId: ['', Validators.required],
     annualInterestRate: [0, [Validators.required, positiveValidator]],
-    effectiveFrom: ['', Validators.required],
+    effectiveFrom: [''],
     effectiveTo: [''],
+    sourceDate: [''],
+    sourceUrl: [''],
     isActive: [true]
   }, { validators: dateRangeValidator });
   readonly filteredRates = computed(() => this.rates().filter(rate =>
@@ -59,6 +64,8 @@ export class CreditRatesComponent {
   readonly activeRates = computed(() => this.rates().filter(rate => rate.isActive).length);
   readonly currentTypeCount = computed(() => new Set(this.rates().filter(rate => this.temporalStatus(rate) === 'current').map(rate => rate.creditTypeId)).size);
   readonly futureRates = computed(() => this.rates().filter(rate => this.temporalStatus(rate) === 'future').length);
+
+  pagedRates(): readonly CreditRate[] { return this.tablePagination.slice(this.filteredRates()); }
 
   constructor() { this.load(); }
 
@@ -74,7 +81,7 @@ export class CreditRatesComponent {
 
   openCreate(): void {
     this.editingRate.set(null);
-    this.form.reset({ creditTypeId: '', annualInterestRate: 0, effectiveFrom: '', effectiveTo: '', isActive: true });
+    this.form.reset({ creditTypeId: '', annualInterestRate: 0, effectiveFrom: '', effectiveTo: '', sourceDate: '', sourceUrl: '', isActive: true });
     this.modalOpen.set(true);
   }
 
@@ -83,8 +90,10 @@ export class CreditRatesComponent {
     this.form.reset({
       creditTypeId: rate.creditTypeId,
       annualInterestRate: rate.annualInterestRate,
-      effectiveFrom: this.toDateInput(rate.effectiveFrom),
+      effectiveFrom: rate.effectiveFrom ? this.toDateInput(rate.effectiveFrom) : '',
       effectiveTo: rate.effectiveTo ? this.toDateInput(rate.effectiveTo) : '',
+      sourceDate: rate.sourceDate ? this.toDateInput(rate.sourceDate) : '',
+      sourceUrl: rate.sourceUrl ?? '',
       isActive: rate.isActive
     });
     this.modalOpen.set(true);
@@ -105,8 +114,10 @@ export class CreditRatesComponent {
     const data: CreditRateFormData = {
       creditTypeId: value.creditTypeId,
       annualInterestRate: value.annualInterestRate,
-      effectiveFrom: this.toUtcDate(value.effectiveFrom),
+      effectiveFrom: value.effectiveFrom ? this.toUtcDate(value.effectiveFrom) : null,
       effectiveTo: value.effectiveTo ? this.toUtcDate(value.effectiveTo) : null,
+      sourceDate: value.sourceDate ? this.toUtcDate(value.sourceDate) : null,
+      sourceUrl: value.sourceUrl.trim() || null,
       isActive: value.isActive
     };
     const editing = this.editingRate();
@@ -131,7 +142,7 @@ export class CreditRatesComponent {
   reactivate(rate: CreditRate): void {
     if (this.saving()) return;
     this.saving.set(true);
-    this.creditRateService.update(rate.id, { creditTypeId: rate.creditTypeId, annualInterestRate: rate.annualInterestRate, effectiveFrom: rate.effectiveFrom, effectiveTo: rate.effectiveTo, isActive: true }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.creditRateService.update(rate.id, { creditTypeId: rate.creditTypeId, annualInterestRate: rate.annualInterestRate, effectiveFrom: rate.effectiveFrom, effectiveTo: rate.effectiveTo, sourceDate: rate.sourceDate, sourceUrl: rate.sourceUrl, isActive: true }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => { this.saving.set(false); this.setFeedback('Tasa de interés reactivada correctamente.', 'success'); this.load(); },
       error: error => { this.saving.set(false); this.setFeedback(this.errorMessage(error), 'error'); }
     });
@@ -139,6 +150,7 @@ export class CreditRatesComponent {
 
   temporalStatus(rate: CreditRate): TemporalStatus {
     if (!rate.isActive) return 'inactive';
+    if (!rate.effectiveFrom) return 'current';
     const today = new Date().toISOString().slice(0, 10);
     if (this.toDateInput(rate.effectiveFrom) > today) return 'future';
     if (rate.effectiveTo && this.toDateInput(rate.effectiveTo) < today) return 'expired';

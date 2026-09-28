@@ -188,21 +188,21 @@ public class CreditSimulationPdfService(
             table.Header(header =>
             {
                 foreach (var label in new[] { "N.º", "Fecha", "Saldo inicial", "Capital", "Interés", "Cuota financiera", "Cargos", "Pago total", "Saldo final" })
-                    header.Cell().Element(cell => HeaderCell(cell, primaryColor)).Text(label);
+                    header.Cell().Element(cell => HeaderCell(cell, primaryColor)).AlignCenter().Text(label);
             });
             var index = 0;
             foreach (var installment in simulation.Installments)
             {
                 var rowColor = index++ % 2 == 0 ? SoftBackgroundColor : "#FFFFFF";
-                table.Cell().Element(cell => BodyCell(cell, rowColor)).Text(installment.InstallmentNumber.ToString());
-                table.Cell().Element(cell => BodyCell(cell, rowColor)).Text(FormatDate(installment.DueDate));
-                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignRight().Text(FormatMoney(installment.OpeningBalance));
-                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignRight().Text(FormatMoney(installment.PrincipalPayment));
-                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignRight().Text(FormatMoney(installment.InterestPayment));
-                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignRight().Text(FormatMoney(installment.BasePayment));
-                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignRight().Text(FormatMoney(installment.AdditionalCharges));
-                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignRight().Text(FormatMoney(installment.TotalPayment)).Bold();
-                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignRight().Text(FormatMoney(installment.ClosingBalance));
+                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignCenter().Text(installment.InstallmentNumber.ToString());
+                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignCenter().Text(FormatDate(installment.DueDate));
+                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignCenter().Text(FormatMoney(installment.OpeningBalance));
+                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignCenter().Text(FormatMoney(installment.PrincipalPayment));
+                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignCenter().Text(FormatMoney(installment.InterestPayment));
+                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignCenter().Text(FormatMoney(installment.BasePayment));
+                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignCenter().Text(FormatMoney(installment.AdditionalCharges));
+                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignCenter().Text(FormatMoney(installment.TotalPayment)).Bold();
+                table.Cell().Element(cell => BodyCell(cell, rowColor)).AlignCenter().Text(FormatMoney(installment.ClosingBalance));
             }
         });
         column.Item().Background(SoftBackgroundColor).Padding(10).Row(row =>

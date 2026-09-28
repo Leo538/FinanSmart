@@ -42,7 +42,7 @@ export class CreditComparisonComponent {
   isPublic(): boolean { return this.router.url.startsWith('/simulators/') || this.router.url.startsWith('/client/'); }
   constructor() {
     this.creditTypeService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: types => { this.creditTypes.set(types.filter(type => type.isActive).map(type => ({ ...type, minimumAmount: Number(type.minimumAmount), maximumAmount: Number(type.maximumAmount), minimumTermMonths: Number(type.minimumTermMonths), maximumTermMonths: Number(type.maximumTermMonths) }))); this.loadingTypes.set(false); },
+      next: types => { this.creditTypes.set(types.filter(type => type.isActive)); this.loadingTypes.set(false); },
       error: () => { this.loadingTypes.set(false); this.error.set('No se pudo conectar con el servidor.'); }
     });
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => { if (this.result()) this.stale.set(true); });
@@ -60,11 +60,11 @@ export class CreditComparisonComponent {
   }
   isValid(): boolean {
     const type = this.selectedType(); const raw = this.form.getRawValue();
-    return this.form.valid && this.isStartDateValid() && !!type && this.rateChecked() && this.currentRate() !== null && raw.amount > 0 && raw.amount >= type.minimumAmount && (type.maximumAmount === null || raw.amount <= type.maximumAmount)
-      && Number.isInteger(raw.termMonths) && raw.termMonths >= type.minimumTermMonths && (type.maximumTermMonths === null || raw.termMonths <= type.maximumTermMonths);
+    return this.form.valid && this.isStartDateValid() && !!type && this.rateChecked() && this.currentRate() !== null && raw.amount > 0 && (type.minimumAmount === null || raw.amount >= type.minimumAmount) && (type.maximumAmount === null || raw.amount <= type.maximumAmount)
+      && Number.isInteger(raw.termMonths) && (type.minimumTermMonths === null || raw.termMonths >= type.minimumTermMonths) && (type.maximumTermMonths === null || raw.termMonths <= type.maximumTermMonths);
   }
-  amountError(): string { const type = this.selectedType(); const value = this.form.controls.amount.value; if (!type || value <= 0) return 'Ingresa un monto válido.'; if (value < type.minimumAmount) return `El monto mínimo para este crédito es ${this.money(type.minimumAmount)}.`; return value > type.maximumAmount ? `El monto máximo para este crédito es ${this.money(type.maximumAmount)}.` : ''; }
-  termError(): string { const type = this.selectedType(); const value = this.form.controls.termMonths.value; if (!type || !Number.isInteger(value) || value <= 0) return 'Ingresa un plazo válido.'; return value < type.minimumTermMonths || value > type.maximumTermMonths ? `El plazo debe estar entre ${type.minimumTermMonths} y ${type.maximumTermMonths} meses.` : ''; }
+  amountError(): string { const type = this.selectedType(); const value = this.form.controls.amount.value; if (!type || value <= 0) return 'Ingresa un monto válido.'; if (type.minimumAmount !== null && value < type.minimumAmount) return `El monto mínimo para este crédito es ${this.money(type.minimumAmount)}.`; return type.maximumAmount !== null && value > type.maximumAmount ? `El monto máximo para este crédito es ${this.money(type.maximumAmount)}.` : ''; }
+  termError(): string { const type = this.selectedType(); const value = this.form.controls.termMonths.value; if (!type || !Number.isInteger(value) || value <= 0) return 'Ingresa un plazo válido.'; if (type.minimumTermMonths !== null && value < type.minimumTermMonths) return `El plazo mínimo es ${type.minimumTermMonths} meses.`; return type.maximumTermMonths !== null && value > type.maximumTermMonths ? `El plazo máximo es ${type.maximumTermMonths} meses.` : ''; }
   isStartDateValid(): boolean { return this.form.controls.startDate.value >= this.minimumStartDate; }
   money(value: number): string { return this.currencyFormatter.format(value); }
   signedMoney(value: number): string { return (value >= 0 ? '+ ' : '- ') + this.money(Math.abs(value)); }
@@ -82,8 +82,10 @@ export class CreditComparisonComponent {
   private configureType(id: string): void {
     const type = this.creditTypes().find(item => item.id === id) ?? null;
     this.selectedType.set(type); this.currentRate.set(null); this.rateChecked.set(false);
-    const amountValidators = type ? [Validators.required, Validators.min(type.minimumAmount)] : [Validators.required, Validators.min(.01)];
-    const termValidators = type ? [Validators.required, Validators.min(type.minimumTermMonths)] : [Validators.required, Validators.min(1)];
+    const amountValidators = [Validators.required, Validators.min(.01)];
+    const termValidators = [Validators.required, Validators.min(1)];
+    if (type?.minimumAmount !== null && type) amountValidators.push(Validators.min(type.minimumAmount));
+    if (type?.minimumTermMonths !== null && type) termValidators.push(Validators.min(type.minimumTermMonths));
     if (type?.maximumAmount !== null && type) amountValidators.push(Validators.max(type.maximumAmount));
     if (type?.maximumTermMonths !== null && type) termValidators.push(Validators.max(type.maximumTermMonths));
     this.form.controls.amount.setValidators(amountValidators); this.form.controls.termMonths.setValidators(termValidators);

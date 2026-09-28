@@ -108,7 +108,7 @@
           <thead>
             <tr>
               <th scope="col">Solicitud</th><th scope="col">Cliente</th><th scope="col">Producto</th>
-              <th scope="col" class="numeric">Monto</th><th scope="col">Estado</th><th scope="col">Fecha</th>
+              <th scope="col" class="numeric">Monto</th><th scope="col" class="status-heading">Estado</th><th scope="col">Fecha</th>
             </tr>
           </thead>
           <tbody>
@@ -118,7 +118,7 @@
                 <td>{{ item.applicantFullName }}</td>
                 <td>{{ item.investmentProductName }}</td>
                 <td class="numeric amount-cell">{{ money(item.amount) }}</td>
-                <td><span class="state" [class.state--approved]="item.status === 'Approved'" [class.state--pending]="item.status === 'Submitted' || item.status === 'ReadyForReview'" [class.state--rejected]="item.status === 'Rejected' || item.status === 'Cancelled'" [class.state--draft]="item.status === 'Draft'" [class.state--info]="item.status === 'PendingDocuments' || item.status === 'PendingIdentityVerification'">{{ status(item.status) }}</span></td>
+                <td class="status-cell"><span class="state" [class.state--approved]="item.status === 'Approved'" [class.state--pending]="item.status === 'Submitted' || item.status === 'ReadyForReview'" [class.state--rejected]="item.status === 'Rejected' || item.status === 'Cancelled'" [class.state--draft]="item.status === 'Draft'" [class.state--info]="item.status === 'PendingDocuments' || item.status === 'PendingIdentityVerification'">{{ status(item.status) }}</span></td>
                 <td>{{ (item.submittedAt ?? item.createdAt) | date:'dd MMM, yyyy' }}</td>
               </tr>
             } @empty {

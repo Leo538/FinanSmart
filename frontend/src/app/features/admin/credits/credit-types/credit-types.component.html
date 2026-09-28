@@ -40,14 +40,14 @@
             </tr>
           </thead>
           <tbody>
-            @for (creditType of creditTypes(); track creditType.id) {
+            @for (creditType of pagedCreditTypes(); track creditType.id) {
               <tr>
                 <td>
                   <strong>{{ creditType.name }}</strong>
                   @if (creditType.description) { <small>{{ creditType.description }}</small> }
                 </td>
-                <td>{{ formatAmount(creditType.minimumAmount) }} - {{ formatAmount(creditType.maximumAmount) }}</td>
-                <td>{{ creditType.minimumTermMonths }} - {{ creditType.maximumTermMonths }} meses</td>
+                <td>{{ formatAmountRange(creditType.minimumAmount, creditType.maximumAmount) }}</td>
+                <td>{{ formatTermRange(creditType.minimumTermMonths, creditType.maximumTermMonths) }}</td>
                 <td class="current-rate">@if (rateFor(creditType.id); as rate) { {{ rate.annualInterestRate | number:'1.2-2' }} % } @else { <span>Sin tasa</span> }</td>
                 <td><app-status-badge [status]="creditType.isActive ? 'active' : 'inactive'" /></td>
                 <td>{{ creditType.updatedAt | date:'dd/MM/yyyy' }}</td>
@@ -66,6 +66,7 @@
           </tbody>
         </table>
       </div>
+      <app-admin-table-pagination [pagination]="tablePagination" [total]="creditTypes().length" />
     }
   </section>
 </main>
@@ -76,7 +77,7 @@
       <header class="modal-header">
         <div>
           <h2 id="credit-type-modal-title">{{ editingCreditType() ? 'Editar producto de crédito' : 'Nuevo producto de crédito' }}</h2>
-          <p>Configura las condiciones, tasa, seguros y cargos del producto.</p>
+          <p>Configura las condiciones, la tasa y los cargos del producto.</p>
         </div>
         <button class="btn btn-ghost btn-sm close-button" type="button" aria-label="Cerrar formulario" (click)="closeForm()" [disabled]="saving()">×</button>
       </header>
@@ -105,14 +106,14 @@
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label" for="minimumAmount">Monto mínimo</label>
-                <input id="minimumAmount" class="form-control" type="number" min="0" step="0.01" formControlName="minimumAmount" />
+                <input id="minimumAmount" class="form-control" type="number" min="0" step="0.01" placeholder="No especificado" formControlName="minimumAmount" />
                 @if (form.controls.minimumAmount.touched && form.controls.minimumAmount.invalid) {
                   <span class="form-error">El monto mínimo debe ser mayor que cero.</span>
                 }
               </div>
               <div class="form-group">
                 <label class="form-label" for="maximumAmount">Monto máximo</label>
-                <input id="maximumAmount" class="form-control" type="number" min="0" step="0.01" formControlName="maximumAmount" />
+                <input id="maximumAmount" class="form-control" type="number" min="0" step="0.01" placeholder="No especificado" formControlName="maximumAmount" />
                 @if (form.controls.maximumAmount.touched && form.hasError('amountRange')) {
                   <span class="form-error">El monto máximo debe ser mayor o igual al monto mínimo.</span>
                 } @else if (form.controls.maximumAmount.touched && form.controls.maximumAmount.invalid) {
@@ -121,14 +122,14 @@
               </div>
               <div class="form-group">
                 <label class="form-label" for="minimumTermMonths">Plazo mínimo (meses)</label>
-                <input id="minimumTermMonths" class="form-control" type="number" min="1" step="1" formControlName="minimumTermMonths" />
+                <input id="minimumTermMonths" class="form-control" type="number" min="1" step="1" placeholder="No especificado" formControlName="minimumTermMonths" />
                 @if (form.controls.minimumTermMonths.touched && form.controls.minimumTermMonths.invalid) {
                   <span class="form-error">El plazo mínimo debe ser mayor que cero.</span>
                 }
               </div>
               <div class="form-group">
                 <label class="form-label" for="maximumTermMonths">Plazo máximo (meses)</label>
-                <input id="maximumTermMonths" class="form-control" type="number" min="1" step="1" formControlName="maximumTermMonths" />
+                <input id="maximumTermMonths" class="form-control" type="number" min="1" step="1" placeholder="No especificado" formControlName="maximumTermMonths" />
                 @if (form.controls.maximumTermMonths.touched && form.hasError('termRange')) {
                   <span class="form-error">El plazo máximo debe ser mayor o igual al plazo mínimo.</span>
                 } @else if (form.controls.maximumTermMonths.touched && form.controls.maximumTermMonths.invalid) {
@@ -148,12 +149,7 @@
           </section>
 
           <section class="form-section configuration-section">
-            <div class="section-heading"><div><p class="eyebrow">Seguros asociados</p><h3>Protecciones del producto</h3></div><button class="btn btn-secondary btn-sm" type="button" disabled>+ Agregar seguro</button></div>
-            <p class="configuration-empty">Guarda el producto para asociar seguros desde el catálogo institucional.</p>
-          </section>
-
-          <section class="form-section configuration-section">
-            <div class="section-heading"><div><p class="eyebrow">Otros cargos</p><h3>Cargos asociados</h3></div><button class="btn btn-secondary btn-sm" type="button" (click)="configureCharges()">+ Agregar cargo</button></div>
+            <div class="section-heading"><div><p class="eyebrow">Cargos adicionales</p><h3>Cargos asociados</h3></div><button class="btn btn-secondary btn-sm" type="button" (click)="configureCharges()">+ Agregar cargo</button></div>
             @if (associatedCharges().length) {
               <div class="configuration-list">
                 @for (charge of associatedCharges(); track charge.id) {

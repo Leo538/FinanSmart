@@ -39,7 +39,7 @@ export class InvestmentApplicationsComponent implements OnDestroy {
   status = '';
   notes = '';
   page = 1;
-  readonly pageSize = 8;
+  readonly pageSize = 10;
 
   constructor() {
     this.applicationsService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(items => {
@@ -73,6 +73,8 @@ export class InvestmentApplicationsComponent implements OnDestroy {
   }
 
   pages(): number { return Math.max(1, Math.ceil(this.filtered().length / this.pageSize)); }
+  firstItem(): number { return this.filtered().length ? (this.page - 1) * this.pageSize + 1 : 0; }
+  lastItem(): number { return Math.min(this.page * this.pageSize, this.filtered().length); }
   previousPage(): void { this.page = Math.max(1, this.page - 1); }
   nextPage(): void { this.page = Math.min(this.pages(), this.page + 1); }
   resetPage(): void { this.page = 1; }

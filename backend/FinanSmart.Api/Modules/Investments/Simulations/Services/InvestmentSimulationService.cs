@@ -48,10 +48,10 @@ public class InvestmentSimulationService(FinanSmartDbContext db, IInvestmentRate
         };
     }
 
-    private static void ValidateRequest(InvestmentSimulationRequestDto request, decimal minimumAmount, decimal? maximumAmount, int minimumTermDays, int? maximumTermDays)
+    private static void ValidateRequest(InvestmentSimulationRequestDto request, decimal? minimumAmount, decimal? maximumAmount, int? minimumTermDays, int? maximumTermDays)
     {
-        if (request.Amount <= 0 || request.TermDays <= 0 || request.Amount < minimumAmount ||
-            (maximumAmount.HasValue && request.Amount > maximumAmount) || request.TermDays < minimumTermDays ||
+        if (request.Amount <= 0 || request.TermDays <= 0 || (minimumAmount.HasValue && request.Amount < minimumAmount) ||
+            (maximumAmount.HasValue && request.Amount > maximumAmount) || (minimumTermDays.HasValue && request.TermDays < minimumTermDays) ||
             (maximumTermDays.HasValue && request.TermDays > maximumTermDays))
             throw new ArgumentException("Invalid investment parameters.");
     }

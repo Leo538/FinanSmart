@@ -32,12 +32,14 @@ public class CreditSimulationService(
             throw new ArgumentException("The credit type is inactive.");
         }
 
-        if (request.Amount < creditType.MinimumAmount || request.Amount > creditType.MaximumAmount)
+        if ((creditType.MinimumAmount.HasValue && request.Amount < creditType.MinimumAmount.Value)
+            || (creditType.MaximumAmount.HasValue && request.Amount > creditType.MaximumAmount.Value))
         {
             throw new ArgumentException("Amount is outside the configured range for this credit type.");
         }
 
-        if (request.TermMonths < creditType.MinimumTermMonths || request.TermMonths > creditType.MaximumTermMonths)
+        if ((creditType.MinimumTermMonths.HasValue && request.TermMonths < creditType.MinimumTermMonths.Value)
+            || (creditType.MaximumTermMonths.HasValue && request.TermMonths > creditType.MaximumTermMonths.Value))
         {
             throw new ArgumentException("Term months are outside the configured range for this credit type.");
         }
@@ -47,9 +49,10 @@ public class CreditSimulationService(
             .AsNoTracking()
             .Where(rate => rate.CreditTypeId == creditType.Id
                 && rate.IsActive
-                && rate.EffectiveFrom <= now
+                && (rate.EffectiveFrom == null || rate.EffectiveFrom <= now)
                 && (rate.EffectiveTo == null || rate.EffectiveTo >= now))
-            .OrderByDescending(rate => rate.EffectiveFrom)
+            .OrderBy(rate => rate.EffectiveFrom == null)
+            .ThenByDescending(rate => rate.EffectiveFrom)
             .FirstOrDefaultAsync();
 
         if (currentRate is null)

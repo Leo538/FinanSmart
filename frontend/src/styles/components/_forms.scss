@@ -1,6 +1,23 @@
 .form-group { display: grid; gap: 8px; }
 .form-label { color: var(--text-secondary); font-size: .72rem; font-weight: 750; }
 .form-control, .form-select { width: 100%; min-height: 46px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 0 13px; background: var(--surface-panel); color: var(--text-primary); transition: border-color .18s, box-shadow .18s, background-color .18s; }
+/* Keeps native select controls aligned with the institution palette in every view. */
+select { accent-color: var(--brand-primary); }
+select option { background: var(--surface-panel); color: var(--text-primary); }
+select option:is(:checked, :hover, :focus, :active) { background: var(--brand-primary); color: var(--primary-contrast); }
+
+/* Native Windows pickers own their hover color. Opt into the stylable picker where
+   supported so the open list also follows the institution template. */
+@supports (appearance: base-select) {
+  select, select::picker(select) { appearance: base-select; }
+  select { display: flex; align-items: center; justify-content: space-between; }
+  select, select::selectedcontent, select option { font-family: var(--font-family-base); font-size: .95rem; font-weight: 500; letter-spacing: 0; }
+  select::picker-icon { margin-left: auto; align-self: center; }
+  select::picker(select) { margin-top: 2px; overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-panel); box-shadow: var(--shadow-sm); }
+  select option { display: flex; min-height: 37px; align-items: center; padding: 6px 13px; border: 0; font: inherit; line-height: 1.2; }
+  select option::checkmark { display: none; }
+  select option:is(:checked, :hover, :focus, :active) { background: var(--brand-primary); color: var(--primary-contrast); }
+}
 .form-control:hover, .form-select:hover { border-color: var(--border-strong); }
 .form-control:focus, .form-select:focus { border-color: var(--brand-primary); outline: 0; box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 12%, transparent); }
 .form-control:disabled, .form-select:disabled { background: #f2f4f7; cursor: not-allowed; }

@@ -4,10 +4,9 @@ public class CreateCreditTypeDto
 {
     public string Name { get; init; } = string.Empty;
     public string? Description { get; init; }
-    public decimal MinimumAmount { get; init; }
-    public decimal MaximumAmount { get; init; }
-    public int MinimumTermMonths { get; init; }
-    public int MaximumTermMonths { get; init; }
+    public decimal? MinimumAmount { get; init; }
+    public decimal? MaximumAmount { get; init; }
+    public int? MinimumTermMonths { get; init; }
+    public int? MaximumTermMonths { get; init; }
     public bool IsActive { get; init; }
 }
-

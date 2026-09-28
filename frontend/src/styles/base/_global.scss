@@ -135,6 +135,7 @@ app-investment-applications .pagination { min-height: 48px; padding: 14px 0; bor
 app-investment-applications .pagination .btn { min-height: 30px; border-color: var(--border-strong); background: transparent; color: var(--brand-primary); box-shadow: none; }
 
 /* One restrained treatment for all administration headers and catalogue tables. */
+
 app-admin-dashboard .dashboard-header .section-caption, app-client-dashboard .section-caption { color: var(--text-secondary); }
 app-admin-dashboard .financial-overview { box-shadow: none; }
 app-admin-dashboard .recent-activity { background: transparent; }

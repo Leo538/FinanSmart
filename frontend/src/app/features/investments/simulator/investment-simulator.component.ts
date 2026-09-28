@@ -57,8 +57,8 @@ export class InvestmentSimulatorComponent {
       next: products => {
         const activeProducts = products.filter(product => product.isActive).map(product => ({
           ...product,
-          minimumAmount: Number(product.minimumAmount), maximumAmount: product.maximumAmount === null ? null : Number(product.maximumAmount),
-          minimumTermDays: Number(product.minimumTermDays), maximumTermDays: product.maximumTermDays === null ? null : Number(product.maximumTermDays)
+          minimumAmount: product.minimumAmount === null ? null : Number(product.minimumAmount), maximumAmount: product.maximumAmount === null ? null : Number(product.maximumAmount),
+          minimumTermDays: product.minimumTermDays === null ? null : Number(product.minimumTermDays), maximumTermDays: product.maximumTermDays === null ? null : Number(product.maximumTermDays)
         }));
         this.products.set(activeProducts);
         this.restorePendingSimulation();
@@ -112,21 +112,23 @@ export class InvestmentSimulatorComponent {
     const product = this.selectedProduct(); const amount = this.form.controls.amount.value;
     if (amount <= 0) return 'Ingresa un monto positivo.';
     if (!product) return '';
-    if (amount < product.minimumAmount || (product.maximumAmount !== null && amount > product.maximumAmount)) return this.amountRangeMessage(product);
+    if ((product.minimumAmount !== null && amount < product.minimumAmount) || (product.maximumAmount !== null && amount > product.maximumAmount)) return this.amountRangeMessage(product);
     return '';
   }
   termError(): string {
     const product = this.selectedProduct(); const termDays = this.normalizedTermDays();
     if (!Number.isInteger(termDays) || termDays <= 0) return 'Ingresa un plazo entero y positivo.';
     if (!product) return '';
-    if (termDays < product.minimumTermDays || (product.maximumTermDays !== null && termDays > product.maximumTermDays)) return this.termRangeMessage(product);
+    if ((product.minimumTermDays !== null && termDays < product.minimumTermDays) || (product.maximumTermDays !== null && termDays > product.maximumTermDays)) return this.termRangeMessage(product);
     return '';
   }
-  money(value: number): string { return this.currencyFormatter.format(value); }
-  amountRange(product: InvestmentProduct): string { return product.maximumAmount === null ? `Desde ${this.money(product.minimumAmount)}` : `${this.money(product.minimumAmount)} - ${this.money(product.maximumAmount)}`; }
+  money(value: number | null): string { return value === null ? 'No especificado' : this.currencyFormatter.format(value); }
+  amountRange(product: InvestmentProduct): string { if (product.minimumAmount === null && product.maximumAmount === null) return 'Sin límite publicado'; if (product.minimumAmount === null) return `Hasta ${this.money(product.maximumAmount!)}`; return product.maximumAmount === null ? `Desde ${this.money(product.minimumAmount)}` : `${this.money(product.minimumAmount)} - ${this.money(product.maximumAmount)}`; }
   termRange(product: InvestmentProduct): string {
-    const minimum = this.termUnit() === 'months' ? Math.ceil(product.minimumTermDays / 30) : product.minimumTermDays;
+    const minimum = product.minimumTermDays === null ? null : this.termUnit() === 'months' ? Math.ceil(product.minimumTermDays / 30) : product.minimumTermDays;
     const maximum = product.maximumTermDays === null ? null : this.termUnit() === 'months' ? Math.floor(product.maximumTermDays / 30) : product.maximumTermDays;
+    if (minimum === null && maximum === null) return 'Sin límite publicado';
+    if (minimum === null) return `Hasta ${maximum} ${this.termUnitLabel()}`;
     return maximum === null ? `Desde ${minimum} ${this.termUnitLabel()}` : `${minimum} - ${maximum} ${this.termUnitLabel()}`;
   }
   amountRangeMessage(product: InvestmentProduct): string { return product.maximumAmount === null ? `El monto mínimo permitido es ${this.money(product.minimumAmount)}.` : `El monto permitido para ${product.name} es de ${this.money(product.minimumAmount)} a ${this.money(product.maximumAmount)}.`; }
@@ -153,10 +155,12 @@ export class InvestmentSimulatorComponent {
       this.form.controls.amount.setValidators([Validators.required, Validators.min(0.01)]);
       this.form.controls.termDays.setValidators([Validators.required, Validators.min(1)]);
     } else {
-      const amountValidators = [Validators.required, Validators.min(product.minimumAmount)];
-      const minimumTerm = this.termUnit() === 'months' ? Math.ceil(product.minimumTermDays / 30) : product.minimumTermDays;
+      const amountValidators = [Validators.required];
+      if (product.minimumAmount !== null) amountValidators.push(Validators.min(product.minimumAmount));
+      const minimumTerm = product.minimumTermDays === null ? null : this.termUnit() === 'months' ? Math.ceil(product.minimumTermDays / 30) : product.minimumTermDays;
       const maximumTerm = product.maximumTermDays === null ? null : this.termUnit() === 'months' ? Math.floor(product.maximumTermDays / 30) : product.maximumTermDays;
-      const termValidators = [Validators.required, Validators.min(minimumTerm)];
+      const termValidators = [Validators.required];
+      if (minimumTerm !== null) termValidators.push(Validators.min(minimumTerm));
       if (product.maximumAmount !== null) amountValidators.push(Validators.max(product.maximumAmount));
       if (maximumTerm !== null) termValidators.push(Validators.max(maximumTerm));
       this.form.controls.amount.setValidators(amountValidators);

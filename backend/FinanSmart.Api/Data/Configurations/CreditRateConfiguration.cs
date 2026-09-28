@@ -9,6 +9,7 @@ public class CreditRateConfiguration : IEntityTypeConfiguration<CreditRate>
     public void Configure(EntityTypeBuilder<CreditRate> builder)
     {
         builder.Property(creditRate => creditRate.AnnualInterestRate).HasPrecision(9, 6);
+        builder.Property(creditRate => creditRate.SourceUrl).HasMaxLength(2048);
 
         builder.HasOne(creditRate => creditRate.CreditType)
             .WithMany(creditType => creditType.CreditRates)
@@ -16,4 +17,3 @@ public class CreditRateConfiguration : IEntityTypeConfiguration<CreditRate>
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
-

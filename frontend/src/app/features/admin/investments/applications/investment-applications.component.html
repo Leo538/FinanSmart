@@ -33,7 +33,7 @@
           </article>
         } @empty { <div class="empty-cards">No hay solicitudes para los filtros seleccionados.</div> }
       </div>
-      @if (filtered().length > pageSize) {<div class="pagination"><span>Mostrando {{ paged().length }} de {{ filtered().length }}</span><div><button class="btn btn-secondary btn-sm" [disabled]="page === 1" (click)="previousPage()">Anterior</button><span>Página {{ page }} de {{ pages() }}</span><button class="btn btn-secondary btn-sm" [disabled]="page === pages()" (click)="nextPage()">Siguiente</button></div></div>}
+      <div class="pagination"><span>{{ firstItem() }}–{{ lastItem() }} de {{ filtered().length }}</span><div><button class="btn btn-secondary btn-sm" [disabled]="page === 1" (click)="previousPage()">Anterior</button><button class="btn btn-secondary btn-sm" [disabled]="page === pages()" (click)="nextPage()">Siguiente</button></div></div>
     </section>
   } @else if (selected(); as item) {
     <a class="back-link" routerLink="/admin/investments/applications"><span aria-hidden="true">←</span> Volver a solicitudes</a>

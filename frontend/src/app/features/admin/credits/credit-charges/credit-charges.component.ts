@@ -11,12 +11,14 @@ import { CreditType } from '../credit-types/models/credit-type.model';
 import { CreditTypeService } from '../credit-types/services/credit-type.service';
 import { ChargeFrequency, ChargeType, CreditCharge, CreditChargeFormData } from './models/credit-charge.model';
 import { CreditChargeService } from './services/credit-charge.service';
+import { AdminTablePagination } from '../../../../shared/utils/admin-table-pagination';
+import { AdminTablePaginationComponent } from '../../../../shared/components/admin-table-pagination/admin-table-pagination.component';
 
 const positiveValidator: ValidatorFn = control => typeof control.value === 'number' && control.value > 0 ? null : { positive: true };
 
 @Component({
   selector: 'app-credit-charges',
-  imports: [ReactiveFormsModule, PageHeaderComponent, LoadingSpinnerComponent, EmptyStateComponent, StatusBadgeComponent, StatCardComponent],
+  imports: [ReactiveFormsModule, PageHeaderComponent, LoadingSpinnerComponent, EmptyStateComponent, StatusBadgeComponent, StatCardComponent, AdminTablePaginationComponent],
   templateUrl: './credit-charges.component.html',
   styleUrl: './credit-charges.component.scss'
 })
@@ -41,6 +43,7 @@ export class CreditChargesComponent {
   readonly chargeTypeFilter = signal<'all' | ChargeType>('all');
   readonly frequencyFilter = signal<'all' | ChargeFrequency>('all');
   readonly activeFilter = signal<'all' | 'active' | 'inactive'>('all');
+  readonly tablePagination = new AdminTablePagination();
   readonly form = this.formBuilder.group({
     creditTypeId: ['', Validators.required],
     name: ['', Validators.required],
@@ -59,6 +62,7 @@ export class CreditChargesComponent {
   readonly activeCount = computed(() => this.charges().filter(charge => charge.isActive).length);
   readonly monthlyCount = computed(() => this.charges().filter(charge => charge.frequency === 'Monthly').length);
   readonly typesWithCharges = computed(() => new Set(this.charges().map(charge => charge.creditTypeId)).size);
+  pagedCharges(): readonly CreditCharge[] { return this.tablePagination.slice(this.filteredCharges()); }
 
   constructor() { this.load(); }
   load(): void {

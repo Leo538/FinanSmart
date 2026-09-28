@@ -5,7 +5,7 @@
   @else if (application(); as item) {
     <section class="application-header" aria-label="Resumen de la solicitud">
       <div class="application-header__lead"><span class="section-kicker">Solicitud de inversión</span><h1>Completa tu solicitud con tranquilidad.</h1></div>
-      <div class="application-meta"><div><span>Solicitud</span><strong>{{ item.applicationNumber }}</strong></div><div><span>Estado</span><strong class="status-badge-inline">{{ statusLabel(item.status) }}</strong></div><div><span>Producto</span><strong>{{ item.investmentProductName }}</strong></div><div><span>Monto</span><strong>{{ money(item.amount) }}</strong></div></div>
+      <div class="application-meta"><div><span>Solicitud</span><strong>{{ item.applicationNumber }}</strong></div><div class="application-meta__status"><span>Estado</span><strong class="status-badge-inline">{{ statusLabel(item.status) }}</strong></div><div><span>Producto</span><strong>{{ item.investmentProductName }}</strong></div><div><span>Monto</span><strong>{{ money(item.amount) }}</strong></div></div>
     </section>
     <ol class="application-stepper" aria-label="Progreso de la solicitud">@for (step of steps; track step.key) { <li [class.complete]="isComplete(step.key)" [class.current]="isCurrent(step.key)"><span>{{ isComplete(step.key) ? '✓' : $index + 1 }}</span><strong>{{ step.label }}</strong></li> }</ol>
     <div class="application-stepper-mobile">@for (step of steps; track step.key; let index = $index) { @if (isCurrent(step.key)) { <span>Paso {{ index + 1 }} de {{ steps.length }}</span><strong>{{ step.label }}</strong> } }</div>
