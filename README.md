@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="./docs/assets/banner.svg" alt="FinanSmart · Créditos e inversiones con simulaciones" width="100%">
+  <picture>
+    <source media="(prefers-reduced-motion: no-preference)" srcset="./docs/assets/banner-motion.svg">
+    <img src="./docs/assets/banner.svg" width="820" alt="FinanSmart · Créditos e inversiones con simulaciones">
+  </picture>
 </p>
 
 <p align="center">
@@ -79,16 +82,10 @@ Abre [localhost:4200](http://localhost:4200). El [entorno de desarrollo](fronten
 ## Capturas
 
 <p align="center">
-  <a href="./docs/assets/capturas/finansmart.png"><img src="./docs/assets/capturas/finansmart.png" alt="Portada de FinanSmart" width="820"></a><br><strong>Portada de FinanSmart</strong>
+  <a href="./docs/assets/capturas/finansmart.png"><img src="./docs/assets/vistas/finansmart.svg" width="820" alt="Portada de FinanSmart"></a>
 </p>
 
-<table width="100%">
-  <tr>
-    <td width="50%" valign="top" align="center">
-      <a href="./docs/assets/capturas/finansmart-herramientas.jpg"><img src="./docs/assets/capturas/finansmart-herramientas.jpg" alt="Herramientas y simulación financiera" width="410"></a><br><sub>Herramientas y simulación financiera</sub>
-    </td>
-    <td width="50%" valign="top" align="center">
-      <a href="./docs/assets/capturas/finansmart-analisis.jpg"><img src="./docs/assets/capturas/finansmart-analisis.jpg" alt="Análisis de amortización" width="410"></a><br><sub>Análisis de amortización</sub>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="./docs/assets/capturas/finansmart-herramientas.jpg"><img src="./docs/assets/vistas/finansmart-herramientas.svg" width="408" alt="Herramientas y simulación financiera"></a>
+  <a href="./docs/assets/capturas/finansmart-analisis.jpg"><img src="./docs/assets/vistas/finansmart-analisis.svg" width="408" alt="Análisis de amortización"></a>
+</p>

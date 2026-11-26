@@ -1,41 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="820" height="188" viewBox="0 0 820 188" role="img" aria-labelledby="title description">
-  <title id="title">FinanSmart</title>
-  <desc id="description">Créditos e inversiones con simulaciones</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="240" viewBox="0 0 900 240" role="img" aria-labelledby="title">
+  <title id="title">FinanSmart · Créditos e inversiones con simulaciones</title>
   <defs>
-    <linearGradient id="night" x2="1" y2="1">
-      <stop stop-color="#192b45"/><stop offset=".63" stop-color="#0c192c"/><stop offset="1" stop-color="#15263d"/>
-    </linearGradient>
-    <linearGradient id="edge" x2="1" y2="1">
-      <stop stop-color="#e9b571" stop-opacity=".85"/><stop offset=".48" stop-color="#6480a7" stop-opacity=".55"/><stop offset="1" stop-color="#7ed8cd" stop-opacity=".8"/>
-    </linearGradient>
-    <radialGradient id="light" cx=".85" cy=".6" r=".54">
-      <stop stop-color="#7ed8cd" stop-opacity=".20"/><stop offset="1" stop-color="#7ed8cd" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="tile" x2="0" y2="1">
-      <stop stop-color="#2b4667"/><stop offset="1" stop-color="#14233b"/>
-    </linearGradient>
-    <clipPath id="frame"><rect x="1" y="1" width="818" height="186" rx="21"/></clipPath>
+    <linearGradient id="surface" x2="1" y2="1"><stop stop-color="#041b29"/><stop offset=".53" stop-color="#073044"/><stop offset="1" stop-color="#0a5057"/></linearGradient>
+    <linearGradient id="edge" x2="1" y2="1"><stop stop-color="#81f0d8" stop-opacity=".91"/><stop offset=".38" stop-color="#6883a4" stop-opacity=".54"/><stop offset=".8" stop-color="#59718b" stop-opacity=".53"/><stop offset="1" stop-color="#81f0d8" stop-opacity=".77"/></linearGradient>
+    <linearGradient id="title-color" x2="1" y2=".81"><stop stop-color="#e9ffff"/><stop offset=".46" stop-color="#7ceade"/><stop offset="1" stop-color="#23c6b6"/></linearGradient>
+    <radialGradient id="shine" cx=".8" cy=".56" r=".57"><stop stop-color="#81f0d8" stop-opacity=".16"/><stop offset="1" stop-color="#81f0d8" stop-opacity="0"/></radialGradient>
+    <clipPath id="outline"><rect x="1" y="1" width="898" height="238" rx="21"/></clipPath>
   </defs>
-  <rect x="1" y="1" width="818" height="186" rx="21" fill="url(#night)"/>
-  <g clip-path="url(#frame)">
-    <rect width="820" height="188" fill="url(#light)"/>
-    <g fill="none" stroke="#7ed8cd" opacity=".21" stroke-linecap="round">
-      <path d="M496 206c33-64 88-63 130-75 69-20 98-53 199-57"/>
-      <path d="M521 208c38-52 80-51 123-67 61-22 98-52 188-51"/>
-      <path d="M548 208c36-43 77-42 117-55 57-20 106-44 166-42"/>
-      <path d="M575 208c30-28 69-31 109-44 53-17 108-34 155-32"/>
-      <path d="M610 209c22-21 63-20 101-31 46-14 94-24 130-20"/>
+  <g clip-path="url(#outline)">
+    <rect width="900" height="240" fill="url(#surface)"/>
+    <rect width="900" height="240" fill="url(#shine)"/>
+
+    <defs>
+      <pattern id="finance-grid" width="41" height="30" patternUnits="userSpaceOnUse">
+        <path d="M0 30V0h41" fill="none" stroke="#91e8d6" stroke-opacity=".23"/>
+      </pattern>
+      <linearGradient id="finance-area" x2="0" y2="1">
+        <stop stop-color="#73efd3" stop-opacity=".38"/><stop offset="1" stop-color="#06a5a6" stop-opacity=".04"/>
+      </linearGradient>
+    </defs>
+    <rect x="482" y="37" width="399" height="165" rx="18" fill="#041d2d" fill-opacity=".66" stroke="#6edacb" stroke-opacity=".5"/>
+    <rect x="496" y="50" width="369" height="141" rx="7" fill="url(#finance-grid)"/>
+    <path d="M505 187v-22l48-12 35 6 41-39 39 16 40-34 35 1 42-53 59 11v126z" fill="url(#finance-area)"/>
+    <path d="M505 165l48-12 35 6 41-39 39 16 40-34 35 1 42-53 59 11" fill="none" stroke="#6cfce0" stroke-opacity=".25" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path class="graph" d="M505 165l48-12 35 6 41-39 39 16 40-34 35 1 42-53 59 11" pathLength="100" fill="none" stroke="#88f8da" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="#66dbc8" opacity=".39">
+      <rect x="528" y="169" width="18" height="19" rx="4"/><rect x="567" y="162" width="18" height="26" rx="4"/>
+      <rect x="607" y="150" width="18" height="38" rx="4"/><rect x="647" y="152" width="18" height="36" rx="4"/>
+      <rect x="686" y="133" width="18" height="55" rx="4"/><rect x="728" y="128" width="18" height="60" rx="4"/>
+      <rect x="768" y="108" width="18" height="80" rx="4"/><rect x="805" y="97" width="18" height="91" rx="4"/>
     </g>
+    <g class="graph-point">
+      <circle cx="844" cy="61" r="9" fill="#7ceade" opacity=".26"/>
+      <circle cx="844" cy="61" r="4" fill="#d1fff1"/>
+    </g>
+    <path d="M58 60h58m7 0h12" stroke="#83f5da" stroke-opacity=".78" stroke-width="2.5" stroke-linecap="round"/>
   </g>
-  <rect x="1" y="1" width="818" height="186" rx="21" fill="none" stroke="url(#edge)"/>
-  <path d="M46 50h41" stroke="#7ed8cd" stroke-width="3" stroke-linecap="round"/>
-  <g font-family="system-ui, 'Segoe UI', sans-serif">
-    <text x="44" y="109" font-size="59" font-weight="750" fill="#f8ebd8">FinanSmart</text>
-    <text x="46" y="143" font-size="21" font-weight="500" fill="#c2d3ea">Créditos e inversiones con simulaciones</text>
+  <rect x="1" y="1" width="898" height="238" rx="21" fill="none" stroke="url(#edge)"/>
+  <g font-family="system-ui, 'Segoe UI', sans-serif" class="brand-name" fill="url(#title-color)" font-weight="820">
+    <text x="55" y="127" font-size="76" letter-spacing="-4.5"><tspan fill="#f4fff9">Finan</tspan><tspan>Smart</tspan></text>
   </g>
-  <g transform="translate(666 39)">
-    <rect x="1" y="1" width="109" height="109" rx="21" fill="url(#tile)" stroke="#7ed8cd" stroke-opacity=".67"/>
-    <path d="M20 2h69" stroke="#fff0d9" stroke-opacity=".38" stroke-linecap="round"/>
-    <g fill="none" stroke="#7ed8cd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 89h67 M29 83V67h12v16 M49 83V55h12v28 M69 83V43h12v40 M26 52l20-11 14 3 24-20 M73 24h11v11"/></g>
-  </g>
+  <text x="60" y="167" fill="#e2edf0" font-family="system-ui, 'Segoe UI', sans-serif" font-size="23" font-weight="500">Simulación de créditos e inversiones</text>
 </svg>
